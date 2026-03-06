@@ -108,3 +108,4 @@ class Consonant(ThaiModel, table=True):
 
     def __str__(self) -> str:
         return f"Consonant(id={self.id}, grapheme={self.grapheme}, phoneme={self.phoneme})"
+
