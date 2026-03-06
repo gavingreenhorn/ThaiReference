@@ -92,7 +92,7 @@ jobs:
               sh get-docker.sh
             fi
 
-            sudo docker compose -f ${{ env.COMPOSE_FILE }} down || true
+            sudo docker compose -f ${{ env.COMPOSE_FILE }} down --remove-orphans || true
             sudo docker image prune -af || true
 
             :> ${{ env.INFRA_DIR }}/.env
