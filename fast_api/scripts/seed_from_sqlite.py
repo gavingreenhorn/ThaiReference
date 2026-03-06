@@ -1,6 +1,6 @@
 """One-time migration: copy all data from a SQLite database into PostgreSQL.
 
-Usage (inside the backend container, after `alembic upgrade head`):
+Usage (inside the fast_api container, after `alembic upgrade head`):
     python scripts/seed_from_sqlite.py /path/to/thai_sqlite.db
 """
 

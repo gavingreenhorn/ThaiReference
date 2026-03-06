@@ -14,9 +14,9 @@ services:
       timeout: 5s
       retries: 5
 
-  thai_backend:
-    container_name: thai_backend
-    image: ${DOCKER_USERNAME}/thai_backend:${BACKEND_IMAGE_TAG}
+  fast_api:
+    container_name: fast_api
+    image: ${DOCKER_USERNAME}/fast_api:${BACKEND_IMAGE_TAG}
     restart: always
     env_file:
       - .env
@@ -42,7 +42,7 @@ services:
       - thai_media:/media:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      - thai_backend
+      - fast_api
 
 volumes:
   thai_pg_data:
