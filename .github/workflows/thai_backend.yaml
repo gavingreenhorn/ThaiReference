@@ -1,0 +1,107 @@
+name: thai backend workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+          pip install -r backend/requirements.txt
+
+      - name: Lint
+        run: flake8 backend
+
+  build_and_push:
+    name: build and push backend image
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/thai_backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/thai_backend:${{ github.sha }}
+
+  copy_infra:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy infra directory
+        uses: garygrossgarten/github-action-scp@release
+        with:
+          local: infra
+          remote: infra
+          recursive: true
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          privateKey: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: copy_infra
+    if: github.ref == 'refs/heads/main'
+    env:
+      INFRA_DIR: /home/${{ secrets.USER }}/infra
+      COMPOSE_FILE: /home/${{ secrets.USER }}/infra/docker-compose.yml
+    steps:
+      - name: Deploy on remote host
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            if which docker &> /dev/null; then
+              echo "docker already installed, skipping installation";
+            else
+              curl -fsSL https://get.docker.com -o get-docker.sh
+              sh get-docker.sh
+            fi
+
+            sudo docker compose -f ${{ env.COMPOSE_FILE }} down || true
+            sudo docker image prune -af || true
+
+            :> ${{ env.INFRA_DIR }}/.env
+            chmod 640 ${{ env.INFRA_DIR }}/.env
+            echo DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }} >> ${{ env.INFRA_DIR }}/.env
+            echo BACKEND_IMAGE_TAG=latest >> ${{ env.INFRA_DIR }}/.env
+            echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> ${{ env.INFRA_DIR }}/.env
+            echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> ${{ env.INFRA_DIR }}/.env
+            echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> ${{ env.INFRA_DIR }}/.env
+            echo DB_EXPORT_TOKEN=${{ secrets.DB_EXPORT_TOKEN }} >> ${{ env.INFRA_DIR }}/.env
+            echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
+
+            sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d

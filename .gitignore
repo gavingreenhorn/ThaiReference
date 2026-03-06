@@ -1,0 +1,31 @@
+# MAUI client app
+ThaiReference/
+ThaiReference.sln
+mykeystore.keystore
+
+# Temporary / scratch
+tmp_schema/
+
+# Environment files
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
