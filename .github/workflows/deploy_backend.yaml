@@ -92,6 +92,15 @@ jobs:
               sh get-docker.sh
             fi
 
+            # Ensure swap exists (prevents OOM kills on small VPS)
+            if [ ! -f /swapfile ]; then
+              sudo fallocate -l 1G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=1024
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+            fi
+
             sudo docker compose -f ${{ env.COMPOSE_FILE }} down --remove-orphans || true
             sudo docker image prune -af || true
 
