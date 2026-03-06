@@ -1,5 +1,5 @@
-
 from typing import Annotated
+
 from fastapi import Body, Path, APIRouter
 from pydantic import Field
 from sqlmodel import select
@@ -9,6 +9,7 @@ from app.models.thai_models import Word
 
 router = APIRouter(prefix="/words")
 PositiveInt = Annotated[int, Field(gt=0)]
+
 
 @router.get("", response_model=list[Word])
 async def get_all(
@@ -30,6 +31,7 @@ async def get_by_id(
     word_id: PositiveInt = Path(..., description="The ID of the word to retrieve")
 ):
     return session.get_one(Word, word_id)
+
 
 @router.post("", response_model=Word, status_code=201)
 async def create_word(

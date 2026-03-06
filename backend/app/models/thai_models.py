@@ -18,7 +18,7 @@ class Transcription(ThaiModel, table=True):
 
     def __str__(self) -> str:
         return f"Transcription(id={self.id}, phonemic={self.phonemic}, paiboon={self.paiboon}, ipa={self.ipa})"
-    
+
 
 class PartOfSpeech(ThaiModel, table=True):
     __tablename__ = "part_of_speech"
@@ -31,9 +31,8 @@ class PartOfSpeech(ThaiModel, table=True):
 
 
 class WordLexeme(ThaiModel, table=True):
-
     id: int | None = Field(default=None, primary_key=True, sa_type=BigInteger)
-    word_id: int  = Field(foreign_key="thai.word.id", sa_type=BigInteger)
+    word_id: int = Field(foreign_key="thai.word.id", sa_type=BigInteger)
     lexeme_id: int = Field(foreign_key="thai.lexeme.id", sa_type=BigInteger)
 
     __table_args__ = (
@@ -42,11 +41,11 @@ class WordLexeme(ThaiModel, table=True):
 
     def __str__(self) -> str:
         return f"WordLexeme(id={self.id}, word_id={self.word_id}, lexeme_id={self.lexeme_id})"
-    
+
 
 class ConsonantSample(ThaiModel, table=True):
     id: int | None = Field(default=None, primary_key=True, sa_type=BigInteger)
-    consonant_id: int  = Field(foreign_key="thai.consonant.id", sa_type=BigInteger)
+    consonant_id: int = Field(foreign_key="thai.consonant.id", sa_type=BigInteger)
     word_id: int = Field(foreign_key="thai.word.id", sa_type=BigInteger)
 
     __table_args__ = (
@@ -88,10 +87,10 @@ class Sound(ThaiModel, table=True):
     is_initial_only: bool
     media_url: HttpUrl | None = Field(default=None, sa_column=Column(String(2048), nullable=True))
     transcription_id: int | None = Field(default=None, unique=True, foreign_key="thai.transcription.id", sa_type=BigInteger)
-    
+
     transcription: Transcription | None = one_to_one()
 
-    
+
 class Consonant(ThaiModel, table=True):
     id: int | None = Field(default=None, primary_key=True, sa_type=BigInteger)
     transcription_id: int | None = Field(default=None, unique=True, foreign_key="thai.transcription.id", sa_type=BigInteger)
@@ -103,10 +102,9 @@ class Consonant(ThaiModel, table=True):
     ending_sound_id: int | None = Field(default=None, foreign_key="thai.sound.id", sa_type=BigInteger)
 
     initial_sound: Sound = one_to_one()
-    ending_sound: Sound | None = one_to_one()   
+    ending_sound: Sound | None = one_to_one()
     acrophonic: Word = one_to_one()
     sample_words: list[Word] = Relationship(link_model=ConsonantSample)
-    
 
     def __str__(self) -> str:
         return f"Consonant(id={self.id}, grapheme={self.grapheme}, phoneme={self.phoneme})"

@@ -22,4 +22,3 @@ app.include_router(thai_router)
 app.include_router(admin_router)
 
 # uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-

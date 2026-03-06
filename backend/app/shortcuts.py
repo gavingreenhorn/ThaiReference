@@ -1,4 +1,4 @@
-from sqlmodel import MetaData, Relationship, Field, SQLModel, SQLModel
+from sqlmodel import Relationship, Field, SQLModel
 
 from app.models import thai_mapper_registry
 
@@ -11,6 +11,7 @@ def one_to_one(**kwargs):
     return Relationship(
         sa_relationship_kwargs={"uselist": False, **kwargs}
     )
+
 
 def unique_field(**kwargs):
     return Field(

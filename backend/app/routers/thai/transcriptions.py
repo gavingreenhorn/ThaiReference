@@ -1,5 +1,5 @@
-
 from typing import Annotated
+
 from fastapi import Body, Path, APIRouter
 from pydantic import Field
 from sqlmodel import select
@@ -9,6 +9,7 @@ from app.models.thai_models import Transcription
 
 router = APIRouter(prefix="/transcriptions")
 PositiveInt = Annotated[int, Field(gt=0)]
+
 
 @router.get("", response_model=list[Transcription])
 async def get_all(

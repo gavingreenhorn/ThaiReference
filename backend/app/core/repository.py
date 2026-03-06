@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.orm_tables import (
     ClassOrm,
-    CompositeNameOrm,
     ConsonantOrm,
     ConsonantSampleOrm,
     EndingOrm,
@@ -16,7 +15,6 @@ from app.models.orm_tables import (
     ToneMarkOrm,
     TranscriptionOrm,
     VowelOrm,
-    VowelGraphemeOrm,
     VowelSampleOrm,
     WordLexemeOrm,
     WordOrm,
