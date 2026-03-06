@@ -1,0 +1,27 @@
+name: Seed database from SQLite
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    env:
+      INFRA_DIR: /home/${{ secrets.USER }}/infra
+      COMPOSE_FILE: /home/${{ secrets.USER }}/infra/docker-compose.yml
+    steps:
+      - name: Run seed on remote host
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+          script: |
+            if [ ! -f ${{ env.INFRA_DIR }}/seed/thai_sqlite.db ]; then
+              echo "ERROR: thai_sqlite.db not found at ${{ env.INFRA_DIR }}/seed/"
+              echo "Upload it first: scp ThaiReference/Resources/Raw/thai_sqlite.db ${{ secrets.USER }}@HOST:~/infra/seed/"
+              exit 1
+            fi
+            sudo docker cp ${{ env.INFRA_DIR }}/seed/thai_sqlite.db fast_api:/tmp/thai_sqlite.db
+            sudo docker exec fast_api python scripts/seed_from_sqlite.py /tmp/thai_sqlite.db

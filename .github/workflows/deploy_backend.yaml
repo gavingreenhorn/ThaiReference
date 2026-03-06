@@ -115,3 +115,9 @@ jobs:
             echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
 
             sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d
+
+            if [ -f ${{ env.INFRA_DIR }}/seed/thai_sqlite.db ]; then
+              echo "Running seed from SQLite..."
+              sudo docker cp ${{ env.INFRA_DIR }}/seed/thai_sqlite.db fast_api:/tmp/thai_sqlite.db
+              sudo docker exec fast_api python scripts/seed_from_sqlite.py /tmp/thai_sqlite.db
+            fi
