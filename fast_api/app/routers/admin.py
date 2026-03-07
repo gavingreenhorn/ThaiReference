@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Header
-from fastapi.responses import FileResponse
 import jwt
 
 from app.core.config import settings
