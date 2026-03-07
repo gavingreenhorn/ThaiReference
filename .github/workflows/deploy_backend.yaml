@@ -5,7 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
-
+    inputs:
+      seed_from_sqlite:
+        description: 'Seed data from local SQLite database'
+        required: false
+        default: false
+        type: boolean
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -101,6 +106,10 @@ jobs:
               echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
             fi
 
+            mkdir -p ${{ env.INFRA_DIR }}/backups
+            sudo docker exec thai_db pg_dump -U ${{ secrets.POSTGRES_USER }} ${{ secrets.POSTGRES_DB }} > ${{ env.INFRA_DIR }}/backups/pg_$(date +%Y%m%d_%H%M%S).sql || true
+            cd ${{ env.INFRA_DIR }}/backups && for f in $(ls -t pg_*.sql 2>/dev/null | tail -n +6); do rm -f "$f"; done || true
+
             sudo docker compose -f ${{ env.COMPOSE_FILE }} down --remove-orphans || true
             sudo docker image prune -af || true
 
@@ -116,8 +125,14 @@ jobs:
 
             sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d
 
-            if [ -f ${{ env.INFRA_DIR }}/seed/thai_sqlite.db ]; then
-              echo "Running seed from SQLite..."
-              sudo docker cp ${{ env.INFRA_DIR }}/seed/thai_sqlite.db fast_api:/tmp/thai_sqlite.db
-              sudo docker exec fast_api python scripts/seed_from_sqlite.py /tmp/thai_sqlite.db
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.seed_from_sqlite }}" = "true" ]; then
+              if [ -f ${{ env.INFRA_DIR }}/seed/thai_sqlite.db ]; then
+                echo "Running seed from SQLite..."
+                sudo docker cp ${{ env.INFRA_DIR }}/seed/thai_sqlite.db fast_api:/tmp/thai_sqlite.db
+                sudo docker exec fast_api python scripts/seed_from_sqlite.py /tmp/thai_sqlite.db
+              else
+                echo "seed_from_sqlite requested but ${{ env.INFRA_DIR }}/seed/thai_sqlite.db not found; skipping."
+              fi
+            else
+              echo "Skipping seed (run workflow manually with 'Seed from SQLite' checked to load from SQLite)."
             fi
