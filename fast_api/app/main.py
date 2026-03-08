@@ -32,6 +32,7 @@ def _tortoise_url() -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     r = redis.from_url(settings.redis_url, decode_responses=True, encoding="utf8")
+    await r.ping()
     admin_app.configure(
         logo_url="https://preview.tabler.io/static/logo-white.svg",
         template_folders=[os.path.join(BASE_DIR, "templates")],

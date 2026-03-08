@@ -17,6 +17,7 @@ COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini .
 COPY scripts ./scripts
+COPY templates ./templates
 
 EXPOSE 5000
 
