@@ -7,7 +7,7 @@ import jwt
 
 from app.core.config import settings
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
 @router.post("/token")

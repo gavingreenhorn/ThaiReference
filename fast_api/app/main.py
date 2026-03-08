@@ -17,7 +17,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 login_provider = UsernamePasswordProvider(
     admin_model=Admin,
-    enable_captcha=True,
     login_logo_url="https://preview.tabler.io/static/logo.svg",
 )
 
@@ -33,7 +32,7 @@ def _tortoise_url() -> str:
 async def lifespan(app: FastAPI):
     r = redis.from_url(settings.redis_url, decode_responses=True, encoding="utf8")
     await r.ping()
-    admin_app.configure(
+    await admin_app.configure(
         logo_url="https://preview.tabler.io/static/logo-white.svg",
         template_folders=[os.path.join(BASE_DIR, "templates")],
         providers=[login_provider],
@@ -76,5 +75,3 @@ app.include_router(admin_router)
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
-
-# uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
