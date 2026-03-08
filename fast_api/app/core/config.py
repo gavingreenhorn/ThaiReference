@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     sqlite_url: str = "sqlite:///../ThaiReference/Resources/Raw/thai_sqlite.db"
     db_export_token: str | None = None
     cors_origins: str | None = None
+    redis_url: str = "redis://redis:6379"
 
     @property
     def dsn(self) -> str:

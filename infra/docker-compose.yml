@@ -14,6 +14,11 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    restart: always
+
   fast_api:
     container_name: fast_api
     image: ${DOCKER_USERNAME}/fast_api:${BACKEND_IMAGE_TAG}
@@ -26,9 +31,12 @@ services:
       db_name: ${POSTGRES_DB}
       db_user: ${POSTGRES_USER}
       db_password: ${POSTGRES_PASSWORD}
+      redis_url: "redis://redis:6379"
     depends_on:
       thai_db:
         condition: service_healthy
+      redis:
+        condition: service_started
     volumes:
       - thai_media:/media
 
