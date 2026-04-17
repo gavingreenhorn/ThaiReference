@@ -2,6 +2,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Env names match GitHub secrets / Docker: POSTGRES_*, ADMIN_*, CORS_ORIGINS."""
+
     model_config = SettingsConfigDict(
         case_sensitive=False,
         env_file=".env",
@@ -9,11 +11,11 @@ class Settings(BaseSettings):
     )
 
     app_title: str = "Thai Reference"
-    db_host: str = "localhost"
-    db_port: str = "5432"
-    db_name: str = "thai"
-    db_user: str = ""
-    db_password: str = ""
+    postgres_host: str = "localhost"
+    postgres_port: str = "5432"
+    postgres_db: str = "thai"
+    postgres_user: str = ""
+    postgres_password: str = ""
     cors_origins: str | None = None
     admin_username: str = "admin"
     admin_password: str = ""
@@ -23,11 +25,11 @@ class Settings(BaseSettings):
     def dsn(self) -> str:
         return (
             f"postgresql+psycopg2://"
-            f"{self.db_user}:"
-            f"{self.db_password}@"
-            f"{self.db_host}:"
-            f"{self.db_port}/"
-            f"{self.db_name}"
+            f"{self.postgres_user}:"
+            f"{self.postgres_password}@"
+            f"{self.postgres_host}:"
+            f"{self.postgres_port}/"
+            f"{self.postgres_db}"
         )
 
     @property
