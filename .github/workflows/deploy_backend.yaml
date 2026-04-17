@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       seed_from_sqlite:
-        description: 'Seed data from local SQLite database'
+        description: 'Seed data from local SQLite database if present'
         required: false
         default: false
         type: boolean
@@ -120,7 +120,9 @@ jobs:
             echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> ${{ env.INFRA_DIR }}/.env
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> ${{ env.INFRA_DIR }}/.env
             echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> ${{ env.INFRA_DIR }}/.env
-            echo DB_EXPORT_TOKEN=${{ secrets.DB_EXPORT_TOKEN }} >> ${{ env.INFRA_DIR }}/.env
+            echo ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }} >> ${{ env.INFRA_DIR }}/.env
+            echo ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} >> ${{ env.INFRA_DIR }}/.env
+            echo ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }} >> ${{ env.INFRA_DIR }}/.env
             echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
 
             sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d

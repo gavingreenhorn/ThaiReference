@@ -1,2 +1,0 @@
-CREATE SCHEMA IF NOT EXISTS thai;
-ALTER ROLE CURRENT_USER SET search_path TO thai, public;

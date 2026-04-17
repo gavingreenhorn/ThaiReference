@@ -3,22 +3,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        case_sensitive=True,
+        case_sensitive=False,
         env_file=".env",
         env_file_encoding="utf-8",
     )
 
     app_title: str = "Thai Reference"
-
-    db_host: str | None = None
-    db_port: str | None = "5432"
-    db_name: str | None = None
-    db_user: str | None = None
-    db_password: str | None = None
-    sqlite_url: str = "sqlite:///../ThaiReference/Resources/Raw/thai_sqlite.db"
-    db_export_token: str | None = None
+    db_host: str = "localhost"
+    db_port: str = "5432"
+    db_name: str = "thai"
+    db_user: str = ""
+    db_password: str = ""
     cors_origins: str | None = None
-    redis_url: str = "redis://redis:6379"
+    admin_username: str = "admin"
+    admin_password: str = ""
+    admin_secret_key: str = "change-me-in-production"
 
     @property
     def dsn(self) -> str:
@@ -30,23 +29,6 @@ class Settings(BaseSettings):
             f"{self.db_port}/"
             f"{self.db_name}"
         )
-
-    @property
-    def database_url(self) -> str:
-        if all([self.db_host, self.db_name, self.db_user, self.db_password]):
-            return self.dsn
-        return self.sqlite_url
-
-    @property
-    def database_path(self) -> str | None:
-        """Filesystem path for the SQLite database when using sqlite_url.
-
-        Returns None when using Postgres or a non-sqlite URL.
-        """
-        url = self.database_url
-        if not url.startswith("sqlite:///"):
-            return None
-        return url.removeprefix("sqlite:///")
 
     @property
     def cors_origins_list(self) -> list[str]:

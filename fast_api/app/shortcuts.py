@@ -1,9 +1,7 @@
 from sqlmodel import Relationship, Field, SQLModel
 
-from app.models import thai_mapper_registry
 
-
-class ThaiModel(SQLModel, registry=thai_mapper_registry):
+class ThaiModel(SQLModel):
     __abstract__ = True
 
 

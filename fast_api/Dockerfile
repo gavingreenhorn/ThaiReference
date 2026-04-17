@@ -11,14 +11,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt && \
-    sed -i 's/, builtins\.TimeoutError//' /usr/local/lib/python3.12/site-packages/aioredis/exceptions.py
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini .
 COPY scripts ./scripts
-COPY templates ./templates
 
 EXPOSE 5000
 

@@ -110,7 +110,7 @@ def _sound_dto(s: SoundOrm) -> SoundDto:
 
 class SQLAlchemyThaiRepository(ThaiRepository):
     """
-    Uses ORM models mapped to thai_sqlite.db tables. Loads entities with
+    Uses ORM models for Thai reference data. Loads entities with
     relationships and converts to DTOs. No raw SQL.
     """
 
@@ -218,6 +218,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     VowelDto(
                         is_diphtong=bool(v.is_diphtong),
                         sound=_sound_dto(sound),
+                        media_url=sound.mediapath,
                         graphemes=graphemes,
                         sample_words=sample_words,
                     )

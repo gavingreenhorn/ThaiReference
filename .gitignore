@@ -3,9 +3,6 @@ ThaiReference/
 ThaiReference.sln
 mykeystore.keystore
 
-# Temporary / scratch
-tmp_schema/
-
 # Environment files
 .env
 *.env

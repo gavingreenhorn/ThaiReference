@@ -1,98 +1,119 @@
-"""One-time migration: copy all data from a SQLite database into PostgreSQL.
-
-Usage (inside the fast_api container, after `alembic upgrade head`):
-    python scripts/seed_from_sqlite.py /path/to/thai_sqlite.db
 """
-
+migration script: copy all data from a SQLite database into PostgreSQL.
+"""
 import sqlite3
 import sys
 from pathlib import Path
 
+from sqlalchemy import create_engine, text
+
+# Add app to path so we can import settings
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
-from sqlalchemy import create_engine, text  # noqa: E402
-
 from app.core.config import settings  # noqa: E402
-from app.models.orm_tables import Base  # noqa: E402
-
-TABLE_ORDER = [
-    "Transcription",
-    "SoundType",
-    "Lexeme",
-    "Class",
-    "Ending",
-    "Gender",
-    "Formality",
-    "Plurality",
-    "PronounType",
-    "Word",
-    "Sound",
-    "WordLexeme",
-    "Consonant",
-    "Vowel",
-    "Numeral",
-    "Pronoun",
-    "SpecialSymbol",
-    "CompositeName",
-    "ConsonantSample",
-    "VowelGrapheme",
-    "VowelSample",
-    "PronounTypeBreakout",
-    "ToneMark",
-]
 
 
 def _read_sqlite_table(conn: sqlite3.Connection, table: str) -> list[dict]:
     cur = conn.execute(f'SELECT * FROM "{table}"')
-    cols = [desc[0] for desc in cur.description]
-    return [dict(zip(cols, row)) for row in cur.fetchall()]
+    columns = [d[0] for d in cur.description]
+    return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def _pg_columns_for_table(pg_conn, table_name: str) -> set:
+    """Return set of column names that exist in Postgres for this table."""
+    r = pg_conn.execute(
+        text(
+            """
+            SELECT column_name FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = :t
+            """
+        ),
+        {"t": table_name},
+    )
+    return {row[0] for row in r}
+
+
+def _pg_boolean_columns(pg_conn, table_name: str) -> set:
+    """Return set of column names that are boolean in Postgres for this table."""
+    r = pg_conn.execute(
+        text(
+            """
+            SELECT column_name FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = :t AND data_type = 'boolean'
+            """
+        ),
+        {"t": table_name},
+    )
+    return {row[0] for row in r}
+
+
+def _coerce_row_for_pg(row: dict, boolean_columns: set) -> dict:
+    """Coerce SQLite 0/1 to Python bool for boolean columns."""
+    out = dict(row)
+    for col in boolean_columns:
+        if col in out and out[col] is not None:
+            out[col] = bool(int(out[col]))
+    return out
 
 
 def seed(sqlite_path: str) -> None:
     sq_conn = sqlite3.connect(sqlite_path)
-    pg_engine = create_engine(settings.database_url)
+    sq_conn.row_factory = sqlite3.Row
+    pg_engine = create_engine(settings.dsn)
 
-    sq_tables = {
-        r[0]
-        for r in sq_conn.execute(
-            "SELECT name FROM sqlite_master WHERE type='table'"
-        ).fetchall()
-    }
+    cur = sq_conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    )
+    table_names = [row[0] for row in cur.fetchall()]
 
-    with pg_engine.begin() as dst:
-        dst.execute(text("SET session_replication_role = 'replica'"))
+    with pg_engine.connect() as pg_conn:
+        # Only seed tables that exist in Postgres (skip e.g. old "Tone" if schema has ToneMark only)
+        pg_tables_result = pg_conn.execute(
+            text(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public'"
+            )
+        )
+        pg_table_set = {row[0] for row in pg_tables_result}
 
-        for table_name in TABLE_ORDER:
-            dst_table = Base.metadata.tables.get(table_name)
-            if table_name not in sq_tables or dst_table is None:
-                print(f"  SKIP  {table_name}")
+        # Disable FK checks so insert order doesn't matter
+        pg_conn.execute(text("SET session_replication_role = replica"))
+        pg_conn.commit()
+
+        tables_to_seed = [t for t in table_names if t in pg_table_set]
+        if tables_to_seed:
+            truncate_list = ", ".join(f'"{t}"' for t in tables_to_seed)
+            pg_conn.execute(text(f"TRUNCATE TABLE {truncate_list} CASCADE"))
+            pg_conn.commit()
+
+        for table_name in table_names:
+            if table_name not in pg_table_set:
+                print(f"  {table_name}: skip (no such table in Postgres)")
                 continue
-
             rows = _read_sqlite_table(sq_conn, table_name)
             if not rows:
-                print(f"  {table_name}: 0 rows")
                 continue
-
-            dst_cols = {c.name for c in dst_table.columns}
-            data = [
-                {k: v for k, v in row.items() if k in dst_cols}
-                for row in rows
-            ]
-            dst.execute(dst_table.insert(), data)
-            print(f"  {table_name}: {len(data)} rows")
-
-        for table_name in TABLE_ORDER:
-            if table_name not in Base.metadata.tables:
+            pg_cols = _pg_columns_for_table(pg_conn, table_name)
+            boolean_cols = _pg_boolean_columns(pg_conn, table_name)
+            # Only insert columns that exist in Postgres (SQLite may have extra/dropped cols)
+            columns = [c for c in rows[0].keys() if c in pg_cols]
+            if not columns:
+                print(f"  {table_name}: skip (no matching columns)")
                 continue
-            dst.execute(text(
-                f"""SELECT setval(pg_get_serial_sequence('"{table_name}"', 'id'), """
-                f"""COALESCE((SELECT MAX(id) FROM "{table_name}"), 0) + 1, false)"""
-            ))
+            placeholders = ", ".join(f":{c}" for c in columns)
+            col_list = ", ".join(f'"{c}"' for c in columns)
+            stmt = text(
+                f'INSERT INTO "{table_name}" ({col_list}) VALUES ({placeholders})'
+            )
+            for row in rows:
+                filtered = {c: row[c] for c in columns}
+                pg_conn.execute(stmt, _coerce_row_for_pg(filtered, boolean_cols))
+            pg_conn.commit()
+            print(f"  {table_name}: {len(rows)} rows")
 
-        dst.execute(text("SET session_replication_role = 'origin'"))
+        pg_conn.execute(text("SET session_replication_role = DEFAULT"))
+        pg_conn.commit()
 
     sq_conn.close()
-    print("Seeding complete.")
+    print("Done.")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,3 @@
-"""
-ORM models mapped to the actual tables in thai_sqlite.db.
-Used by ThaiRepository to load data; db-agnostic (same models can target Postgres later).
-"""
 from __future__ import annotations
 
 from sqlalchemy import (
@@ -33,6 +29,10 @@ class TranscriptionOrm(Base):
     paiboon: Mapped[str | None] = mapped_column(String(25), nullable=True)
     IPA: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    def __repr__(self) -> str:
+        label = self.phonemic or self.paiboon or self.IPA or f"id={self.id}"
+        return f"Transcription({label})"
+
 
 class SoundTypeOrm(Base):
     __tablename__ = "SoundType"
@@ -40,6 +40,9 @@ class SoundTypeOrm(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(15), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"SoundType({self.name})"
 
 
 class LexemeOrm(Base):
@@ -49,6 +52,9 @@ class LexemeOrm(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     value: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    def __repr__(self) -> str:
+        return f"Lexeme({self.value or f'id={self.id}'})"
+
 
 class ClassOrm(Base):
     __tablename__ = "Class"
@@ -56,6 +62,9 @@ class ClassOrm(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(15), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"Class({self.name})"
 
 
 class EndingOrm(Base):
@@ -65,6 +74,9 @@ class EndingOrm(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(15), nullable=False)
 
+    def __repr__(self) -> str:
+        return f"Ending({self.name})"
+
 
 class GenderOrm(Base):
     __tablename__ = "Gender"
@@ -72,6 +84,9 @@ class GenderOrm(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"Gender({self.name or self.id})"
 
 
 class FormalityOrm(Base):
@@ -81,6 +96,9 @@ class FormalityOrm(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    def __repr__(self) -> str:
+        return f"Formality({self.name or self.id})"
+
 
 class PluralityOrm(Base):
     __tablename__ = "Plurality"
@@ -89,6 +107,9 @@ class PluralityOrm(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    def __repr__(self) -> str:
+        return f"Plurality({self.name or self.id})"
+
 
 class PronounTypeOrm(Base):
     __tablename__ = "PronounType"
@@ -96,6 +117,9 @@ class PronounTypeOrm(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"PronounType({self.name or self.id})"
 
 
 # ---------------------------------------------------------------------------
@@ -121,6 +145,9 @@ class WordOrm(Base):
         "WordLexemeOrm", foreign_keys="[WordLexemeOrm.word]", back_populates="word_rel"
     )
 
+    def __repr__(self) -> str:
+        return f"Word({self.value or f'id={self.id}'})"
+
 
 class WordLexemeOrm(Base):
     __tablename__ = "WordLexeme"
@@ -136,6 +163,17 @@ class WordLexemeOrm(Base):
     lexeme_rel: Mapped[LexemeOrm | None] = relationship(
         "LexemeOrm", foreign_keys=[lexeme]
     )
+
+    def __repr__(self) -> str:
+        try:
+            w = self.word_rel.value if self.word_rel is not None else f"word_id={self.word}"
+        except Exception:
+            w = f"word_id={self.word}"
+        try:
+            lex = self.lexeme_rel.value if self.lexeme_rel is not None else f"lexeme_id={self.lexeme}"
+        except Exception:
+            lex = f"lexeme_id={self.lexeme}"
+        return f"WordLexeme({w} ↔ {lex})"
 
 
 class SoundOrm(Base):
@@ -160,6 +198,9 @@ class SoundOrm(Base):
     sound_type_rel: Mapped[SoundTypeOrm | None] = relationship(
         "SoundTypeOrm", foreign_keys=[sound_type]
     )
+
+    def __repr__(self) -> str:
+        return f"Sound(id={self.id}, {self.mediapath or 'no path'})"
 
 
 class ConsonantOrm(Base):
@@ -199,6 +240,9 @@ class ConsonantOrm(Base):
         "ConsonantSampleOrm", back_populates="consonant_rel", foreign_keys="[ConsonantSampleOrm.consonant]"
     )
 
+    def __repr__(self) -> str:
+        return f"Consonant({self.grapheme} / {self.phoneme})"
+
 
 class ConsonantSampleOrm(Base):
     __tablename__ = "ConsonantSample"
@@ -217,6 +261,17 @@ class ConsonantSampleOrm(Base):
         "WordOrm", foreign_keys=[word]
     )
 
+    def __repr__(self) -> str:
+        try:
+            c = self.consonant_rel.grapheme if self.consonant_rel is not None else self.consonant
+        except Exception:
+            c = self.consonant
+        try:
+            w = self.word_rel.value if self.word_rel is not None else self.word
+        except Exception:
+            w = self.word
+        return f"ConsonantSample({c} + word {w})"
+
 
 class VowelGraphemeOrm(Base):
     __tablename__ = "VowelGrapheme"
@@ -226,6 +281,9 @@ class VowelGraphemeOrm(Base):
     vowel_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("Vowel.id"), nullable=True)
     value: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_closed: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"VowelGrapheme({self.value or self.id})"
 
 
 class VowelSampleOrm(Base):
@@ -242,6 +300,13 @@ class VowelSampleOrm(Base):
     word_rel: Mapped[WordOrm | None] = relationship(
         "WordOrm", foreign_keys=[word]
     )
+
+    def __repr__(self) -> str:
+        try:
+            w = self.word_rel.value if self.word_rel is not None else self.word
+        except Exception:
+            w = self.word
+        return f"VowelSample(vowel={self.vowel}, word {w})"
 
 
 class VowelOrm(Base):
@@ -262,6 +327,9 @@ class VowelOrm(Base):
         "VowelSampleOrm", back_populates="vowel_rel", foreign_keys="[VowelSampleOrm.vowel]"
     )
 
+    def __repr__(self) -> str:
+        return f"Vowel(id={self.id}, sound_id={self.sound_id})"
+
 
 VowelGraphemeOrm.vowel_rel = relationship(
     "VowelOrm", back_populates="graphemes", foreign_keys="[VowelGraphemeOrm.vowel_id]"
@@ -279,6 +347,9 @@ class NumeralOrm(Base):
     word_rel: Mapped[WordOrm | None] = relationship(
         "WordOrm", foreign_keys=[word]
     )
+
+    def __repr__(self) -> str:
+        return f"Numeral({self.grapheme or self.id})"
 
 
 class PronounOrm(Base):
@@ -309,6 +380,13 @@ class PronounOrm(Base):
         "PluralityOrm", foreign_keys=[plurality]
     )
 
+    def __repr__(self) -> str:
+        try:
+            w = self.word_rel.value if self.word_rel is not None else self.word
+        except Exception:
+            w = self.word
+        return f"Pronoun(word={w})"
+
 
 class PronounTypeBreakoutOrm(Base):
     __tablename__ = "PronounTypeBreakout"
@@ -321,6 +399,9 @@ class PronounTypeBreakoutOrm(Base):
     type_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("PronounType.id"), nullable=True
     )
+
+    def __repr__(self) -> str:
+        return f"PronounTypeBreakout(pronoun_id={self.pronoun_id}, type_id={self.type_id})"
 
 
 class SpecialSymbolOrm(Base):
@@ -335,6 +416,9 @@ class SpecialSymbolOrm(Base):
         "WordOrm", foreign_keys=[word_id]
     )
 
+    def __repr__(self) -> str:
+        return f"SpecialSymbol({self.grapheme or self.id})"
+
 
 class CompositeNameOrm(Base):
     __tablename__ = "CompositeName"
@@ -347,6 +431,9 @@ class CompositeNameOrm(Base):
     word4: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
     word5: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
     media: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"CompositeName(id={self.id}, words {self.word1}-{self.word5})"
 
 
 class ToneMarkOrm(Base):
@@ -363,3 +450,6 @@ class ToneMarkOrm(Base):
     name_rel: Mapped[CompositeNameOrm | None] = relationship(
         "CompositeNameOrm", foreign_keys=[name]
     )
+
+    def __repr__(self) -> str:
+        return f"ToneMark({self.mark})"
