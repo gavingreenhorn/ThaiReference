@@ -1,7 +1,3 @@
-"""
-Pydantic DTOs for Thai API responses. Field names are snake_case for JSON;
-C# ApiDataService uses PropertyNamingPolicy.SnakeCaseLower and PropertyNameCaseInsensitive.
-"""
 from pydantic import BaseModel, ConfigDict
 
 
