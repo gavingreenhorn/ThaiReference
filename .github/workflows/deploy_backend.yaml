@@ -74,17 +74,6 @@ jobs:
           privateKey: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
 
-      - name: Copy media directory
-        uses: garygrossgarten/github-action-scp@release
-        with:
-          local: media
-          remote: infra/media
-          recursive: true
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          privateKey: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.PASSPHRASE }}
-
   deploy:
     runs-on: ubuntu-latest
     needs: copy_infra
