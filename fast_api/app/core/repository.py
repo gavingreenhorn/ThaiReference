@@ -218,7 +218,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     VowelDto(
                         is_diphtong=bool(v.is_diphtong),
                         sound=_sound_dto(sound),
-                        media_url=sound.mediapath,
+                        media_url=v.mediapath,
                         graphemes=graphemes,
                         sample_words=sample_words,
                     )

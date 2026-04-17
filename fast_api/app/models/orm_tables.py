@@ -316,6 +316,7 @@ class VowelOrm(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sound_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("Sound.id"), nullable=True)
     is_diphtong: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    mediapath: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     sound_rel: Mapped[SoundOrm | None] = relationship(
         "SoundOrm", foreign_keys=[sound_id]

@@ -1,7 +1,6 @@
 setuptools>=65.0.0
 fastapi>=0.128.0
 uvicorn[standard]>=0.32.0
-sqlmodel>=0.0.22
 pydantic>=2.12.0
 pydantic-settings>=2.12.0
 alembic>=1.17.0

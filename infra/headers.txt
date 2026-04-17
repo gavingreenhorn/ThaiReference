@@ -1,7 +1,0 @@
-HTTP/1.1 302 Found
-Server: nginx/1.27.5
-Date: Sun, 08 Mar 2026 19:21:42 GMT
-Content-Length: 0
-Connection: keep-alive
-location: /admin/login
-

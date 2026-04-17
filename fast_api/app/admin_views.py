@@ -144,7 +144,7 @@ class ConsonantSampleAdmin(_ThaiModelView, model=ConsonantSampleOrm):
 class VowelAdmin(_ThaiModelView, model=VowelOrm):
     name = "Vowel"
     category = "Content"
-    column_list = [VowelOrm.id, VowelOrm.sound_id, VowelOrm.is_diphtong]
+    column_list = [VowelOrm.id, VowelOrm.sound_id, VowelOrm.is_diphtong, VowelOrm.mediapath]
 
 
 class VowelGraphemeAdmin(_ThaiModelView, model=VowelGraphemeOrm):

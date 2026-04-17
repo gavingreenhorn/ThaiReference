@@ -2,7 +2,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Env names match GitHub secrets / Docker: POSTGRES_*, ADMIN_*, CORS_ORIGINS."""
 
     model_config = SettingsConfigDict(
         case_sensitive=False,
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
     postgres_password: str = ""
     cors_origins: str | None = None
     admin_username: str = "admin"
-    admin_password: str = ""
+    admin_password: str = "admin"
     admin_secret_key: str = "change-me-in-production"
 
     @property
