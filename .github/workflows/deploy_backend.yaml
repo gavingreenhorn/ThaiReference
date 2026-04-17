@@ -74,6 +74,17 @@ jobs:
           privateKey: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
 
+      - name: Copy media directory
+        uses: garygrossgarten/github-action-scp@release
+        with:
+          local: media
+          remote: infra/media
+          recursive: true
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          privateKey: ${{ secrets.SSH_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
   deploy:
     runs-on: ubuntu-latest
     needs: copy_infra
@@ -120,14 +131,22 @@ jobs:
             echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> ${{ env.INFRA_DIR }}/.env
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> ${{ env.INFRA_DIR }}/.env
             echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> ${{ env.INFRA_DIR }}/.env
-            echo POSTGRES_HOST=thai_db >> ${{ env.INFRA_DIR }}/.env
-            echo POSTGRES_PORT=5432 >> ${{ env.INFRA_DIR }}/.env
+            echo POSTGRES_HOST=${{ secrets.POSTGRES_HOST }} >> ${{ env.INFRA_DIR }}/.env
+            echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> ${{ env.INFRA_DIR }}/.env
             echo ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }} >> ${{ env.INFRA_DIR }}/.env
             echo ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} >> ${{ env.INFRA_DIR }}/.env
             echo ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }} >> ${{ env.INFRA_DIR }}/.env
             echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
 
             sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d
+
+            if [ -d ${{ env.INFRA_DIR }}/media ] && [ "$(ls -A ${{ env.INFRA_DIR }}/media 2>/dev/null)" ]; then
+              echo "Syncing ${{ env.INFRA_DIR }}/media into volume thai_media..."
+              sudo docker run --rm \
+                -v ${{ env.INFRA_DIR }}/media:/src:ro \
+                -v thai_media:/dest \
+                alpine sh -c 'mkdir -p /dest && cp -a /src/. /dest/'
+            fi
 
             if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.seed_from_sqlite }}" = "true" ]; then
               if [ -f ${{ env.INFRA_DIR }}/seed/thai_sqlite.db ]; then

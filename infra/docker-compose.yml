@@ -1,21 +1,12 @@
 services:
   thai_db:
-    container_name: thai_db
+    container_name: ${POSTGRES_HOST}
     image: postgres:16-alpine
     restart: always
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     env_file:
       - .env
-    volumes:
-      - thai_pg_data:/var/lib/postgresql/data
-      - ./postgres/init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      start_period: 5s
-      timeout: 5s
-      retries: 3
-      interval: 10s
 
   fast_api:
     container_name: fast_api
