@@ -7,12 +7,15 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     env_file:
       - .env
+    volumes:
+      - thai_pg_data:/var/lib/postgresql/data
+      - ./postgres/init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 10s
+      start_period: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 3
+      interval: 10s
 
   fast_api:
     container_name: fast_api
