@@ -97,6 +97,27 @@ def _word_dto(w: WordOrm, lexeme_values: list[str] | None = None) -> WordDto:
     )
 
 
+def _position_lexeme_gloss_line(word_dtos: list[WordDto]) -> str:
+    parts: list[str] = []
+    for w in word_dtos:
+        g = " ".join(x.strip() for x in w.lexemes if x and str(x).strip()).strip()
+        if g:
+            parts.append(g)
+    return " · ".join(parts)
+
+
+def _position_cell_english_display(name: str | None, word_dtos: list[WordDto]) -> str:
+    gloss_line = _position_lexeme_gloss_line(word_dtos)
+    n = (name or "").strip()
+    if not n:
+        return gloss_line
+    if re.search(r"[A-Z]", n) or re.search(r"[,()]", n):
+        return n
+    if " · " in n:
+        return gloss_line
+    return n
+
+
 def _sound_dto(s: SoundOrm) -> SoundDto:
     return SoundDto(
         id=s.id,
