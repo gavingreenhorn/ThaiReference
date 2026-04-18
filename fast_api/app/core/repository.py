@@ -8,6 +8,8 @@ from app.models.orm_tables import (
     ConsonantSampleOrm,
     EndingOrm,
     NumeralOrm,
+    PositionOrm,
+    PositionWordOrm,
     PronounOrm,
     PronounTypeBreakoutOrm,
     SoundOrm,
@@ -23,6 +25,7 @@ from app.schemas.thai import (
     ConsonantDto,
     MarkDto,
     NumeralDto,
+    PositionCellDto,
     PronounDto,
     SoundDto,
     TranscriptionDto,
@@ -56,6 +59,9 @@ class ThaiRepository(ABC):
 
     @abstractmethod
     def get_pronouns(self) -> list[PronounDto]: ...
+
+    @abstractmethod
+    def get_positions(self) -> list[PositionCellDto]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -344,3 +350,72 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 )
             )
         return result
+
+    def get_positions(self) -> list[PositionCellDto]:
+        stmt = (
+            select(PositionOrm)
+            .options(
+                selectinload(PositionOrm.position_words),
+            )
+            .order_by(PositionOrm.row_index, PositionOrm.col_index)
+        )
+        rows = self._session.execute(stmt).scalars().unique().all()
+        if not rows:
+            return []
+
+        word_ids: set[int] = set()
+        for pos in rows:
+            for pw in pos.position_words or []:
+                word_ids.add(pw.word_id)
+
+        if not word_ids:
+            return [
+                PositionCellDto(
+                    row=p.row_index,
+                    col=p.col_index,
+                    tile_style=p.tile_style,
+                    label=p.name,
+                    words=[],
+                    thai_display="",
+                    english_display="",
+                )
+                for p in rows
+            ]
+
+        stmt_w = (
+            select(WordOrm)
+            .where(WordOrm.id.in_(word_ids))
+            .options(
+                joinedload(WordOrm.transcription_rel),
+                selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
+            )
+        )
+        wmap = {w.id: w for w in self._session.execute(stmt_w).scalars().unique().all()}
+
+        out: list[PositionCellDto] = []
+        for pos in rows:
+            links = sorted(pos.position_words or [], key=lambda x: x.word_order)
+            word_dtos: list[WordDto] = []
+            for pw in links:
+                w_orm = wmap.get(pw.word_id)
+                if w_orm is not None:
+                    word_dtos.append(_word_dto(w_orm))
+            thai_display = " ".join(w.value for w in word_dtos if w.value)
+            english_parts: list[str] = []
+            for w in word_dtos:
+                gloss = next((lx for lx in w.lexemes if lx), "")
+                if gloss:
+                    english_parts.append(gloss)
+            english_display = " ".join(english_parts)
+            out.append(
+                PositionCellDto(
+                    row=pos.row_index,
+                    col=pos.col_index,
+                    tile_style=pos.tile_style,
+                    label=pos.name,
+                    words=word_dtos,
+                    thai_display=thai_display,
+                    english_display=english_display,
+                )
+            )
+        return out

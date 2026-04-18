@@ -7,6 +7,7 @@ from sqlalchemy import (
     LargeBinary,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -174,6 +175,60 @@ class WordLexemeOrm(Base):
         except Exception:
             lex = f"lexeme_id={self.lexeme}"
         return f"WordLexeme({w} ↔ {lex})"
+
+
+class PositionOrm(Base):
+    __tablename__ = "Position"
+    __table_args__ = (
+        UniqueConstraint("row_index", "col_index", name="uq_thai_position_row_col"),
+        {"schema": "thai", "extend_existing": True},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    row_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    col_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    tile_style: Mapped[str | None] = mapped_column(String(32), nullable=True)
+
+    position_words: Mapped[list["PositionWordOrm"]] = relationship(
+        "PositionWordOrm",
+        foreign_keys="[PositionWordOrm.position_id]",
+        back_populates="position_rel",
+        order_by="PositionWordOrm.word_order",
+    )
+
+    def __repr__(self) -> str:
+        return f"Position(r={self.row_index}, c={self.col_index})"
+
+
+class PositionWordOrm(Base):
+    __tablename__ = "PositionWord"
+    __table_args__ = (
+        UniqueConstraint("position_id", "word_order", name="uq_thai_position_word_order"),
+        {"schema": "thai", "extend_existing": True},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    position_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("thai.Position.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    word_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('thai."Word".id'),
+        nullable=False,
+    )
+    word_order: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    position_rel: Mapped[PositionOrm] = relationship(
+        "PositionOrm",
+        foreign_keys=[position_id],
+        back_populates="position_words",
+    )
+
+    def __repr__(self) -> str:
+        return f"PositionWord(position={self.position_id}, order={self.word_order})"
 
 
 class SoundOrm(Base):

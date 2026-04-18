@@ -7,6 +7,7 @@ from app.schemas.thai import (
     ConsonantDto,
     MarkDto,
     NumeralDto,
+    PositionCellDto,
     PronounDto,
     SoundDto,
     VowelDto,
@@ -43,3 +44,8 @@ def get_numerals(repo: RepoDep) -> list[NumeralDto]:
 @router.get("/pronouns", response_model=list[PronounDto])
 def get_pronouns(repo: RepoDep) -> list[PronounDto]:
     return repo.get_pronouns()
+
+
+@router.get("/positions", response_model=list[PositionCellDto])
+def get_positions(repo: RepoDep) -> list[PositionCellDto]:
+    return repo.get_positions()

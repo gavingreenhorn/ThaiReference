@@ -12,6 +12,8 @@ from app.models.orm_tables import (
     LexemeOrm,
     NumeralOrm,
     PluralityOrm,
+    PositionOrm,
+    PositionWordOrm,
     PronounOrm,
     PronounTypeBreakoutOrm,
     PronounTypeOrm,
@@ -102,6 +104,29 @@ class WordLexemeAdmin(_ThaiModelView, model=WordLexemeOrm):
     name = "Word-Lexeme"
     category = "Associations"
     column_list = [WordLexemeOrm.id, WordLexemeOrm.word, WordLexemeOrm.lexeme]
+
+
+class PositionAdmin(_ThaiModelView, model=PositionOrm):
+    name = "Position (grid cell)"
+    category = "Content"
+    column_list = [
+        PositionOrm.id,
+        PositionOrm.row_index,
+        PositionOrm.col_index,
+        PositionOrm.name,
+        PositionOrm.tile_style,
+    ]
+
+
+class PositionWordAdmin(_ThaiModelView, model=PositionWordOrm):
+    name = "Position word"
+    category = "Associations"
+    column_list = [
+        PositionWordOrm.id,
+        PositionWordOrm.position_id,
+        PositionWordOrm.word_id,
+        PositionWordOrm.word_order,
+    ]
 
 
 class SoundAdmin(_ThaiModelView, model=SoundOrm):
@@ -223,6 +248,8 @@ def get_admin_views():
         PronounTypeAdmin,
         WordAdmin,
         WordLexemeAdmin,
+        PositionAdmin,
+        PositionWordAdmin,
         SoundAdmin,
         ConsonantAdmin,
         ConsonantSampleAdmin,

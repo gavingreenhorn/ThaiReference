@@ -78,3 +78,14 @@ class PronounDto(BaseModel):
     formality: str
     gender: str
     types: list[str] = []
+
+
+class PositionCellDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    row: int
+    col: int
+    tile_style: str | None = None
+    label: str | None = None
+    words: list[WordDto]
+    thai_display: str
+    english_display: str
