@@ -9,7 +9,6 @@ from app.models.orm_tables import (
     EndingOrm,
     NumeralOrm,
     PositionOrm,
-    PositionWordOrm,
     PronounOrm,
     PronounTypeBreakoutOrm,
     SoundOrm,
