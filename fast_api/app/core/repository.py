@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -400,12 +401,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 if w_orm is not None:
                     word_dtos.append(_word_dto(w_orm))
             thai_display = " ".join(w.value for w in word_dtos if w.value)
-            english_parts: list[str] = []
-            for w in word_dtos:
-                gloss = next((lx for lx in w.lexemes if lx), "")
-                if gloss:
-                    english_parts.append(gloss)
-            english_display = " ".join(english_parts)
+            english_display = _position_cell_english_display(pos.name, word_dtos)
             out.append(
                 PositionCellDto(
                     row=pos.row_index,

@@ -17,9 +17,9 @@ services:
       retries: 3
       interval: 10s
 
-  fast_api:
-    container_name: fast_api
-    image: ${DOCKER_USERNAME}/fast_api:${BACKEND_IMAGE_TAG}
+  backend:
+    container_name: backend
+    image: ${DOCKER_USERNAME}/backend:${BACKEND_IMAGE_TAG}
     restart: always
     env_file:
       - .env
@@ -29,12 +29,15 @@ services:
     volumes:
       - thai_media:/media
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')\" || exit 1"]
-      start_period: 5s
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://127.0.0.1:5000/health >/dev/null 2>&1 || curl -fsS http://127.0.0.1:5000/actuator/health >/dev/null 2>&1 || curl -fsS -o /dev/null http://127.0.0.1:5000/ || exit 1",
+        ]
+      start_period: 40s
       timeout: 5s
       retries: 3
       interval: 10s
-      
 
   thai_nginx:
     container_name: thai_nginx
@@ -46,7 +49,7 @@ services:
       - thai_media:/media:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      fast_api:
+      backend:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.1 5000 || exit 1"]

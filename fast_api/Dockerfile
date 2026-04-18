@@ -8,6 +8,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    curl \
  && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -19,6 +20,9 @@ COPY alembic.ini .
 COPY scripts ./scripts
 
 EXPOSE 5000
+
+HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:5000/health >/dev/null || exit 1
 
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 5000"]
 
