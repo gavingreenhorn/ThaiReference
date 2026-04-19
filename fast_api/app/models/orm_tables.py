@@ -210,12 +210,12 @@ class PositionWordOrm(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     position_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey("thai.Position.id", ondelete="CASCADE"),
+        ForeignKey("Position.id", ondelete="CASCADE"),
         nullable=False,
     )
     word_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey('thai."Word".id'),
+        ForeignKey("Word.id"),
         nullable=False,
     )
     word_order: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -244,14 +244,13 @@ class TimePeriodOrm(Base):
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     word_id: Mapped[int] = mapped_column(
         Integer,
-        ForeignKey('thai."Word".id'),
+        ForeignKey("Word.id"),
         nullable=False,
     )
 
     word_rel: Mapped[WordOrm] = relationship(
         "WordOrm",
         foreign_keys=[word_id],
-        primaryjoin="TimePeriodOrm.word_id == WordOrm.id",
     )
 
     def __repr__(self) -> str:
@@ -506,11 +505,11 @@ class CompositeNameOrm(Base):
     __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    word1: Mapped[int | None] = mapped_column(Integer, ForeignKey("thai.Word.id"), nullable=True)
-    word2: Mapped[int | None] = mapped_column(Integer, ForeignKey("thai.Word.id"), nullable=True)
-    word3: Mapped[int | None] = mapped_column(Integer, ForeignKey("thai.Word.id"), nullable=True)
-    word4: Mapped[int | None] = mapped_column(Integer, ForeignKey("thai.Word.id"), nullable=True)
-    word5: Mapped[int | None] = mapped_column(Integer, ForeignKey("thai.Word.id"), nullable=True)
+    word1: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
+    word2: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
+    word3: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
+    word4: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
+    word5: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
 
     def __repr__(self) -> str:
         return f"CompositeName(id={self.id}, words {self.word1}-{self.word5})"
