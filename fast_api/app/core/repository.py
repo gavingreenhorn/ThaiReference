@@ -1,4 +1,3 @@
-import re
 from abc import ABC, abstractmethod
 
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -36,7 +35,7 @@ from app.schemas.thai import (
     VowelGraphemeDto,
     WordDto,
 )
-from sqlalchemy import Sequence, select
+from sqlalchemy import select
 
 
 class ThaiRepository(ABC):
@@ -385,9 +384,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 kind=tp.kind,
                 ordinal=tp.ordinal,
                 word=_word_dto(tp.word_rel),
-            )
-            for tp in self._session.execute(
-            (
+            ) for tp in self._session.execute(
                 select(TimePeriodOrm)
                 .options(
                     joinedload(TimePeriodOrm.word_rel)
@@ -397,6 +394,5 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     .joinedload(WordLexemeOrm.lexeme_rel),
                 )
                 .order_by(TimePeriodOrm.ordinal)
-            )
             ).scalars().unique().all()
         ]
