@@ -22,7 +22,7 @@ class Base(DeclarativeBase):
 
 class TranscriptionOrm(Base):
     __tablename__ = "Transcription"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     phonemic: Mapped[str | None] = mapped_column(String(25), nullable=True)
@@ -36,7 +36,7 @@ class TranscriptionOrm(Base):
 
 class SoundTypeOrm(Base):
     __tablename__ = "SoundType"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(15), nullable=False)
@@ -47,7 +47,7 @@ class SoundTypeOrm(Base):
 
 class LexemeOrm(Base):
     __tablename__ = "Lexeme"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     value: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -58,7 +58,7 @@ class LexemeOrm(Base):
 
 class ClassOrm(Base):
     __tablename__ = "Class"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(15), nullable=False)
@@ -69,7 +69,7 @@ class ClassOrm(Base):
 
 class EndingOrm(Base):
     __tablename__ = "Ending"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(15), nullable=False)
@@ -80,7 +80,7 @@ class EndingOrm(Base):
 
 class GenderOrm(Base):
     __tablename__ = "Gender"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -91,7 +91,7 @@ class GenderOrm(Base):
 
 class FormalityOrm(Base):
     __tablename__ = "Formality"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -102,7 +102,7 @@ class FormalityOrm(Base):
 
 class PluralityOrm(Base):
     __tablename__ = "Plurality"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -113,7 +113,7 @@ class PluralityOrm(Base):
 
 class PronounTypeOrm(Base):
     __tablename__ = "PronounType"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -129,7 +129,7 @@ class PronounTypeOrm(Base):
 
 class WordOrm(Base):
     __tablename__ = "Word"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     transcription: Mapped[int | None] = mapped_column(
@@ -150,7 +150,7 @@ class WordOrm(Base):
 
 class WordLexemeOrm(Base):
     __tablename__ = "WordLexeme"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     word: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
@@ -259,7 +259,7 @@ class TimePeriodOrm(Base):
 
 class SoundOrm(Base):
     __tablename__ = "Sound"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     transcription: Mapped[int | None] = mapped_column(
@@ -285,7 +285,7 @@ class SoundOrm(Base):
 
 class ConsonantOrm(Base):
     __tablename__ = "Consonant"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     grapheme: Mapped[str] = mapped_column(String(1), nullable=False)
@@ -325,7 +325,7 @@ class ConsonantOrm(Base):
 
 class ConsonantSampleOrm(Base):
     __tablename__ = "ConsonantSample"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     consonant: Mapped[int | None] = mapped_column(
@@ -354,7 +354,7 @@ class ConsonantSampleOrm(Base):
 
 class VowelGraphemeOrm(Base):
     __tablename__ = "VowelGrapheme"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     vowel_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("Vowel.id"), nullable=True)
@@ -367,7 +367,7 @@ class VowelGraphemeOrm(Base):
 
 class VowelSampleOrm(Base):
     __tablename__ = "VowelSample"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     vowel: Mapped[int | None] = mapped_column(Integer, ForeignKey("Vowel.id"), nullable=True)
@@ -390,7 +390,7 @@ class VowelSampleOrm(Base):
 
 class VowelOrm(Base):
     __tablename__ = "Vowel"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sound_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("Sound.id"), nullable=True)
@@ -418,7 +418,7 @@ VowelGraphemeOrm.vowel_rel = relationship(
 
 class NumeralOrm(Base):
     __tablename__ = "Numeral"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     word: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
@@ -434,7 +434,7 @@ class NumeralOrm(Base):
 
 class PronounOrm(Base):
     __tablename__ = "Pronoun"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     word: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
@@ -470,7 +470,7 @@ class PronounOrm(Base):
 
 class PronounTypeBreakoutOrm(Base):
     __tablename__ = "PronounTypeBreakout"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     pronoun_id: Mapped[int | None] = mapped_column(
@@ -486,7 +486,7 @@ class PronounTypeBreakoutOrm(Base):
 
 class SpecialSymbolOrm(Base):
     __tablename__ = "SpecialSymbol"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     grapheme: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -502,7 +502,7 @@ class SpecialSymbolOrm(Base):
 
 class CompositeNameOrm(Base):
     __tablename__ = "CompositeName"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     word1: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
@@ -517,7 +517,7 @@ class CompositeNameOrm(Base):
 
 class ToneMarkOrm(Base):
     __tablename__ = "ToneMark"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = {"extend_existing": True, "schema": "thai"}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     mark: Mapped[str] = mapped_column(String(2), nullable=False)
