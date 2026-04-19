@@ -10,6 +10,7 @@ from app.models.orm_tables import (
     EndingOrm,
     NumeralOrm,
     PositionOrm,
+    PositionWordOrm,
     PronounOrm,
     PronounTypeBreakoutOrm,
     SoundOrm,
@@ -35,7 +36,7 @@ from app.schemas.thai import (
     VowelGraphemeDto,
     WordDto,
 )
-from sqlalchemy import select
+from sqlalchemy import Sequence, select
 
 
 class ThaiRepository(ABC):
@@ -66,11 +67,7 @@ class ThaiRepository(ABC):
     def get_positions(self) -> list[PositionCellDto]: ...
 
     @abstractmethod
-    def get_calendar_day_names(self) -> list[CalendarPeriodDto]: ...
-
-    @abstractmethod
-    def get_calendar_month_names(self) -> list[CalendarPeriodDto]: ...
-
+    def get_calendar_periods(self) -> list[CalendarPeriodDto]: ...
 
 # ---------------------------------------------------------------------------
 # Helpers: ORM -> DTO
@@ -102,27 +99,6 @@ def _word_dto(w: WordOrm, lexeme_values: list[str] | None = None) -> WordDto:
         transcription=_transcription_dto(w.transcription_rel),
         lexemes=lexeme_values,
     )
-
-
-def _position_lexeme_gloss_line(word_dtos: list[WordDto]) -> str:
-    parts: list[str] = []
-    for w in word_dtos:
-        g = " ".join(x.strip() for x in w.lexemes if x and str(x).strip()).strip()
-        if g:
-            parts.append(g)
-    return " · ".join(parts)
-
-
-def _position_cell_english_display(name: str | None, word_dtos: list[WordDto]) -> str:
-    gloss_line = _position_lexeme_gloss_line(word_dtos)
-    n = (name or "").strip()
-    if not n:
-        return gloss_line
-    if re.search(r"[A-Z]", n) or re.search(r"[,()]", n):
-        return n
-    if " · " in n:
-        return gloss_line
-    return n
 
 
 def _sound_dto(s: SoundOrm) -> SoundDto:
@@ -375,97 +351,52 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         return result
 
     def get_positions(self) -> list[PositionCellDto]:
-        stmt = (
+        rows = self._session.execute(
             select(PositionOrm)
             .options(
-                selectinload(PositionOrm.position_words),
-            )
-            .order_by(PositionOrm.row_index, PositionOrm.col_index)
-        )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        if not rows:
-            return []
-
-        word_ids: set[int] = set()
-        for pos in rows:
-            for pw in pos.position_words or []:
-                word_ids.add(pw.word_id)
-
-        if not word_ids:
-            return [
-                PositionCellDto(
-                    row=p.row_index,
-                    col=p.col_index,
-                    tile_style=p.tile_style,
-                    label=p.name,
-                    words=[],
-                    thai_display="",
-                    english_display="",
-                )
-                for p in rows
-            ]
-
-        stmt_w = (
-            select(WordOrm)
-            .where(WordOrm.id.in_(word_ids))
-            .options(
-                joinedload(WordOrm.transcription_rel),
-                selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
-            )
-        )
-        wmap = {w.id: w for w in self._session.execute(stmt_w).scalars().unique().all()}
-
-        out: list[PositionCellDto] = []
-        for pos in rows:
-            links = sorted(pos.position_words or [], key=lambda x: x.word_order)
-            word_dtos: list[WordDto] = []
-            for pw in links:
-                w_orm = wmap.get(pw.word_id)
-                if w_orm is not None:
-                    word_dtos.append(_word_dto(w_orm))
-            thai_display = " ".join(w.value for w in word_dtos if w.value)
-            english_display = _position_cell_english_display(pos.name, word_dtos)
-            out.append(
-                PositionCellDto(
-                    row=pos.row_index,
-                    col=pos.col_index,
-                    tile_style=pos.tile_style,
-                    label=pos.name,
-                    words=word_dtos,
-                    thai_display=thai_display,
-                    english_display=english_display,
-                )
-            )
-        return out
-
-    def _calendar_periods(self, kind: str) -> list[CalendarPeriodDto]:
-        stmt = (
-            select(TimePeriodOrm)
-            .where(TimePeriodOrm.kind == kind)
-            .options(
-                joinedload(TimePeriodOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(TimePeriodOrm.word_rel)
+                selectinload(PositionOrm.position_words)
+                .joinedload(PositionWordOrm.word_rel)
+                .joinedload(WordOrm.transcription_rel),
+                selectinload(PositionOrm.position_words)
+                .joinedload(PositionWordOrm.word_rel)
                 .selectinload(WordOrm.word_lexemes)
                 .joinedload(WordLexemeOrm.lexeme_rel),
             )
-            .order_by(TimePeriodOrm.ordinal)
-        )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        out: list[CalendarPeriodDto] = []
-        for tp in rows:
-            if not tp.word_rel:
-                continue
-            out.append(
-                CalendarPeriodDto(
-                    kind=tp.kind,
-                    ordinal=tp.ordinal,
-                    word=_word_dto(tp.word_rel),
-                )
+            .order_by(PositionOrm.row_index, PositionOrm.col_index)
+        ).scalars().unique().all()
+
+        return [
+            PositionCellDto(
+                row=pos.row_index,
+                col=pos.col_index,
+                tile_style=pos.tile_style,
+                label=pos.name,
+                words=[
+                    _word_dto(pw.word_rel)
+                    for pw in sorted(pos.position_words, key=lambda x: x.word_order)
+                ]
             )
-        return out
+            for pos in rows
+        ]
 
-    def get_calendar_day_names(self) -> list[CalendarPeriodDto]:
-        return self._calendar_periods("DayOfWeek")
-
-    def get_calendar_month_names(self) -> list[CalendarPeriodDto]:
-        return self._calendar_periods("Month")
+    def get_calendar_periods(self) -> list[CalendarPeriodDto]:
+        return [
+            CalendarPeriodDto(
+                kind=tp.kind,
+                ordinal=tp.ordinal,
+                word=_word_dto(tp.word_rel),
+            )
+            for tp in self._session.execute(
+            (
+                select(TimePeriodOrm)
+                .options(
+                    joinedload(TimePeriodOrm.word_rel)
+                    .joinedload(WordOrm.transcription_rel),
+                    joinedload(TimePeriodOrm.word_rel)
+                    .selectinload(WordOrm.word_lexemes)
+                    .joinedload(WordLexemeOrm.lexeme_rel),
+                )
+                .order_by(TimePeriodOrm.ordinal)
+            )
+            ).scalars().unique().all()
+        ]

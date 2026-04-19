@@ -52,11 +52,6 @@ def get_positions(repo: RepoDep) -> list[PositionCellDto]:
     return repo.get_positions()
 
 
-@router.get("/calendar/days", response_model=list[CalendarPeriodDto])
-def get_calendar_day_names(repo: RepoDep) -> list[CalendarPeriodDto]:
-    return repo.get_calendar_day_names()
-
-
-@router.get("/calendar/months", response_model=list[CalendarPeriodDto])
-def get_calendar_month_names(repo: RepoDep) -> list[CalendarPeriodDto]:
-    return repo.get_calendar_month_names()
+@router.get("/calendar", response_model=list[CalendarPeriodDto])
+def get_calendar_periods(repo: RepoDep) -> list[CalendarPeriodDto]:
+    return repo.get_calendar_periods()

@@ -84,8 +84,6 @@ class PositionCellDto(BaseModel):
     tile_style: str | None = None
     label: str | None = None
     words: list[WordDto]
-    thai_display: str
-    english_display: str
 
 
 class CalendarPeriodDto(BaseModel):

@@ -225,6 +225,11 @@ class PositionWordOrm(Base):
         foreign_keys=[position_id],
         back_populates="position_words",
     )
+    word_rel: Mapped[WordOrm] = relationship(
+        "WordOrm",
+        foreign_keys=[word_id],
+        lazy="raise"
+    )
 
     def __repr__(self) -> str:
         return f"PositionWord(position={self.position_id}, order={self.word_order})"
