@@ -252,6 +252,7 @@ class TimePeriodOrm(Base):
     word_rel: Mapped[WordOrm] = relationship(
         "WordOrm",
         foreign_keys=[word_id],
+        primaryjoin="TimePeriodOrm.word_id == WordOrm.id",
     )
 
     def __repr__(self) -> str:
