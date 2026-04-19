@@ -4,6 +4,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     Integer,
+    MetaData,
     String,
     Text,
     UniqueConstraint,
@@ -12,7 +13,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(DeclarativeBase):
-    pass
+    metadata = MetaData(schema="thai")
 
 
 # ---------------------------------------------------------------------------
