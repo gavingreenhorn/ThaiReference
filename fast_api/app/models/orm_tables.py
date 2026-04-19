@@ -231,6 +231,33 @@ class PositionWordOrm(Base):
         return f"PositionWord(position={self.position_id}, order={self.word_order})"
 
 
+class TimePeriodOrm(Base):
+    """Calendar day-of-week or month name linked to a single Word."""
+
+    __tablename__ = "TimePeriod"
+    __table_args__ = (
+        UniqueConstraint("kind", "ordinal", name="uq_thai_time_period_kind_ord"),
+        {"schema": "thai", "extend_existing": True},
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    word_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey('thai."Word".id'),
+        nullable=False,
+    )
+
+    word_rel: Mapped[WordOrm] = relationship(
+        "WordOrm",
+        foreign_keys=[word_id],
+    )
+
+    def __repr__(self) -> str:
+        return f"TimePeriod(kind={self.kind!r}, ord={self.ordinal})"
+
+
 class SoundOrm(Base):
     __tablename__ = "Sound"
     __table_args__ = {"extend_existing": True}

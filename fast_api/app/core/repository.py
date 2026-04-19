@@ -14,6 +14,7 @@ from app.models.orm_tables import (
     PronounTypeBreakoutOrm,
     SoundOrm,
     SpecialSymbolOrm,
+    TimePeriodOrm,
     ToneMarkOrm,
     TranscriptionOrm,
     VowelOrm,
@@ -22,6 +23,7 @@ from app.models.orm_tables import (
     WordOrm,
 )
 from app.schemas.thai import (
+    CalendarPeriodDto,
     ConsonantDto,
     MarkDto,
     NumeralDto,
@@ -62,6 +64,12 @@ class ThaiRepository(ABC):
 
     @abstractmethod
     def get_positions(self) -> list[PositionCellDto]: ...
+
+    @abstractmethod
+    def get_calendar_day_names(self) -> list[CalendarPeriodDto]: ...
+
+    @abstractmethod
+    def get_calendar_month_names(self) -> list[CalendarPeriodDto]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -435,3 +443,35 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 )
             )
         return out
+
+    def _calendar_periods(self, kind: str) -> list[CalendarPeriodDto]:
+        stmt = (
+            select(TimePeriodOrm)
+            .where(TimePeriodOrm.kind == kind)
+            .options(
+                joinedload(TimePeriodOrm.word_rel).joinedload(WordOrm.transcription_rel),
+                joinedload(TimePeriodOrm.word_rel)
+                .selectinload(WordOrm.word_lexemes)
+                .joinedload(WordLexemeOrm.lexeme_rel),
+            )
+            .order_by(TimePeriodOrm.ordinal)
+        )
+        rows = self._session.execute(stmt).scalars().unique().all()
+        out: list[CalendarPeriodDto] = []
+        for tp in rows:
+            if not tp.word_rel:
+                continue
+            out.append(
+                CalendarPeriodDto(
+                    kind=tp.kind,
+                    ordinal=tp.ordinal,
+                    word=_word_dto(tp.word_rel),
+                )
+            )
+        return out
+
+    def get_calendar_day_names(self) -> list[CalendarPeriodDto]:
+        return self._calendar_periods("DayOfWeek")
+
+    def get_calendar_month_names(self) -> list[CalendarPeriodDto]:
+        return self._calendar_periods("Month")
