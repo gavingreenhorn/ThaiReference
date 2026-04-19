@@ -14,16 +14,14 @@ class SoundDto(BaseModel):
     sound_type: str
     is_consonant_sound: bool
     is_initial_only: bool
-    media_url: str | None = None
-    media: bytes | None = None  # Kept for contract; API always null → client uses media_url or TTS
     transcription: TranscriptionDto
+    media_url: str | None = None
 
 
 class WordDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: int
     value: str
-    media: bytes | None = None  # Kept for contract; API always null → client uses media_url or TTS
     transcription: TranscriptionDto
     lexemes: list[str] = []
 
@@ -40,10 +38,10 @@ class ConsonantDto(BaseModel):
     phoneme: str
     consonant_class: str
     ending: str
-    media: bytes | None = None  # Kept for contract; API always null → client uses media_url or TTS
     transcription: TranscriptionDto
     initial_sound: SoundDto
     ending_sound: SoundDto | None = None
+    media_url: str | None = None
     sample_words: list[WordDto] = []
 
 
@@ -51,8 +49,8 @@ class VowelDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     is_diphtong: bool
     sound: SoundDto
-    media_url: str | None = None
     graphemes: list[VowelGraphemeDto] = []
+    media_url: str | None = None
     sample_words: list[WordDto] = []
 
 
@@ -60,7 +58,6 @@ class MarkDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     grapheme: str
     tone_mark: bool
-    media: bytes | None = None  # Kept for contract; API always null → client uses media_url or TTS
     words: list[WordDto] = []
 
 

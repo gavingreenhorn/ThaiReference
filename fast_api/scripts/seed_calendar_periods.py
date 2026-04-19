@@ -11,14 +11,15 @@ import sys
 
 import psycopg2
 
+# ISO 8601: Monday = 1 … Sunday = 7
 DAYS: list[tuple[int, str, str, str, str, str]] = [
-    (1, "อาทิตย์", "aat-thit", "aat-thít", "ʔaːt.tʰít", "Sunday"),
-    (2, "จันทร์", "jan", "jan", "tɕan", "Monday"),
-    (3, "อังคาร", "ang-khaan", "ang-khaan", "ʔaŋ.kʰaːn", "Tuesday"),
-    (4, "พุธ", "phut", "phút", "pʰút", "Wednesday"),
-    (5, "พฤหัสบดี", "phrue-hat", "phrɯ́-hàt", "pʰrɯ́.hàt", "Thursday"),
-    (6, "ศุกร์", "suk", "sùk", "sùk", "Friday"),
-    (7, "เสาร์", "sao", "sǎo", "sǎːw", "Saturday"),
+    (1, "จันทร์", "jan", "jan", "tɕan", "Monday"),
+    (2, "อังคาร", "ang-khaan", "ang-khaan", "ʔaŋ.kʰaːn", "Tuesday"),
+    (3, "พุธ", "phut", "phút", "pʰút", "Wednesday"),
+    (4, "พฤหัสบดี", "phrue-hat", "phrɯ́-hàt", "pʰrɯ́.hàt", "Thursday"),
+    (5, "ศุกร์", "suk", "sùk", "sùk", "Friday"),
+    (6, "เสาร์", "sao", "sǎo", "sǎːw", "Saturday"),
+    (7, "อาทิตย์", "aat-thit", "aat-thít", "ʔaːt.tʰít", "Sunday"),
 ]
 
 MONTHS: list[tuple[int, str, str, str, str, str]] = [
@@ -120,6 +121,8 @@ def main() -> int:
     cur = conn.cursor()
     try:
         ensure_time_period_table(cur)
+        # Rebuild weekday links so ordinal order can change (e.g. ISO Monday=1).
+        cur.execute('DELETE FROM thai."TimePeriod" WHERE kind = %s', ("DayOfWeek",))
         for ord_, thai, ph, pb, ipa, gloss in DAYS:
             wid = ensure_word(cur, thai, ph, pb, ipa, gloss)
             ensure_time_period(cur, "DayOfWeek", ord_, wid)

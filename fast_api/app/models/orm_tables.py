@@ -137,7 +137,6 @@ class WordOrm(Base):
         Integer, ForeignKey("Transcription.id"), nullable=True
     )
     value: Mapped[str | None] = mapped_column(String(25), nullable=True)
-    media: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
     transcription_rel: Mapped[TranscriptionOrm | None] = relationship(
         "TranscriptionOrm", foreign_keys=[transcription]
@@ -273,7 +272,6 @@ class SoundOrm(Base):
     sound_type: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("SoundType.id"), nullable=True
     )
-    media: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
     transcription_rel: Mapped[TranscriptionOrm | None] = relationship(
         "TranscriptionOrm", foreign_keys=[transcription]
@@ -305,7 +303,6 @@ class ConsonantOrm(Base):
     final_sound_id: Mapped[int | None] = mapped_column(
         "final", Integer, ForeignKey("Sound.id"), nullable=True
     )
-    media: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
     transcription_rel: Mapped[TranscriptionOrm | None] = relationship(
         "TranscriptionOrm", foreign_keys=[transcription]
@@ -514,7 +511,6 @@ class CompositeNameOrm(Base):
     word3: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
     word4: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
     word5: Mapped[int | None] = mapped_column(Integer, ForeignKey("Word.id"), nullable=True)
-    media: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
 
     def __repr__(self) -> str:
         return f"CompositeName(id={self.id}, words {self.word1}-{self.word5})"
