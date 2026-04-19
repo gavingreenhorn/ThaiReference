@@ -4,7 +4,6 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
     Integer,
-    LargeBinary,
     String,
     Text,
     UniqueConstraint,

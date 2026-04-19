@@ -99,7 +99,6 @@ def _word_dto(w: WordOrm, lexeme_values: list[str] | None = None) -> WordDto:
     return WordDto(
         id=w.id,
         value=w.value or "",
-        media=None,
         transcription=_transcription_dto(w.transcription_rel),
         lexemes=lexeme_values,
     )
@@ -133,7 +132,6 @@ def _sound_dto(s: SoundOrm) -> SoundDto:
         is_consonant_sound=bool(s.consonant_sound),
         is_initial_only=bool(s.initial_only),
         media_url=s.mediapath,
-        media=None,
         transcription=_transcription_dto(s.transcription_rel),
     )
 
@@ -207,7 +205,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 is_consonant_sound=False,
                 is_initial_only=False,
                 media_url=None,
-                media=None,
                 transcription=TranscriptionDto(),
             )
             result.append(
@@ -216,7 +213,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     phoneme=c.phoneme,
                     consonant_class=_class_name(str(c.class_)),
                     ending=_ending_name(str(c.ending)),
-                    media=None,
                     transcription=_transcription_dto(c.transcription_rel),
                     initial_sound=_sound_dto(initial) if initial else default_sound,
                     ending_sound=_sound_dto(ending_sound) if ending_sound else None,
@@ -276,7 +272,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 MarkDto(
                     grapheme=ss.grapheme or "",
                     tone_mark=False,
-                    media=None,
                     words=words,
                 )
             )
@@ -310,7 +305,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 MarkDto(
                     grapheme=tm.mark or "",
                     tone_mark=True,
-                    media=None,
                     words=words,
                 )
             )
