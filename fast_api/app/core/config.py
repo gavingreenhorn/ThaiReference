@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     app_title: str = "Thai Reference"
     postgres_host: str = "localhost"
     postgres_port: str = "5432"
-    postgres_db: str = "thai"
+    postgres_db: str = "thaidb"
     postgres_user: str = ""
     postgres_password: str = ""
     cors_origins: str | None = None

@@ -23,5 +23,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
   CMD curl -fsS http://127.0.0.1:5000/health >/dev/null || exit 1
 
-CMD ["sh", "-c", "alembic revision --autogenerate && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 5000"]
+# Migrations are versioned under migrations/versions — run autogenerate locally, commit, then ship.
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 5000"]
 
