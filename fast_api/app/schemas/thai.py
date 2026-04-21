@@ -79,6 +79,7 @@ class PronounDto(BaseModel):
 
 class PositionCellDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
+    ordinal: int
     row: int
     col: int
     tile_style: str | None = None

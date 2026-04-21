@@ -366,6 +366,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
 
         return [
             PositionCellDto(
+                ordinal=pos.id,
                 row=pos.row_index,
                 col=pos.col_index,
                 tile_style=pos.tile_style,
