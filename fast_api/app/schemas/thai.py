@@ -96,17 +96,20 @@ class CalendarPeriodDto(BaseModel):
     word: WordDto
 
 
-class ClockLabelDto(BaseModel):
+class TimeOfDayDto(BaseModel):
+    """One of the named Thai time-of-day bands (morning, evening, ...)."""
+
     model_config = ConfigDict(populate_by_name=True)
-    kind: str
     ordinal: int
     word: WordDto
 
 
-class ThaiClockDto(BaseModel):
+class HourDto(BaseModel):
+    """A single hour of the day. ``ordinal`` IS the hour (0..23)."""
+
     model_config = ConfigDict(populate_by_name=True)
-    time_of_day: list[ClockLabelDto] = []
-    hours: list[ClockLabelDto] = []
+    ordinal: int
+    word: WordDto
 
 
 class ZodiacDto(BaseModel):

@@ -236,7 +236,7 @@ class PositionWordOrm(Base):
 
 
 class TimePeriodOrm(Base):
-    """Calendar day-of-week or month name linked to a single Word."""
+    """Generic Thai time-label table; currently holds DayOfWeek and TimeOfDay rows."""
 
     __tablename__ = "TimePeriod"
     __table_args__ = (
@@ -260,6 +260,28 @@ class TimePeriodOrm(Base):
 
     def __repr__(self) -> str:
         return f"TimePeriod(kind={self.kind!r}, ord={self.ordinal})"
+
+
+class HourOrm(Base):
+    """Standalone hour entity (decoupled from TimePeriod). Ordinal IS the hour 0..23."""
+
+    __tablename__ = "Hour"
+    __table_args__ = {"schema": "thai", "extend_existing": True}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    word_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("Word.id"),
+        nullable=False,
+    )
+
+    word_rel: Mapped[WordOrm] = relationship(
+        "WordOrm", foreign_keys=[word_id]
+    )
+
+    def __repr__(self) -> str:
+        return f"Hour(ord={self.ordinal})"
 
 
 class ZodiacOrm(Base):

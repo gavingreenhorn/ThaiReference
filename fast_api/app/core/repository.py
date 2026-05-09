@@ -7,6 +7,7 @@ from app.models.orm_tables import (
     ConsonantOrm,
     ConsonantSampleOrm,
     EndingOrm,
+    HourOrm,
     MonthOrm,
     NumeralOrm,
     PositionOrm,
@@ -25,15 +26,15 @@ from app.models.orm_tables import (
 )
 from app.schemas.thai import (
     CalendarPeriodDto,
-    ClockLabelDto,
     ConsonantDto,
+    HourDto,
     MarkDto,
     MonthDto,
     NumeralDto,
     PositionCellDto,
     PronounDto,
     SoundDto,
-    ThaiClockDto,
+    TimeOfDayDto,
     TranscriptionDto,
     VowelDto,
     VowelGraphemeDto,
@@ -74,7 +75,10 @@ class ThaiRepository(ABC):
     def get_calendar_periods(self) -> list[CalendarPeriodDto]: ...
 
     @abstractmethod
-    def get_clock_periods(self) -> ThaiClockDto: ...
+    def get_time_of_day(self) -> list[TimeOfDayDto]: ...
+
+    @abstractmethod
+    def get_hours(self) -> list[HourDto]: ...
 
     @abstractmethod
     def get_months(self) -> list[MonthDto]: ...
@@ -409,7 +413,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             ).scalars().unique().all()
         ]
 
-    def get_clock_periods(self) -> ThaiClockDto:
+    def get_time_of_day(self) -> list[TimeOfDayDto]:
         rows = self._session.execute(
             select(TimePeriodOrm)
             .options(
@@ -418,27 +422,31 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 .selectinload(WordOrm.word_lexemes)
                 .joinedload(WordLexemeOrm.lexeme_rel),
             )
-            .where(TimePeriodOrm.kind.in_(("TimeOfDay", "Hour")))
-            .order_by(TimePeriodOrm.kind, TimePeriodOrm.ordinal)
+            .where(TimePeriodOrm.kind == "TimeOfDay")
+            .order_by(TimePeriodOrm.ordinal)
         ).scalars().unique().all()
 
-        time_of_day: list[ClockLabelDto] = []
-        hours: list[ClockLabelDto] = []
-        for tp in rows:
-            dto = ClockLabelDto(
-                kind=tp.kind,
-                ordinal=tp.ordinal,
-                word=_word_dto(tp.word_rel),
-            )
-            if tp.kind == "TimeOfDay":
-                time_of_day.append(dto)
-            elif tp.kind == "Hour":
-                hours.append(dto)
+        return [
+            TimeOfDayDto(ordinal=tp.ordinal, word=_word_dto(tp.word_rel))
+            for tp in rows
+        ]
 
-        return ThaiClockDto(
-            time_of_day=sorted(time_of_day, key=lambda x: x.ordinal),
-            hours=sorted(hours, key=lambda x: x.ordinal),
-        )
+    def get_hours(self) -> list[HourDto]:
+        rows = self._session.execute(
+            select(HourOrm)
+            .options(
+                joinedload(HourOrm.word_rel).joinedload(WordOrm.transcription_rel),
+                joinedload(HourOrm.word_rel)
+                .selectinload(WordOrm.word_lexemes)
+                .joinedload(WordLexemeOrm.lexeme_rel),
+            )
+            .order_by(HourOrm.ordinal)
+        ).scalars().unique().all()
+
+        return [
+            HourDto(ordinal=h.ordinal, word=_word_dto(h.word_rel))
+            for h in rows
+        ]
 
     def get_months(self) -> list[MonthDto]:
         rows = self._session.execute(

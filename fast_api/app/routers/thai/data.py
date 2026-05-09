@@ -6,13 +6,14 @@ from app.core.deps import RepoDep
 from app.schemas.thai import (
     CalendarPeriodDto,
     ConsonantDto,
-    ThaiClockDto,
+    HourDto,
     MarkDto,
     MonthDto,
     NumeralDto,
     PositionCellDto,
     PronounDto,
     SoundDto,
+    TimeOfDayDto,
     VowelDto,
 )
 
@@ -59,9 +60,14 @@ def get_calendar_periods(repo: RepoDep) -> list[CalendarPeriodDto]:
     return repo.get_calendar_periods()
 
 
-@router.get("/clock", response_model=ThaiClockDto)
-def get_clock_periods(repo: RepoDep) -> ThaiClockDto:
-    return repo.get_clock_periods()
+@router.get("/time-of-day", response_model=list[TimeOfDayDto])
+def get_time_of_day(repo: RepoDep) -> list[TimeOfDayDto]:
+    return repo.get_time_of_day()
+
+
+@router.get("/hours", response_model=list[HourDto])
+def get_hours(repo: RepoDep) -> list[HourDto]:
+    return repo.get_hours()
 
 
 @router.get("/months", response_model=list[MonthDto])
