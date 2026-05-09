@@ -655,6 +655,8 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         stmt = (
             select(
                 DayOfWeek.ordinal.label("ordinal"),
+                DayOfWeek.deity.label("deity"),
+                DayOfWeek.image_url.label("image_url"),
                 *_word_columns(),
             )
             .select_from(DayOfWeek)
@@ -666,7 +668,12 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             .order_by(DayOfWeek.ordinal)
         )
         return [
-            DayOfWeekDto(ordinal=r["ordinal"], word=_word_dto(r))
+            DayOfWeekDto(
+                ordinal=r["ordinal"],
+                word=_word_dto(r),
+                deity=r.get("deity"),
+                image_url=r.get("image_url"),
+            )
             for r in self._session.execute(stmt).mappings().all()
         ]
 

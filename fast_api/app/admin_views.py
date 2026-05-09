@@ -101,7 +101,13 @@ class PronounTypeAdmin(_ThaiModelView, model=PronounType):
 class DayOfWeekAdmin(_ThaiModelView, model=DayOfWeek):
     name = "Day of week"
     category = "Content"
-    column_list = [DayOfWeek.id, DayOfWeek.ordinal, DayOfWeek.word_id]
+    column_list = [
+        DayOfWeek.id,
+        DayOfWeek.ordinal,
+        DayOfWeek.word_id,
+        DayOfWeek.deity,
+        DayOfWeek.image_url,
+    ]
 
 
 class TimeOfDayAdmin(_ThaiModelView, model=TimeOfDay):

@@ -93,6 +93,8 @@ class DayOfWeekDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     ordinal: int
     word: WordDto
+    deity: str | None = None
+    image_url: str | None = None
 
 
 class TimeOfDayDto(BaseModel):

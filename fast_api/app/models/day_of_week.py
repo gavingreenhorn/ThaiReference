@@ -2,7 +2,7 @@
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer
+from sqlalchemy import ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -24,6 +24,8 @@ class DayOfWeek(Base):
         ForeignKey("Word.id"),
         nullable=False,
     )
+    deity: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
 
     word_rel: Mapped[Word] = relationship(
         "Word", foreign_keys=[word_id]
