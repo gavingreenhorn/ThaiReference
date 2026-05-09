@@ -109,6 +109,7 @@ class TimeOfDayAdmin(_ThaiModelView, model=TimeOfDay):
     category = "Content"
     column_list = [TimeOfDay.id, TimeOfDay.ordinal, TimeOfDay.word_id]
 
+
 class WordAdmin(_ThaiModelView, model=Word):
     name = "Word"
     category = "Content"
