@@ -94,3 +94,16 @@ class CalendarPeriodDto(BaseModel):
     kind: str
     ordinal: int
     word: WordDto
+
+
+class ClockLabelDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    kind: str
+    ordinal: int
+    word: WordDto
+
+
+class ThaiClockDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    time_of_day: list[ClockLabelDto] = []
+    hours: list[ClockLabelDto] = []

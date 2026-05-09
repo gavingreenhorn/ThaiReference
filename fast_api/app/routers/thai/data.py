@@ -6,6 +6,7 @@ from app.core.deps import RepoDep
 from app.schemas.thai import (
     CalendarPeriodDto,
     ConsonantDto,
+    ThaiClockDto,
     MarkDto,
     NumeralDto,
     PositionCellDto,
@@ -55,3 +56,8 @@ def get_positions(repo: RepoDep) -> list[PositionCellDto]:
 @router.get("/calendar", response_model=list[CalendarPeriodDto])
 def get_calendar_periods(repo: RepoDep) -> list[CalendarPeriodDto]:
     return repo.get_calendar_periods()
+
+
+@router.get("/clock", response_model=ThaiClockDto)
+def get_clock_periods(repo: RepoDep) -> ThaiClockDto:
+    return repo.get_clock_periods()

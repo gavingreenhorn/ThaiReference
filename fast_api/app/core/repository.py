@@ -24,12 +24,14 @@ from app.models.orm_tables import (
 )
 from app.schemas.thai import (
     CalendarPeriodDto,
+    ClockLabelDto,
     ConsonantDto,
     MarkDto,
     NumeralDto,
     PositionCellDto,
     PronounDto,
     SoundDto,
+    ThaiClockDto,
     TranscriptionDto,
     VowelDto,
     VowelGraphemeDto,
@@ -67,6 +69,9 @@ class ThaiRepository(ABC):
 
     @abstractmethod
     def get_calendar_periods(self) -> list[CalendarPeriodDto]: ...
+
+    @abstractmethod
+    def get_clock_periods(self) -> ThaiClockDto: ...
 
 # ---------------------------------------------------------------------------
 # Helpers: ORM -> DTO
@@ -397,3 +402,34 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 .order_by(TimePeriodOrm.ordinal)
             ).scalars().unique().all()
         ]
+
+    def get_clock_periods(self) -> ThaiClockDto:
+        rows = self._session.execute(
+            select(TimePeriodOrm)
+            .options(
+                joinedload(TimePeriodOrm.word_rel).joinedload(WordOrm.transcription_rel),
+                joinedload(TimePeriodOrm.word_rel)
+                .selectinload(WordOrm.word_lexemes)
+                .joinedload(WordLexemeOrm.lexeme_rel),
+            )
+            .where(TimePeriodOrm.kind.in_(("TimeOfDay", "Hour")))
+            .order_by(TimePeriodOrm.kind, TimePeriodOrm.ordinal)
+        ).scalars().unique().all()
+
+        time_of_day: list[ClockLabelDto] = []
+        hours: list[ClockLabelDto] = []
+        for tp in rows:
+            dto = ClockLabelDto(
+                kind=tp.kind,
+                ordinal=tp.ordinal,
+                word=_word_dto(tp.word_rel),
+            )
+            if tp.kind == "TimeOfDay":
+                time_of_day.append(dto)
+            elif tp.kind == "Hour":
+                hours.append(dto)
+
+        return ThaiClockDto(
+            time_of_day=sorted(time_of_day, key=lambda x: x.ordinal),
+            hours=sorted(hours, key=lambda x: x.ordinal),
+        )
