@@ -262,6 +262,56 @@ class TimePeriodOrm(Base):
         return f"TimePeriod(kind={self.kind!r}, ord={self.ordinal})"
 
 
+class ZodiacOrm(Base):
+    """Zodiac sign metadata; element-to-color mapping stays client-side."""
+
+    __tablename__ = "Zodiac"
+    __table_args__ = {"schema": "thai", "extend_existing": True}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    english_name: Mapped[str] = mapped_column(String(32), nullable=False)
+    sanskrit_name: Mapped[str] = mapped_column(String(32), nullable=False)
+    sanskrit_lexeme: Mapped[str] = mapped_column(String(64), nullable=False)
+    element: Mapped[str] = mapped_column(String(16), nullable=False)
+    image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    def __repr__(self) -> str:
+        return f"Zodiac(ord={self.ordinal}, {self.english_name})"
+
+
+class MonthOrm(Base):
+    """Standalone month entity (decoupled from TimePeriod)."""
+
+    __tablename__ = "Month"
+    __table_args__ = {"schema": "thai", "extend_existing": True}
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ordinal: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
+    word_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("Word.id"),
+        nullable=False,
+    )
+    short_name: Mapped[str] = mapped_column(String(16), nullable=False)
+    english_name: Mapped[str] = mapped_column(String(32), nullable=False)
+    zodiac_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("Zodiac.id"),
+        nullable=False,
+    )
+
+    word_rel: Mapped[WordOrm] = relationship(
+        "WordOrm", foreign_keys=[word_id]
+    )
+    zodiac_rel: Mapped[ZodiacOrm] = relationship(
+        "ZodiacOrm", foreign_keys=[zodiac_id]
+    )
+
+    def __repr__(self) -> str:
+        return f"Month(ord={self.ordinal}, {self.english_name})"
+
+
 class SoundOrm(Base):
     __tablename__ = "Sound"
     __table_args__ = {"extend_existing": True}

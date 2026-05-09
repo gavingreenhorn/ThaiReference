@@ -7,6 +7,7 @@ from app.models.orm_tables import (
     ConsonantOrm,
     ConsonantSampleOrm,
     EndingOrm,
+    MonthOrm,
     NumeralOrm,
     PositionOrm,
     PositionWordOrm,
@@ -21,12 +22,14 @@ from app.models.orm_tables import (
     VowelSampleOrm,
     WordLexemeOrm,
     WordOrm,
+    ZodiacOrm,
 )
 from app.schemas.thai import (
     CalendarPeriodDto,
     ClockLabelDto,
     ConsonantDto,
     MarkDto,
+    MonthDto,
     NumeralDto,
     PositionCellDto,
     PronounDto,
@@ -36,6 +39,7 @@ from app.schemas.thai import (
     VowelDto,
     VowelGraphemeDto,
     WordDto,
+    ZodiacDto,
 )
 from sqlalchemy import select
 
@@ -72,6 +76,9 @@ class ThaiRepository(ABC):
 
     @abstractmethod
     def get_clock_periods(self) -> ThaiClockDto: ...
+
+    @abstractmethod
+    def get_months(self) -> list[MonthDto]: ...
 
 # ---------------------------------------------------------------------------
 # Helpers: ORM -> DTO
@@ -433,3 +440,34 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             time_of_day=sorted(time_of_day, key=lambda x: x.ordinal),
             hours=sorted(hours, key=lambda x: x.ordinal),
         )
+
+    def get_months(self) -> list[MonthDto]:
+        rows = self._session.execute(
+            select(MonthOrm)
+            .options(
+                joinedload(MonthOrm.zodiac_rel),
+                joinedload(MonthOrm.word_rel).joinedload(WordOrm.transcription_rel),
+                joinedload(MonthOrm.word_rel)
+                .selectinload(WordOrm.word_lexemes)
+                .joinedload(WordLexemeOrm.lexeme_rel),
+            )
+            .order_by(MonthOrm.ordinal)
+        ).scalars().unique().all()
+
+        return [
+            MonthDto(
+                ordinal=m.ordinal,
+                word=_word_dto(m.word_rel),
+                short_name=m.short_name,
+                english_name=m.english_name,
+                zodiac=ZodiacDto(
+                    ordinal=m.zodiac_rel.ordinal,
+                    english_name=m.zodiac_rel.english_name,
+                    sanskrit_name=m.zodiac_rel.sanskrit_name,
+                    sanskrit_lexeme=m.zodiac_rel.sanskrit_lexeme,
+                    element=m.zodiac_rel.element,
+                    image_url=m.zodiac_rel.image_url,
+                ),
+            )
+            for m in rows
+        ]

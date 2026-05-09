@@ -107,3 +107,24 @@ class ThaiClockDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     time_of_day: list[ClockLabelDto] = []
     hours: list[ClockLabelDto] = []
+
+
+class ZodiacDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    ordinal: int
+    english_name: str
+    sanskrit_name: str
+    sanskrit_lexeme: str
+    element: str
+    image_url: str | None = None
+
+
+class MonthDto(BaseModel):
+    """Standalone month entity with its underlying Word and zodiac association."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    ordinal: int
+    word: WordDto
+    short_name: str
+    english_name: str
+    zodiac: ZodiacDto

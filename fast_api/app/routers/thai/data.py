@@ -8,6 +8,7 @@ from app.schemas.thai import (
     ConsonantDto,
     ThaiClockDto,
     MarkDto,
+    MonthDto,
     NumeralDto,
     PositionCellDto,
     PronounDto,
@@ -61,3 +62,8 @@ def get_calendar_periods(repo: RepoDep) -> list[CalendarPeriodDto]:
 @router.get("/clock", response_model=ThaiClockDto)
 def get_clock_periods(repo: RepoDep) -> ThaiClockDto:
     return repo.get_clock_periods()
+
+
+@router.get("/months", response_model=list[MonthDto])
+def get_months(repo: RepoDep) -> list[MonthDto]:
+    return repo.get_months()
