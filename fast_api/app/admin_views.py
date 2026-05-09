@@ -6,6 +6,7 @@ from app.models import (
     CompositeName,
     Consonant,
     ConsonantSample,
+    DayOfWeek,
     Ending,
     Formality,
     Gender,
@@ -20,6 +21,7 @@ from app.models import (
     Sound,
     SoundType,
     SpecialSymbol,
+    TimeOfDay,
     ToneMark,
     Transcription,
     Vowel,
@@ -94,6 +96,19 @@ class PronounTypeAdmin(_ThaiModelView, model=PronounType):
 
 
 # Content
+
+
+class DayOfWeekAdmin(_ThaiModelView, model=DayOfWeek):
+    name = "Day of week"
+    category = "Content"
+    column_list = [DayOfWeek.id, DayOfWeek.ordinal, DayOfWeek.word_id]
+
+
+class TimeOfDayAdmin(_ThaiModelView, model=TimeOfDay):
+    name = "Time of day"
+    category = "Content"
+    column_list = [TimeOfDay.id, TimeOfDay.ordinal, TimeOfDay.word_id]
+
 class WordAdmin(_ThaiModelView, model=Word):
     name = "Word"
     category = "Content"
@@ -247,6 +262,8 @@ def get_admin_views():
         PluralityAdmin,
         PronounTypeAdmin,
         WordAdmin,
+        DayOfWeekAdmin,
+        TimeOfDayAdmin,
         WordLexemeAdmin,
         PositionAdmin,
         PositionWordAdmin,

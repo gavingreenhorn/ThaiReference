@@ -87,11 +87,10 @@ class PositionCellDto(BaseModel):
     words: list[WordDto]
 
 
-class CalendarPeriodDto(BaseModel):
-    """Thai weekday or month name with stable ordering."""
+class DayOfWeekDto(BaseModel):
+    """One Thai weekday name with stable ordering (ordinal 0..6)."""
 
     model_config = ConfigDict(populate_by_name=True)
-    kind: str
     ordinal: int
     word: WordDto
 

@@ -1,11 +1,11 @@
-"""Single router for all Thai read-only data endpoints."""
+﻿"""Single router for all Thai read-only data endpoints."""
 
 from fastapi import APIRouter
 
 from app.core.deps import RepoDep
 from app.schemas.thai import (
-    CalendarPeriodDto,
     ConsonantDto,
+    DayOfWeekDto,
     HourDto,
     MarkDto,
     MonthDto,
@@ -55,9 +55,9 @@ def get_positions(repo: RepoDep) -> list[PositionCellDto]:
     return repo.get_positions()
 
 
-@router.get("/calendar", response_model=list[CalendarPeriodDto])
-def get_calendar_periods(repo: RepoDep) -> list[CalendarPeriodDto]:
-    return repo.get_calendar_periods()
+@router.get("/weekdays", response_model=list[DayOfWeekDto])
+def get_weekdays(repo: RepoDep) -> list[DayOfWeekDto]:
+    return repo.get_weekdays()
 
 
 @router.get("/time-of-day", response_model=list[TimeOfDayDto])

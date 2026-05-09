@@ -34,7 +34,8 @@ from app.models import (
     Sound,
     SoundType,
     SpecialSymbol,
-    TimePeriod,
+    DayOfWeek,
+    TimeOfDay,
     ToneMark,
     Transcription,
     Vowel,
@@ -45,7 +46,7 @@ from app.models import (
     Zodiac,
 )
 from app.schemas.thai import (
-    CalendarPeriodDto,
+    DayOfWeekDto,
     ConsonantDto,
     HourDto,
     MarkDto,
@@ -91,7 +92,7 @@ class ThaiRepository(ABC):
     def get_positions(self) -> list[PositionCellDto]: ...
 
     @abstractmethod
-    def get_calendar_periods(self) -> list[CalendarPeriodDto]: ...
+    def get_weekdays(self) -> list[DayOfWeekDto]: ...
 
     @abstractmethod
     def get_time_of_day(self) -> list[TimeOfDayDto]: ...
@@ -647,47 +648,41 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         ]
 
     # ------------------------------------------------------------------
-    # Calendar / TimePeriod / Hour / Month
+    # Weekdays / TimeOfDay / Hour / Month
     # ------------------------------------------------------------------
 
-    def get_calendar_periods(self) -> list[CalendarPeriodDto]:
+    def get_weekdays(self) -> list[DayOfWeekDto]:
         stmt = (
             select(
-                TimePeriod.kind.label("kind"),
-                TimePeriod.ordinal.label("ordinal"),
+                DayOfWeek.ordinal.label("ordinal"),
                 *_word_columns(),
             )
-            .select_from(TimePeriod)
-            .join(Word, Word.id == TimePeriod.word_id)
+            .select_from(DayOfWeek)
+            .join(Word, Word.id == DayOfWeek.word_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(TimePeriod.id, Word.id, Transcription.id)
-            .order_by(TimePeriod.ordinal)
+            .group_by(DayOfWeek.id, Word.id, Transcription.id)
+            .order_by(DayOfWeek.ordinal)
         )
         return [
-            CalendarPeriodDto(
-                kind=r["kind"],
-                ordinal=r["ordinal"],
-                word=_word_dto(r),
-            )
+            DayOfWeekDto(ordinal=r["ordinal"], word=_word_dto(r))
             for r in self._session.execute(stmt).mappings().all()
         ]
 
     def get_time_of_day(self) -> list[TimeOfDayDto]:
         stmt = (
             select(
-                TimePeriod.ordinal.label("ordinal"),
+                TimeOfDay.ordinal.label("ordinal"),
                 *_word_columns(),
             )
-            .select_from(TimePeriod)
-            .join(Word, Word.id == TimePeriod.word_id)
+            .select_from(TimeOfDay)
+            .join(Word, Word.id == TimeOfDay.word_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .where(TimePeriod.kind == "TimeOfDay")
-            .group_by(TimePeriod.id, Word.id, Transcription.id)
-            .order_by(TimePeriod.ordinal)
+            .group_by(TimeOfDay.id, Word.id, Transcription.id)
+            .order_by(TimeOfDay.ordinal)
         )
         return [
             TimeOfDayDto(ordinal=r["ordinal"], word=_word_dto(r))
