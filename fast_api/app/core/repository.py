@@ -22,7 +22,6 @@ from app.models.orm_tables import (
     VowelSampleOrm,
     WordLexemeOrm,
     WordOrm,
-    ZodiacOrm,
 )
 from app.schemas.thai import (
     CalendarPeriodDto,
@@ -354,8 +353,8 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     name=_word_dto(p.word_rel),
                     person=p.grammatical_person or 0,
                     plurality=plurality_val,
-                    formality=p.formality_rel.name if p.formality_rel else "",
-                    gender=p.gender_rel.name if p.gender_rel else "",
+                    formality=(p.formality_rel.name or "") if p.formality_rel else "",
+                    gender=(p.gender_rel.name or "") if p.gender_rel else "",
                     types=types,
                 )
             )
