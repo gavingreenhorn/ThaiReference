@@ -9,7 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 
-from app.models.orm_tables import Base
+from app.models import Base
 
 revision: str = "f8a3e1b2d4c5"
 down_revision: Union[str, Sequence[str], None] = None

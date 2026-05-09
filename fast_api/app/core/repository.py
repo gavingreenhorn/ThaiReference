@@ -1,28 +1,48 @@
+"""Read-only repository: SQL projections only, no entity hydration.
+
+Each method projects scalar columns (and `array_agg(text)` for `lexemes: list[str]`)
+out of Postgres and lets Pydantic compose nested DTOs in Python. No `jsonb_*` is
+used; nested objects are assembled from the flat ``RowMapping`` by helpers below.
+"""
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from collections import defaultdict
 
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy import Text, cast, func, literal, select
+from sqlalchemy.engine.row import RowMapping
+from sqlalchemy.orm import Session, aliased
 
-from app.models.orm_tables import (
-    ClassOrm,
-    ConsonantOrm,
-    ConsonantSampleOrm,
-    EndingOrm,
-    HourOrm,
-    MonthOrm,
-    NumeralOrm,
-    PositionOrm,
-    PositionWordOrm,
-    PronounOrm,
-    PronounTypeBreakoutOrm,
-    SoundOrm,
-    SpecialSymbolOrm,
-    TimePeriodOrm,
-    ToneMarkOrm,
-    TranscriptionOrm,
-    VowelOrm,
-    VowelSampleOrm,
-    WordLexemeOrm,
-    WordOrm,
+from app.models import (
+    Class,
+    CompositeName,
+    Consonant,
+    ConsonantSample,
+    Ending,
+    Formality,
+    Gender,
+    Hour,
+    Lexeme,
+    Month,
+    Numeral,
+    Plurality,
+    Position,
+    PositionWord,
+    Pronoun,
+    PronounType,
+    PronounTypeBreakout,
+    Sound,
+    SoundType,
+    SpecialSymbol,
+    TimePeriod,
+    ToneMark,
+    Transcription,
+    Vowel,
+    VowelGrapheme,
+    VowelSample,
+    Word,
+    WordLexeme,
+    Zodiac,
 )
 from app.schemas.thai import (
     CalendarPeriodDto,
@@ -41,7 +61,6 @@ from app.schemas.thai import (
     WordDto,
     ZodiacDto,
 )
-from sqlalchemy import select
 
 
 class ThaiRepository(ABC):
@@ -83,398 +102,654 @@ class ThaiRepository(ABC):
     @abstractmethod
     def get_months(self) -> list[MonthDto]: ...
 
+
 # ---------------------------------------------------------------------------
-# Helpers: ORM -> DTO
+# Row-mapping helpers (RowMapping in, Pydantic DTO out)
 # ---------------------------------------------------------------------------
 
 
-def _transcription_dto(t: TranscriptionOrm | None) -> TranscriptionDto:
-    if t is None:
-        return TranscriptionDto()
-    return TranscriptionDto(
-        phonemic=t.phonemic,
-        paiboon=t.paiboon,
-        ipa=t.IPA,
-    )
-
-
-def _word_dto(w: WordOrm, lexeme_values: list[str] | None = None) -> WordDto:
-    if lexeme_values is None:
-        lexeme_values = []
-        if w.word_lexemes:
-            lexeme_values = [
-                le.lexeme_rel.value or ""
-                for le in w.word_lexemes
-                if le.lexeme_rel
-            ]
+def _word_dto(r: RowMapping, prefix: str = "") -> WordDto:
+    """Build a ``WordDto`` from labelled columns. ``prefix`` lets callers
+    flatten multiple words into the same row (e.g. ``initial_word_id`` etc.)."""
     return WordDto(
-        id=w.id,
-        value=w.value or "",
-        transcription=_transcription_dto(w.transcription_rel),
-        lexemes=lexeme_values,
+        id=r[f"{prefix}word_id"],
+        value=(r.get(f"{prefix}word_value") or ""),
+        transcription=TranscriptionDto(
+            phonemic=r.get(f"{prefix}word_phonemic"),
+            paiboon=r.get(f"{prefix}word_paiboon"),
+            ipa=r.get(f"{prefix}word_ipa"),
+        ),
+        lexemes=[v for v in (r.get(f"{prefix}word_lexemes") or []) if v],
     )
 
 
-def _sound_dto(s: SoundOrm) -> SoundDto:
+def _sound_dto(r: RowMapping, prefix: str = "") -> SoundDto | None:
+    """Build a ``SoundDto`` from labelled columns; returns ``None`` if no sound
+    row was joined (FK was NULL)."""
+    sid = r.get(f"{prefix}sound_id")
+    if sid is None:
+        return None
     return SoundDto(
-        id=s.id,
-        sound_type=s.sound_type_rel.name if s.sound_type_rel else (str(s.sound_type) if s.sound_type is not None else ""),
-        is_consonant_sound=bool(s.consonant_sound),
-        is_initial_only=bool(s.initial_only),
-        media_url=s.mediapath,
-        transcription=_transcription_dto(s.transcription_rel),
+        id=sid,
+        sound_type=(r.get(f"{prefix}sound_type_name") or ""),
+        is_consonant_sound=bool(r.get(f"{prefix}sound_consonant_sound")),
+        is_initial_only=bool(r.get(f"{prefix}sound_initial_only")),
+        media_url=r.get(f"{prefix}sound_media_url"),
+        transcription=TranscriptionDto(
+            phonemic=r.get(f"{prefix}sound_phonemic"),
+            paiboon=r.get(f"{prefix}sound_paiboon"),
+            ipa=r.get(f"{prefix}sound_ipa"),
+        ),
+    )
+
+
+def _empty_sound() -> SoundDto:
+    return SoundDto(
+        id=0,
+        sound_type="",
+        is_consonant_sound=False,
+        is_initial_only=False,
+        media_url=None,
+        transcription=TranscriptionDto(),
     )
 
 
 # ---------------------------------------------------------------------------
-# ORM-based implementation
+# Reusable column groups
+# ---------------------------------------------------------------------------
+
+
+def _word_columns(prefix: str = ""):
+    """Project Word + its Transcription + lexemes array. Caller must include
+    a Word LEFT JOIN, an outerjoin to Transcription, an outerjoin chain
+    Word -> WordLexeme -> Lexeme, and ``Word.id, Transcription.id`` in
+    ``GROUP BY``."""
+    return (
+        Word.id.label(f"{prefix}word_id"),
+        Word.value.label(f"{prefix}word_value"),
+        Transcription.phonemic.label(f"{prefix}word_phonemic"),
+        Transcription.paiboon.label(f"{prefix}word_paiboon"),
+        Transcription.IPA.label(f"{prefix}word_ipa"),
+        func.array_agg(Lexeme.value)
+        .filter(Lexeme.value.isnot(None))
+        .label(f"{prefix}word_lexemes"),
+    )
+
+
+def _sound_columns(sound_alias, transcription_alias, sound_type_alias, prefix: str):
+    """Project a Sound + its Transcription + sound_type name (already-aliased
+    to allow multiple sounds in one row, e.g. consonant initial vs final)."""
+    return (
+        sound_alias.id.label(f"{prefix}sound_id"),
+        sound_type_alias.name.label(f"{prefix}sound_type_name"),
+        sound_alias.consonant_sound.label(f"{prefix}sound_consonant_sound"),
+        sound_alias.initial_only.label(f"{prefix}sound_initial_only"),
+        sound_alias.mediapath.label(f"{prefix}sound_media_url"),
+        transcription_alias.phonemic.label(f"{prefix}sound_phonemic"),
+        transcription_alias.paiboon.label(f"{prefix}sound_paiboon"),
+        transcription_alias.IPA.label(f"{prefix}sound_ipa"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# SQLAlchemy projection-based implementation
 # ---------------------------------------------------------------------------
 
 
 class SQLAlchemyThaiRepository(ThaiRepository):
     """
-    Uses ORM models for Thai reference data. Loads entities with
-    relationships and converts to DTOs. No raw SQL.
+    Read-only repository over the Thai schema. Every method projects scalar
+    columns into RowMappings; Pydantic composes nested DTOs in Python.
+    No ORM entity hydration, no SQL-side JSON building.
     """
 
     def __init__(self, session: Session) -> None:
         self._session = session
 
+    # ------------------------------------------------------------------
+    # Sounds
+    # ------------------------------------------------------------------
+
     def get_sounds(self) -> list[SoundDto]:
         stmt = (
-            select(SoundOrm)
-            .options(
-                joinedload(SoundOrm.transcription_rel),
-                joinedload(SoundOrm.sound_type_rel),
+            select(
+                Sound.id.label("sound_id"),
+                func.coalesce(
+                    SoundType.name,
+                    cast(Sound.sound_type, Text),
+                    literal(""),
+                ).label("sound_type_name"),
+                Sound.consonant_sound.label("sound_consonant_sound"),
+                Sound.initial_only.label("sound_initial_only"),
+                Sound.mediapath.label("sound_media_url"),
+                Transcription.phonemic.label("sound_phonemic"),
+                Transcription.paiboon.label("sound_paiboon"),
+                Transcription.IPA.label("sound_ipa"),
             )
+            .select_from(Sound)
+            .outerjoin(SoundType, SoundType.id == Sound.sound_type)
+            .outerjoin(Transcription, Transcription.id == Sound.transcription)
+            .order_by(Sound.id)
         )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        return [_sound_dto(s) for s in rows]
+        return [
+            _sound_dto(r) or _empty_sound()
+            for r in self._session.execute(stmt).mappings().all()
+        ]
+
+    # ------------------------------------------------------------------
+    # Consonants
+    # ------------------------------------------------------------------
 
     def get_consonants(self) -> list[ConsonantDto]:
-        stmt = (
-            select(ConsonantOrm)
-            .options(
-                joinedload(ConsonantOrm.transcription_rel),
-                joinedload(ConsonantOrm.initial_sound_rel).joinedload(SoundOrm.transcription_rel),
-                joinedload(ConsonantOrm.initial_sound_rel).joinedload(SoundOrm.sound_type_rel),
-                joinedload(ConsonantOrm.final_sound_rel).joinedload(SoundOrm.transcription_rel),
-                joinedload(ConsonantOrm.final_sound_rel).joinedload(SoundOrm.sound_type_rel),
-                selectinload(ConsonantOrm.sample_links).joinedload(ConsonantSampleOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                selectinload(ConsonantOrm.sample_links).joinedload(ConsonantSampleOrm.word_rel).selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
+        # Class/Ending lookup tables: stored as VARCHAR ids on Consonant; resolve to names.
+        class_map: dict[int, str] = {
+            r["id"]: r["name"]
+            for r in self._session.execute(select(Class.id, Class.name)).mappings().all()
+        }
+        ending_map: dict[int, str] = {
+            r["id"]: r["name"]
+            for r in self._session.execute(select(Ending.id, Ending.name)).mappings().all()
+        }
+
+        def _resolve(raw: str | None, table_map: dict[int, str]) -> str:
+            try:
+                return table_map.get(int(raw or "0"), raw or "")
+            except (ValueError, TypeError):
+                return raw or ""
+
+        # Aliases: Consonant has both initial and final Sound joins.
+        SInit = aliased(Sound)
+        SFinal = aliased(Sound)
+        STInit = aliased(Transcription)  # initial sound's transcription
+        STFinal = aliased(Transcription)  # final sound's transcription
+        STypeInit = aliased(SoundType)
+        STypeFinal = aliased(SoundType)
+
+        base = (
+            select(
+                Consonant.id.label("consonant_id"),
+                Consonant.grapheme.label("grapheme"),
+                Consonant.phoneme.label("phoneme"),
+                Consonant.class_.label("class_raw"),
+                Consonant.ending.label("ending_raw"),
+                Transcription.phonemic.label("c_phonemic"),
+                Transcription.paiboon.label("c_paiboon"),
+                Transcription.IPA.label("c_ipa"),
+                *_sound_columns(SInit, STInit, STypeInit, prefix="init_"),
+                *_sound_columns(SFinal, STFinal, STypeFinal, prefix="final_"),
             )
+            .select_from(Consonant)
+            .outerjoin(Transcription, Transcription.id == Consonant.transcription)
+            .outerjoin(SInit, SInit.id == Consonant.initial)
+            .outerjoin(STInit, STInit.id == SInit.transcription)
+            .outerjoin(STypeInit, STypeInit.id == SInit.sound_type)
+            .outerjoin(SFinal, SFinal.id == Consonant.final_sound_id)
+            .outerjoin(STFinal, STFinal.id == SFinal.transcription)
+            .outerjoin(STypeFinal, STypeFinal.id == SFinal.sound_type)
+            .order_by(Consonant.id)
         )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        # Resolve class and ending IDs to names (ConsonantsView exposes names; table stores IDs)
-        class_map = {r.id: (r.name or "") for r in self._session.execute(select(ClassOrm)).scalars().all()}
-        ending_map = {r.id: (r.name or "") for r in self._session.execute(select(EndingOrm)).scalars().all()}
 
-        def _class_name(raw: str) -> str:
-            try:
-                return class_map.get(int(raw), raw)
-            except (ValueError, TypeError):
-                return raw or ""
-
-        def _ending_name(raw: str) -> str:
-            try:
-                return ending_map.get(int(raw), raw)
-            except (ValueError, TypeError):
-                return raw or ""
-
-        result = []
-        for c in rows:
-            sample_words = []
-            for link in c.sample_links or []:
-                if link.word_rel:
-                    sample_words.append(_word_dto(link.word_rel))
-            initial = c.initial_sound_rel
-            ending_sound = c.final_sound_rel
-            default_sound = SoundDto(
-                id=0,
-                sound_type="",
-                is_consonant_sound=False,
-                is_initial_only=False,
-                media_url=None,
-                transcription=TranscriptionDto(),
+        samples = (
+            select(
+                ConsonantSample.consonant.label("consonant_id"),
+                ConsonantSample.id.label("sample_id"),
+                *_word_columns(),
             )
+            .select_from(ConsonantSample)
+            .join(Word, Word.id == ConsonantSample.word)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(ConsonantSample.id, Word.id, Transcription.id)
+            .order_by(ConsonantSample.consonant, ConsonantSample.id)
+        )
+
+        samples_by_consonant: dict[int, list[WordDto]] = defaultdict(list)
+        for r in self._session.execute(samples).mappings().all():
+            samples_by_consonant[r["consonant_id"]].append(_word_dto(r))
+
+        result: list[ConsonantDto] = []
+        for r in self._session.execute(base).mappings().all():
+            initial = _sound_dto(r, prefix="init_") or _empty_sound()
+            final = _sound_dto(r, prefix="final_")
             result.append(
                 ConsonantDto(
-                    grapheme=c.grapheme,
-                    phoneme=c.phoneme,
-                    consonant_class=_class_name(str(c.class_)),
-                    ending=_ending_name(str(c.ending)),
-                    transcription=_transcription_dto(c.transcription_rel),
-                    initial_sound=_sound_dto(initial) if initial else default_sound,
-                    ending_sound=_sound_dto(ending_sound) if ending_sound else None,
-                    sample_words=sample_words,
+                    grapheme=r["grapheme"],
+                    phoneme=r["phoneme"],
+                    consonant_class=_resolve(r["class_raw"], class_map),
+                    ending=_resolve(r["ending_raw"], ending_map),
+                    transcription=TranscriptionDto(
+                        phonemic=r["c_phonemic"],
+                        paiboon=r["c_paiboon"],
+                        ipa=r["c_ipa"],
+                    ),
+                    initial_sound=initial,
+                    ending_sound=final,
+                    sample_words=samples_by_consonant.get(r["consonant_id"], []),
                 )
             )
         return result
+
+    # ------------------------------------------------------------------
+    # Vowels
+    # ------------------------------------------------------------------
 
     def get_vowels(self) -> list[VowelDto]:
-        stmt = (
-            select(VowelOrm)
-            .options(
-                joinedload(VowelOrm.sound_rel).joinedload(SoundOrm.transcription_rel),
-                joinedload(VowelOrm.sound_rel).joinedload(SoundOrm.sound_type_rel),
-                joinedload(VowelOrm.graphemes),
-                selectinload(VowelOrm.sample_links).joinedload(VowelSampleOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                selectinload(VowelOrm.sample_links).joinedload(VowelSampleOrm.word_rel).selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
+        VS = aliased(Sound)
+        VST = aliased(Transcription)
+        VSType = aliased(SoundType)
+
+        base = (
+            select(
+                Vowel.id.label("vowel_id"),
+                Vowel.is_diphtong.label("is_diphtong"),
+                Vowel.mediapath.label("media_url"),
+                *_sound_columns(VS, VST, VSType, prefix=""),
             )
+            .select_from(Vowel)
+            .outerjoin(VS, VS.id == Vowel.sound_id)
+            .outerjoin(VST, VST.id == VS.transcription)
+            .outerjoin(VSType, VSType.id == VS.sound_type)
+            .order_by(Vowel.id)
         )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        result = []
-        for v in rows:
-            sound = v.sound_rel
-            graphemes = [
-                VowelGraphemeDto(value=g.value or "", is_closed=bool(g.is_closed))
-                for g in (v.graphemes or [])
-            ]
-            sample_words = []
-            for link in v.sample_links or []:
-                if link.word_rel:
-                    sample_words.append(_word_dto(link.word_rel))
-            if sound:
-                result.append(
-                    VowelDto(
-                        is_diphtong=bool(v.is_diphtong),
-                        sound=_sound_dto(sound),
-                        media_url=v.mediapath,
-                        graphemes=graphemes,
-                        sample_words=sample_words,
-                    )
+
+        graphemes_q = (
+            select(
+                VowelGrapheme.vowel_id.label("vowel_id"),
+                VowelGrapheme.value.label("value"),
+                VowelGrapheme.is_closed.label("is_closed"),
+            )
+            .order_by(VowelGrapheme.vowel_id, VowelGrapheme.id)
+        )
+
+        samples_q = (
+            select(
+                VowelSample.vowel.label("vowel_id"),
+                VowelSample.id.label("sample_id"),
+                *_word_columns(),
+            )
+            .select_from(VowelSample)
+            .join(Word, Word.id == VowelSample.word)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(VowelSample.id, Word.id, Transcription.id)
+            .order_by(VowelSample.vowel, VowelSample.id)
+        )
+
+        graphemes_by_vowel: dict[int, list[VowelGraphemeDto]] = defaultdict(list)
+        for r in self._session.execute(graphemes_q).mappings().all():
+            graphemes_by_vowel[r["vowel_id"]].append(
+                VowelGraphemeDto(
+                    value=(r["value"] or ""),
+                    is_closed=bool(r["is_closed"]),
                 )
+            )
+
+        samples_by_vowel: dict[int, list[WordDto]] = defaultdict(list)
+        for r in self._session.execute(samples_q).mappings().all():
+            samples_by_vowel[r["vowel_id"]].append(_word_dto(r))
+
+        result: list[VowelDto] = []
+        for r in self._session.execute(base).mappings().all():
+            sound = _sound_dto(r)
+            if sound is None:
+                continue
+            result.append(
+                VowelDto(
+                    is_diphtong=bool(r["is_diphtong"]),
+                    sound=sound,
+                    media_url=r["media_url"],
+                    graphemes=graphemes_by_vowel.get(r["vowel_id"], []),
+                    sample_words=samples_by_vowel.get(r["vowel_id"], []),
+                )
+            )
         return result
 
+    # ------------------------------------------------------------------
+    # Marks (SpecialSymbol + ToneMark)
+    # ------------------------------------------------------------------
+
     def get_marks(self) -> list[MarkDto]:
-        result = []
-        # SpecialSymbol: non-tone marks
-        stmt_ss = (
-            select(SpecialSymbolOrm)
-            .options(
-                joinedload(SpecialSymbolOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(SpecialSymbolOrm.word_rel).selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
+        # SpecialSymbol: one row per symbol, single Word.
+        ss_q = (
+            select(
+                SpecialSymbol.id.label("ss_id"),
+                SpecialSymbol.grapheme.label("grapheme"),
+                *_word_columns(),
             )
+            .select_from(SpecialSymbol)
+            .outerjoin(Word, Word.id == SpecialSymbol.word_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(SpecialSymbol.id, Word.id, Transcription.id)
+            .order_by(SpecialSymbol.id)
         )
-        for ss in self._session.execute(stmt_ss).scalars().unique().all():
-            words = [_word_dto(ss.word_rel)] if ss.word_rel else []
+
+        # ToneMark + CompositeName: 5 word ids per row.
+        tm_q = (
+            select(
+                ToneMark.id.label("tm_id"),
+                ToneMark.mark.label("mark"),
+                CompositeName.word1.label("w1"),
+                CompositeName.word2.label("w2"),
+                CompositeName.word3.label("w3"),
+                CompositeName.word4.label("w4"),
+                CompositeName.word5.label("w5"),
+            )
+            .select_from(ToneMark)
+            .outerjoin(CompositeName, CompositeName.id == ToneMark.name)
+            .order_by(ToneMark.id)
+        )
+
+        result: list[MarkDto] = []
+        for r in self._session.execute(ss_q).mappings().all():
+            words: list[WordDto] = []
+            if r.get("word_id") is not None:
+                words.append(_word_dto(r))
             result.append(
                 MarkDto(
-                    grapheme=ss.grapheme or "",
+                    grapheme=(r["grapheme"] or ""),
                     tone_mark=False,
                     words=words,
                 )
             )
-        # ToneMark: tone marks with CompositeName -> words
-        stmt_tm = (
-            select(ToneMarkOrm)
-            .options(
-                joinedload(ToneMarkOrm.name_rel),
+
+        tm_rows = self._session.execute(tm_q).mappings().all()
+
+        # Collect every word id referenced across all tone marks, fetch in one shot.
+        word_ids: set[int] = set()
+        for r in tm_rows:
+            for k in ("w1", "w2", "w3", "w4", "w5"):
+                wid = r.get(k)
+                if wid is not None:
+                    word_ids.add(wid)
+
+        word_map: dict[int, WordDto] = {}
+        if word_ids:
+            words_q = (
+                select(*_word_columns())
+                .select_from(Word)
+                .outerjoin(Transcription, Transcription.id == Word.transcription)
+                .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+                .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+                .where(Word.id.in_(word_ids))
+                .group_by(Word.id, Transcription.id)
             )
-        )
-        for tm in self._session.execute(stmt_tm).scalars().unique().all():
+            word_map = {
+                r["word_id"]: _word_dto(r)
+                for r in self._session.execute(words_q).mappings().all()
+            }
+
+        for r in tm_rows:
             words = []
-            if tm.name_rel:
-                comp = tm.name_rel
-                word_ids = [comp.word1, comp.word2, comp.word3, comp.word4, comp.word5]
-                word_ids = [wid for wid in word_ids if wid is not None]
-                if word_ids:
-                    stmt_w = (
-                        select(WordOrm)
-                        .where(WordOrm.id.in_(word_ids))
-                        .options(
-                            joinedload(WordOrm.transcription_rel),
-                            selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
-                        )
-                    )
-                    word_map = {w.id: w for w in self._session.execute(stmt_w).scalars().unique().all()}
-                    for wid in word_ids:
-                        if wid in word_map:
-                            words.append(_word_dto(word_map[wid]))
+            for k in ("w1", "w2", "w3", "w4", "w5"):
+                wid = r.get(k)
+                if wid is not None and wid in word_map:
+                    words.append(word_map[wid])
             result.append(
                 MarkDto(
-                    grapheme=tm.mark or "",
+                    grapheme=(r["mark"] or ""),
                     tone_mark=True,
                     words=words,
                 )
             )
+
         return result
+
+    # ------------------------------------------------------------------
+    # Numerals
+    # ------------------------------------------------------------------
 
     def get_numerals(self) -> list[NumeralDto]:
         stmt = (
-            select(NumeralOrm)
-            .options(
-                joinedload(NumeralOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(NumeralOrm.word_rel).selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
+            select(
+                Numeral.id.label("numeral_id"),
+                Numeral.grapheme.label("grapheme"),
+                *_word_columns(),
             )
+            .select_from(Numeral)
+            .join(Word, Word.id == Numeral.word)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(Numeral.id, Word.id, Transcription.id)
+            .order_by(Numeral.id)
         )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        result = []
-        for n in rows:
-            if n.word_rel:
-                result.append(
-                    NumeralDto(
-                        grapheme=n.grapheme or "",
-                        name=_word_dto(n.word_rel),
-                    )
-                )
-        return result
+        return [
+            NumeralDto(
+                grapheme=(r["grapheme"] or ""),
+                name=_word_dto(r),
+            )
+            for r in self._session.execute(stmt).mappings().all()
+        ]
+
+    # ------------------------------------------------------------------
+    # Pronouns
+    # ------------------------------------------------------------------
 
     def get_pronouns(self) -> list[PronounDto]:
-        stmt = (
-            select(PronounOrm)
-            .options(
-                joinedload(PronounOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(PronounOrm.word_rel).selectinload(WordOrm.word_lexemes).joinedload(WordLexemeOrm.lexeme_rel),
-                joinedload(PronounOrm.gender_rel),
-                joinedload(PronounOrm.formality_rel),
-                joinedload(PronounOrm.plurality_rel),
+        base = (
+            select(
+                Pronoun.id.label("pronoun_id"),
+                Pronoun.grammatical_person.label("person"),
+                Plurality.name.label("plurality_name"),
+                Formality.name.label("formality_name"),
+                Gender.name.label("gender_name"),
+                *_word_columns(),
             )
+            .select_from(Pronoun)
+            .join(Word, Word.id == Pronoun.word)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .outerjoin(Plurality, Plurality.id == Pronoun.plurality)
+            .outerjoin(Formality, Formality.id == Pronoun.formality)
+            .outerjoin(Gender, Gender.id == Pronoun.gender)
+            .group_by(
+                Pronoun.id,
+                Word.id,
+                Transcription.id,
+                Plurality.id,
+                Formality.id,
+                Gender.id,
+            )
+            .order_by(Pronoun.id)
         )
-        rows = self._session.execute(stmt).scalars().unique().all()
-        result = []
-        for p in rows:
-            if not p.word_rel:
-                continue
-            types = []
-            from app.models.orm_tables import PronounTypeOrm
-            stmt_ptb = select(PronounTypeBreakoutOrm).where(PronounTypeBreakoutOrm.pronoun_id == p.id)
-            for ptb in self._session.execute(stmt_ptb).scalars().all():
-                if ptb.type_id is not None:
-                    type_row = self._session.get(PronounTypeOrm, ptb.type_id)
-                    if type_row and type_row.name:
-                        types.append(type_row.name)
-            plurality_val = 0
-            if p.plurality_rel and p.plurality_rel.name:
-                if "singular" in (p.plurality_rel.name or "").lower():
-                    plurality_val = 1
-                elif "plural" in (p.plurality_rel.name or "").lower():
-                    plurality_val = 2
-                else:
-                    plurality_val = 3
+
+        types_q = (
+            select(
+                PronounTypeBreakout.pronoun_id.label("pronoun_id"),
+                PronounType.name.label("type_name"),
+            )
+            .select_from(PronounTypeBreakout)
+            .join(PronounType, PronounType.id == PronounTypeBreakout.type_id)
+            .order_by(PronounTypeBreakout.pronoun_id, PronounTypeBreakout.id)
+        )
+
+        types_by_pronoun: dict[int, list[str]] = defaultdict(list)
+        for r in self._session.execute(types_q).mappings().all():
+            name = r["type_name"]
+            if name:
+                types_by_pronoun[r["pronoun_id"]].append(name)
+
+        def _plurality_int(name: str | None) -> int:
+            if not name:
+                return 0
+            n = name.lower()
+            if "singular" in n:
+                return 1
+            if "plural" in n:
+                return 2
+            return 3
+
+        result: list[PronounDto] = []
+        for r in self._session.execute(base).mappings().all():
             result.append(
                 PronounDto(
-                    name=_word_dto(p.word_rel),
-                    person=p.grammatical_person or 0,
-                    plurality=plurality_val,
-                    formality=(p.formality_rel.name or "") if p.formality_rel else "",
-                    gender=(p.gender_rel.name or "") if p.gender_rel else "",
-                    types=types,
+                    name=_word_dto(r),
+                    person=(r["person"] or 0),
+                    plurality=_plurality_int(r["plurality_name"]),
+                    formality=(r["formality_name"] or ""),
+                    gender=(r["gender_name"] or ""),
+                    types=types_by_pronoun.get(r["pronoun_id"], []),
                 )
             )
         return result
 
+    # ------------------------------------------------------------------
+    # Positions (grid)
+    # ------------------------------------------------------------------
+
     def get_positions(self) -> list[PositionCellDto]:
-        rows = self._session.execute(
-            select(PositionOrm)
-            .options(
-                selectinload(PositionOrm.position_words)
-                .joinedload(PositionWordOrm.word_rel)
-                .joinedload(WordOrm.transcription_rel),
-                selectinload(PositionOrm.position_words)
-                .joinedload(PositionWordOrm.word_rel)
-                .selectinload(WordOrm.word_lexemes)
-                .joinedload(WordLexemeOrm.lexeme_rel),
+        base = (
+            select(
+                Position.id.label("position_id"),
+                Position.row_index.label("row_index"),
+                Position.col_index.label("col_index"),
+                Position.tile_style.label("tile_style"),
+                Position.name.label("label"),
             )
-            .order_by(PositionOrm.row_index, PositionOrm.col_index)
-        ).scalars().unique().all()
+            .select_from(Position)
+            .order_by(Position.row_index, Position.col_index)
+        )
+
+        words_q = (
+            select(
+                PositionWord.position_id.label("position_id"),
+                PositionWord.word_order.label("word_order"),
+                *_word_columns(),
+            )
+            .select_from(PositionWord)
+            .join(Word, Word.id == PositionWord.word_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(PositionWord.id, Word.id, Transcription.id)
+            .order_by(PositionWord.position_id, PositionWord.word_order)
+        )
+
+        words_by_position: dict[int, list[WordDto]] = defaultdict(list)
+        for r in self._session.execute(words_q).mappings().all():
+            words_by_position[r["position_id"]].append(_word_dto(r))
 
         return [
             PositionCellDto(
-                ordinal=pos.id,
-                row=pos.row_index,
-                col=pos.col_index,
-                tile_style=pos.tile_style,
-                label=pos.name,
-                words=[
-                    _word_dto(pw.word_rel)
-                    for pw in sorted(pos.position_words, key=lambda x: x.word_order)
-                ]
+                ordinal=r["position_id"],
+                row=r["row_index"],
+                col=r["col_index"],
+                tile_style=r["tile_style"],
+                label=r["label"],
+                words=words_by_position.get(r["position_id"], []),
             )
-            for pos in rows
+            for r in self._session.execute(base).mappings().all()
         ]
 
+    # ------------------------------------------------------------------
+    # Calendar / TimePeriod / Hour / Month
+    # ------------------------------------------------------------------
+
     def get_calendar_periods(self) -> list[CalendarPeriodDto]:
+        stmt = (
+            select(
+                TimePeriod.kind.label("kind"),
+                TimePeriod.ordinal.label("ordinal"),
+                *_word_columns(),
+            )
+            .select_from(TimePeriod)
+            .join(Word, Word.id == TimePeriod.word_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(TimePeriod.id, Word.id, Transcription.id)
+            .order_by(TimePeriod.ordinal)
+        )
         return [
             CalendarPeriodDto(
-                kind=tp.kind,
-                ordinal=tp.ordinal,
-                word=_word_dto(tp.word_rel),
-            ) for tp in self._session.execute(
-                select(TimePeriodOrm)
-                .options(
-                    joinedload(TimePeriodOrm.word_rel)
-                    .joinedload(WordOrm.transcription_rel),
-                    joinedload(TimePeriodOrm.word_rel)
-                    .selectinload(WordOrm.word_lexemes)
-                    .joinedload(WordLexemeOrm.lexeme_rel),
-                )
-                .order_by(TimePeriodOrm.ordinal)
-            ).scalars().unique().all()
+                kind=r["kind"],
+                ordinal=r["ordinal"],
+                word=_word_dto(r),
+            )
+            for r in self._session.execute(stmt).mappings().all()
         ]
 
     def get_time_of_day(self) -> list[TimeOfDayDto]:
-        rows = self._session.execute(
-            select(TimePeriodOrm)
-            .options(
-                joinedload(TimePeriodOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(TimePeriodOrm.word_rel)
-                .selectinload(WordOrm.word_lexemes)
-                .joinedload(WordLexemeOrm.lexeme_rel),
+        stmt = (
+            select(
+                TimePeriod.ordinal.label("ordinal"),
+                *_word_columns(),
             )
-            .where(TimePeriodOrm.kind == "TimeOfDay")
-            .order_by(TimePeriodOrm.ordinal)
-        ).scalars().unique().all()
-
+            .select_from(TimePeriod)
+            .join(Word, Word.id == TimePeriod.word_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .where(TimePeriod.kind == "TimeOfDay")
+            .group_by(TimePeriod.id, Word.id, Transcription.id)
+            .order_by(TimePeriod.ordinal)
+        )
         return [
-            TimeOfDayDto(ordinal=tp.ordinal, word=_word_dto(tp.word_rel))
-            for tp in rows
+            TimeOfDayDto(ordinal=r["ordinal"], word=_word_dto(r))
+            for r in self._session.execute(stmt).mappings().all()
         ]
 
     def get_hours(self) -> list[HourDto]:
-        rows = self._session.execute(
-            select(HourOrm)
-            .options(
-                joinedload(HourOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(HourOrm.word_rel)
-                .selectinload(WordOrm.word_lexemes)
-                .joinedload(WordLexemeOrm.lexeme_rel),
+        stmt = (
+            select(
+                Hour.ordinal.label("ordinal"),
+                *_word_columns(),
             )
-            .order_by(HourOrm.ordinal)
-        ).scalars().unique().all()
-
+            .select_from(Hour)
+            .join(Word, Word.id == Hour.word_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(Hour.id, Word.id, Transcription.id)
+            .order_by(Hour.ordinal)
+        )
         return [
-            HourDto(ordinal=h.ordinal, word=_word_dto(h.word_rel))
-            for h in rows
+            HourDto(ordinal=r["ordinal"], word=_word_dto(r))
+            for r in self._session.execute(stmt).mappings().all()
         ]
 
     def get_months(self) -> list[MonthDto]:
-        rows = self._session.execute(
-            select(MonthOrm)
-            .options(
-                joinedload(MonthOrm.zodiac_rel),
-                joinedload(MonthOrm.word_rel).joinedload(WordOrm.transcription_rel),
-                joinedload(MonthOrm.word_rel)
-                .selectinload(WordOrm.word_lexemes)
-                .joinedload(WordLexemeOrm.lexeme_rel),
+        stmt = (
+            select(
+                Month.ordinal.label("ordinal"),
+                Month.short_name.label("short_name"),
+                Month.english_name.label("english_name"),
+                Zodiac.ordinal.label("z_ordinal"),
+                Zodiac.english_name.label("z_english_name"),
+                Zodiac.sanskrit_name.label("z_sanskrit_name"),
+                Zodiac.sanskrit_lexeme.label("z_sanskrit_lexeme"),
+                Zodiac.element.label("z_element"),
+                Zodiac.image_url.label("z_image_url"),
+                *_word_columns(),
             )
-            .order_by(MonthOrm.ordinal)
-        ).scalars().unique().all()
-
+            .select_from(Month)
+            .join(Word, Word.id == Month.word_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .join(Zodiac, Zodiac.id == Month.zodiac_id)
+            .group_by(Month.id, Word.id, Transcription.id, Zodiac.id)
+            .order_by(Month.ordinal)
+        )
         return [
             MonthDto(
-                ordinal=m.ordinal,
-                word=_word_dto(m.word_rel),
-                short_name=m.short_name,
-                english_name=m.english_name,
+                ordinal=r["ordinal"],
+                word=_word_dto(r),
+                short_name=r["short_name"],
+                english_name=r["english_name"],
                 zodiac=ZodiacDto(
-                    ordinal=m.zodiac_rel.ordinal,
-                    english_name=m.zodiac_rel.english_name,
-                    sanskrit_name=m.zodiac_rel.sanskrit_name,
-                    sanskrit_lexeme=m.zodiac_rel.sanskrit_lexeme,
-                    element=m.zodiac_rel.element,
-                    image_url=m.zodiac_rel.image_url,
+                    ordinal=r["z_ordinal"],
+                    english_name=r["z_english_name"],
+                    sanskrit_name=r["z_sanskrit_name"],
+                    sanskrit_lexeme=r["z_sanskrit_lexeme"],
+                    element=r["z_element"],
+                    image_url=r["z_image_url"],
                 ),
             )
-            for m in rows
+            for r in self._session.execute(stmt).mappings().all()
         ]

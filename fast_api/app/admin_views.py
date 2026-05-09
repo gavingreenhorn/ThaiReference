@@ -1,32 +1,32 @@
-"""SQLAdmin ModelViews for Thai reference tables (SQLAlchemy orm_tables)."""
+"""SQLAdmin ModelViews for Thai reference tables."""
 from sqladmin import ModelView
 
-from app.models.orm_tables import (
-    ClassOrm,
-    CompositeNameOrm,
-    ConsonantOrm,
-    ConsonantSampleOrm,
-    EndingOrm,
-    FormalityOrm,
-    GenderOrm,
-    LexemeOrm,
-    NumeralOrm,
-    PluralityOrm,
-    PositionOrm,
-    PositionWordOrm,
-    PronounOrm,
-    PronounTypeBreakoutOrm,
-    PronounTypeOrm,
-    SoundTypeOrm,
-    SoundOrm,
-    SpecialSymbolOrm,
-    ToneMarkOrm,
-    TranscriptionOrm,
-    VowelGraphemeOrm,
-    VowelOrm,
-    VowelSampleOrm,
-    WordLexemeOrm,
-    WordOrm,
+from app.models import (
+    Class,
+    CompositeName,
+    Consonant,
+    ConsonantSample,
+    Ending,
+    Formality,
+    Gender,
+    Lexeme,
+    Numeral,
+    Plurality,
+    Position,
+    PositionWord,
+    Pronoun,
+    PronounType,
+    PronounTypeBreakout,
+    Sound,
+    SoundType,
+    SpecialSymbol,
+    ToneMark,
+    Transcription,
+    Vowel,
+    VowelGrapheme,
+    VowelSample,
+    Word,
+    WordLexeme,
 )
 
 
@@ -39,199 +39,199 @@ class _ThaiModelView(ModelView):
 
 
 # Reference
-class TranscriptionAdmin(_ThaiModelView, model=TranscriptionOrm):
+class TranscriptionAdmin(_ThaiModelView, model=Transcription):
     name = "Transcription"
     category = "Reference"
-    column_list = [TranscriptionOrm.id, TranscriptionOrm.phonemic, TranscriptionOrm.paiboon, TranscriptionOrm.IPA]
+    column_list = [Transcription.id, Transcription.phonemic, Transcription.paiboon, Transcription.IPA]
 
 
-class SoundTypeAdmin(_ThaiModelView, model=SoundTypeOrm):
+class SoundTypeAdmin(_ThaiModelView, model=SoundType):
     name = "Sound Type"
     category = "Reference"
-    column_list = [SoundTypeOrm.id, SoundTypeOrm.name]
+    column_list = [SoundType.id, SoundType.name]
 
 
-class LexemeAdmin(_ThaiModelView, model=LexemeOrm):
+class LexemeAdmin(_ThaiModelView, model=Lexeme):
     name = "Lexeme"
     category = "Reference"
-    column_list = [LexemeOrm.id, LexemeOrm.value]
+    column_list = [Lexeme.id, Lexeme.value]
 
 
-class ClassAdmin(_ThaiModelView, model=ClassOrm):
+class ClassAdmin(_ThaiModelView, model=Class):
     name = "Class"
     category = "Reference"
-    column_list = [ClassOrm.id, ClassOrm.name]
+    column_list = [Class.id, Class.name]
 
 
-class EndingAdmin(_ThaiModelView, model=EndingOrm):
+class EndingAdmin(_ThaiModelView, model=Ending):
     name = "Ending"
     category = "Reference"
-    column_list = [EndingOrm.id, EndingOrm.name]
+    column_list = [Ending.id, Ending.name]
 
 
-class GenderAdmin(_ThaiModelView, model=GenderOrm):
+class GenderAdmin(_ThaiModelView, model=Gender):
     name = "Gender"
     category = "Reference"
-    column_list = [GenderOrm.id, GenderOrm.name]
+    column_list = [Gender.id, Gender.name]
 
 
-class FormalityAdmin(_ThaiModelView, model=FormalityOrm):
+class FormalityAdmin(_ThaiModelView, model=Formality):
     name = "Formality"
     category = "Reference"
-    column_list = [FormalityOrm.id, FormalityOrm.name]
+    column_list = [Formality.id, Formality.name]
 
 
-class PluralityAdmin(_ThaiModelView, model=PluralityOrm):
+class PluralityAdmin(_ThaiModelView, model=Plurality):
     name = "Plurality"
     category = "Reference"
-    column_list = [PluralityOrm.id, PluralityOrm.name]
+    column_list = [Plurality.id, Plurality.name]
 
 
-class PronounTypeAdmin(_ThaiModelView, model=PronounTypeOrm):
+class PronounTypeAdmin(_ThaiModelView, model=PronounType):
     name = "Pronoun Type"
     category = "Reference"
-    column_list = [PronounTypeOrm.id, PronounTypeOrm.name]
+    column_list = [PronounType.id, PronounType.name]
 
 
 # Content
-class WordAdmin(_ThaiModelView, model=WordOrm):
+class WordAdmin(_ThaiModelView, model=Word):
     name = "Word"
     category = "Content"
-    column_list = [WordOrm.id, WordOrm.transcription, WordOrm.value]
+    column_list = [Word.id, Word.transcription, Word.value]
 
 
-class WordLexemeAdmin(_ThaiModelView, model=WordLexemeOrm):
+class WordLexemeAdmin(_ThaiModelView, model=WordLexeme):
     name = "Word-Lexeme"
     category = "Associations"
-    column_list = [WordLexemeOrm.id, WordLexemeOrm.word, WordLexemeOrm.lexeme]
+    column_list = [WordLexeme.id, WordLexeme.word, WordLexeme.lexeme]
 
 
-class PositionAdmin(_ThaiModelView, model=PositionOrm):
+class PositionAdmin(_ThaiModelView, model=Position):
     name = "Position (grid cell)"
     category = "Content"
     column_list = [
-        PositionOrm.id,
-        PositionOrm.row_index,
-        PositionOrm.col_index,
-        PositionOrm.name,
-        PositionOrm.tile_style,
+        Position.id,
+        Position.row_index,
+        Position.col_index,
+        Position.name,
+        Position.tile_style,
     ]
 
 
-class PositionWordAdmin(_ThaiModelView, model=PositionWordOrm):
+class PositionWordAdmin(_ThaiModelView, model=PositionWord):
     name = "Position word"
     category = "Associations"
     column_list = [
-        PositionWordOrm.id,
-        PositionWordOrm.position_id,
-        PositionWordOrm.word_id,
-        PositionWordOrm.word_order,
+        PositionWord.id,
+        PositionWord.position_id,
+        PositionWord.word_id,
+        PositionWord.word_order,
     ]
 
 
-class SoundAdmin(_ThaiModelView, model=SoundOrm):
+class SoundAdmin(_ThaiModelView, model=Sound):
     name = "Sound"
     category = "Content"
     column_list = [
-        SoundOrm.id,
-        SoundOrm.transcription,
-        SoundOrm.mediapath,
-        SoundOrm.initial_only,
-        SoundOrm.consonant_sound,
-        SoundOrm.sound_type,
+        Sound.id,
+        Sound.transcription,
+        Sound.mediapath,
+        Sound.initial_only,
+        Sound.consonant_sound,
+        Sound.sound_type,
     ]
 
 
-class ConsonantAdmin(_ThaiModelView, model=ConsonantOrm):
+class ConsonantAdmin(_ThaiModelView, model=Consonant):
     name = "Consonant"
     category = "Content"
     column_list = [
-        ConsonantOrm.id,
-        ConsonantOrm.grapheme,
-        ConsonantOrm.phoneme,
-        ConsonantOrm.soundtype,
-        ConsonantOrm.class_,
-        ConsonantOrm.ending,
-        ConsonantOrm.transcription,
-        ConsonantOrm.acrophonic,
-        ConsonantOrm.mediapath,
-        ConsonantOrm.initial,
-        ConsonantOrm.final_sound_id,
+        Consonant.id,
+        Consonant.grapheme,
+        Consonant.phoneme,
+        Consonant.soundtype,
+        Consonant.class_,
+        Consonant.ending,
+        Consonant.transcription,
+        Consonant.acrophonic,
+        Consonant.mediapath,
+        Consonant.initial,
+        Consonant.final_sound_id,
     ]
 
 
-class ConsonantSampleAdmin(_ThaiModelView, model=ConsonantSampleOrm):
+class ConsonantSampleAdmin(_ThaiModelView, model=ConsonantSample):
     name = "Consonant Sample"
     category = "Associations"
-    column_list = [ConsonantSampleOrm.id, ConsonantSampleOrm.consonant, ConsonantSampleOrm.word]
+    column_list = [ConsonantSample.id, ConsonantSample.consonant, ConsonantSample.word]
 
 
-class VowelAdmin(_ThaiModelView, model=VowelOrm):
+class VowelAdmin(_ThaiModelView, model=Vowel):
     name = "Vowel"
     category = "Content"
-    column_list = [VowelOrm.id, VowelOrm.sound_id, VowelOrm.is_diphtong, VowelOrm.mediapath]
+    column_list = [Vowel.id, Vowel.sound_id, Vowel.is_diphtong, Vowel.mediapath]
 
 
-class VowelGraphemeAdmin(_ThaiModelView, model=VowelGraphemeOrm):
+class VowelGraphemeAdmin(_ThaiModelView, model=VowelGrapheme):
     name = "Vowel Grapheme"
     category = "Associations"
-    column_list = [VowelGraphemeOrm.id, VowelGraphemeOrm.vowel_id, VowelGraphemeOrm.value, VowelGraphemeOrm.is_closed]
+    column_list = [VowelGrapheme.id, VowelGrapheme.vowel_id, VowelGrapheme.value, VowelGrapheme.is_closed]
 
 
-class VowelSampleAdmin(_ThaiModelView, model=VowelSampleOrm):
+class VowelSampleAdmin(_ThaiModelView, model=VowelSample):
     name = "Vowel Sample"
     category = "Associations"
-    column_list = [VowelSampleOrm.id, VowelSampleOrm.vowel, VowelSampleOrm.word]
+    column_list = [VowelSample.id, VowelSample.vowel, VowelSample.word]
 
 
-class NumeralAdmin(_ThaiModelView, model=NumeralOrm):
+class NumeralAdmin(_ThaiModelView, model=Numeral):
     name = "Numeral"
     category = "Content"
-    column_list = [NumeralOrm.id, NumeralOrm.word, NumeralOrm.grapheme]
+    column_list = [Numeral.id, Numeral.word, Numeral.grapheme]
 
 
-class PronounAdmin(_ThaiModelView, model=PronounOrm):
+class PronounAdmin(_ThaiModelView, model=Pronoun):
     name = "Pronoun"
     category = "Content"
     column_list = [
-        PronounOrm.id,
-        PronounOrm.word,
-        PronounOrm.gender,
-        PronounOrm.formality,
-        PronounOrm.plurality,
-        PronounOrm.grammatical_person,
+        Pronoun.id,
+        Pronoun.word,
+        Pronoun.gender,
+        Pronoun.formality,
+        Pronoun.plurality,
+        Pronoun.grammatical_person,
     ]
 
 
-class PronounTypeBreakoutAdmin(_ThaiModelView, model=PronounTypeBreakoutOrm):
+class PronounTypeBreakoutAdmin(_ThaiModelView, model=PronounTypeBreakout):
     name = "Pronoun Type Breakout"
     category = "Associations"
-    column_list = [PronounTypeBreakoutOrm.id, PronounTypeBreakoutOrm.pronoun_id, PronounTypeBreakoutOrm.type_id]
+    column_list = [PronounTypeBreakout.id, PronounTypeBreakout.pronoun_id, PronounTypeBreakout.type_id]
 
 
-class SpecialSymbolAdmin(_ThaiModelView, model=SpecialSymbolOrm):
+class SpecialSymbolAdmin(_ThaiModelView, model=SpecialSymbol):
     name = "Special Symbol"
     category = "Content"
-    column_list = [SpecialSymbolOrm.id, SpecialSymbolOrm.grapheme, SpecialSymbolOrm.word_id]
+    column_list = [SpecialSymbol.id, SpecialSymbol.grapheme, SpecialSymbol.word_id]
 
 
-class CompositeNameAdmin(_ThaiModelView, model=CompositeNameOrm):
+class CompositeNameAdmin(_ThaiModelView, model=CompositeName):
     name = "Composite Name"
     category = "Content"
     column_list = [
-        CompositeNameOrm.id,
-        CompositeNameOrm.word1,
-        CompositeNameOrm.word2,
-        CompositeNameOrm.word3,
-        CompositeNameOrm.word4,
-        CompositeNameOrm.word5,
+        CompositeName.id,
+        CompositeName.word1,
+        CompositeName.word2,
+        CompositeName.word3,
+        CompositeName.word4,
+        CompositeName.word5,
     ]
 
 
-class ToneMarkAdmin(_ThaiModelView, model=ToneMarkOrm):
+class ToneMarkAdmin(_ThaiModelView, model=ToneMark):
     name = "Tone Mark"
     category = "Content"
-    column_list = [ToneMarkOrm.id, ToneMarkOrm.mark, ToneMarkOrm.name, ToneMarkOrm.mediapath]
+    column_list = [ToneMark.id, ToneMark.mark, ToneMark.name, ToneMark.mediapath]
 
 
 def get_admin_views():
