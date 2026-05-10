@@ -104,8 +104,7 @@ class CelestialBodyDto(BaseModel):
     ordinal: int
     glyph: str
     color_hex: str
-    thai_name: WordDto
-    english_name: WordDto
+    word: WordDto
 
 
 class TimeOfDayDto(BaseModel):

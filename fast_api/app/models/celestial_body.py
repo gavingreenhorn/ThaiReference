@@ -21,23 +21,13 @@ class CelestialBody(Base):
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False, unique=True)
     glyph: Mapped[str] = mapped_column(String(32), nullable=False)
     color_hex: Mapped[str] = mapped_column(String(16), nullable=False)
-    thai_name_word_id: Mapped[int] = mapped_column(
-        Integer,
-        ForeignKey("Word.id"),
-        nullable=False,
-    )
-    english_name_word_id: Mapped[int] = mapped_column(
+    word_id: Mapped[int] = mapped_column(
         Integer,
         ForeignKey("Word.id"),
         nullable=False,
     )
 
-    thai_name_word_rel: Mapped[Word] = relationship(
-        "Word", foreign_keys=[thai_name_word_id]
-    )
-    english_name_word_rel: Mapped[Word] = relationship(
-        "Word", foreign_keys=[english_name_word_id]
-    )
+    word_rel: Mapped[Word] = relationship("Word", foreign_keys=[word_id])
 
     def __repr__(self) -> str:
         return f"CelestialBody(ord={self.ordinal})"

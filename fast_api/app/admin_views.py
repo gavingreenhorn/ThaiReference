@@ -107,8 +107,7 @@ class CelestialBodyAdmin(_ThaiModelView, model=CelestialBody):
         CelestialBody.ordinal,
         CelestialBody.glyph,
         CelestialBody.color_hex,
-        CelestialBody.thai_name_word_id,
-        CelestialBody.english_name_word_id,
+        CelestialBody.word_id,
     ]
 
 

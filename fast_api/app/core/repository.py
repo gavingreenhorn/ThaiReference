@@ -756,62 +756,40 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         ]
 
     def get_celestial_bodies(self) -> list[CelestialBodyDto]:
-        TW = aliased(Word)
-        EW = aliased(Word)
-        TrW = aliased(Transcription)
-        TrE = aliased(Transcription)
-        WlW = aliased(WordLexeme)
-        WlE = aliased(WordLexeme)
-        LmW = aliased(Lexeme)
-        LmE = aliased(Lexeme)
+        W = aliased(Word)
+        Tr = aliased(Transcription)
+        Wl = aliased(WordLexeme)
+        Lm = aliased(Lexeme)
         stmt = (
             select(
                 CelestialBody.ordinal,
                 CelestialBody.glyph,
                 CelestialBody.color_hex,
-                TW.id.label("th_word_id"),
-                TW.value.label("th_word_value"),
-                TrW.phonemic.label("th_word_phonemic"),
-                TrW.paiboon.label("th_word_paiboon"),
-                TrW.IPA.label("th_word_ipa"),
-                func.array_agg(LmW.value)
-                .filter(LmW.value.isnot(None))
-                .label("th_word_lexemes"),
-                EW.id.label("en_word_id"),
-                EW.value.label("en_word_value"),
-                TrE.phonemic.label("en_word_phonemic"),
-                TrE.paiboon.label("en_word_paiboon"),
-                TrE.IPA.label("en_word_ipa"),
-                func.array_agg(LmE.value)
-                .filter(LmE.value.isnot(None))
-                .label("en_word_lexemes"),
+                W.id.label("word_id"),
+                W.value.label("word_value"),
+                Tr.phonemic.label("word_phonemic"),
+                Tr.paiboon.label("word_paiboon"),
+                Tr.IPA.label("word_ipa"),
+                func.array_agg(Lm.value)
+                .filter(Lm.value.isnot(None))
+                .label("word_lexemes"),
             )
             .select_from(CelestialBody)
-            .join(TW, TW.id == CelestialBody.thai_name_word_id)
-            .outerjoin(TrW, TrW.id == TW.transcription)
-            .outerjoin(WlW, WlW.word == TW.id)
-            .outerjoin(LmW, LmW.id == WlW.lexeme)
-            .join(EW, EW.id == CelestialBody.english_name_word_id)
-            .outerjoin(TrE, TrE.id == EW.transcription)
-            .outerjoin(WlE, WlE.word == EW.id)
-            .outerjoin(LmE, LmE.id == WlE.lexeme)
+            .join(W, W.id == CelestialBody.word_id)
+            .outerjoin(Tr, Tr.id == W.transcription)
+            .outerjoin(Wl, Wl.word == W.id)
+            .outerjoin(Lm, Lm.id == Wl.lexeme)
             .group_by(
                 CelestialBody.id,
                 CelestialBody.ordinal,
                 CelestialBody.glyph,
                 CelestialBody.color_hex,
-                TW.id,
-                TW.value,
-                TrW.id,
-                TrW.phonemic,
-                TrW.paiboon,
-                TrW.IPA,
-                EW.id,
-                EW.value,
-                TrE.id,
-                TrE.phonemic,
-                TrE.paiboon,
-                TrE.IPA,
+                W.id,
+                W.value,
+                Tr.id,
+                Tr.phonemic,
+                Tr.paiboon,
+                Tr.IPA,
             )
             .order_by(CelestialBody.ordinal)
         )
@@ -820,8 +798,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 ordinal=r["ordinal"],
                 glyph=r["glyph"],
                 color_hex=r["color_hex"],
-                thai_name=_word_dto(r, "th_"),
-                english_name=_word_dto(r, "en_"),
+                word=_word_dto(r),
             )
             for r in self._session.execute(stmt).mappings().all()
         ]
