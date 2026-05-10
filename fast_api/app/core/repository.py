@@ -1,9 +1,3 @@
-"""Read-only repository: SQL projections only, no entity hydration.
-
-Each method projects scalar columns (and `array_agg(text)` for `lexemes: list[str]`)
-out of Postgres and lets Pydantic compose nested DTOs in Python. No `jsonb_*` is
-used; nested objects are assembled from the flat ``RowMapping`` by helpers below.
-"""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -14,10 +8,12 @@ from sqlalchemy.engine.row import RowMapping
 from sqlalchemy.orm import Session, aliased
 
 from app.models import (
+    CelestialBody,
     Class,
     CompositeName,
     Consonant,
     ConsonantSample,
+    DayOfWeek,
     Ending,
     Formality,
     Gender,
@@ -34,7 +30,6 @@ from app.models import (
     Sound,
     SoundType,
     SpecialSymbol,
-    DayOfWeek,
     TimeOfDay,
     ToneMark,
     Transcription,
@@ -46,8 +41,9 @@ from app.models import (
     Zodiac,
 )
 from app.schemas.thai import (
-    DayOfWeekDto,
+    CelestialBodyDto,
     ConsonantDto,
+    DayOfWeekDto,
     HourDto,
     MarkDto,
     MonthDto,
@@ -102,6 +98,9 @@ class ThaiRepository(ABC):
 
     @abstractmethod
     def get_months(self) -> list[MonthDto]: ...
+
+    @abstractmethod
+    def get_celestial_bodies(self) -> list[CelestialBodyDto]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -648,7 +647,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         ]
 
     # ------------------------------------------------------------------
-    # Weekdays / TimeOfDay / Hour / Month
+    # Weekdays / TimeOfDay / Hour / Month / CelestialBody
     # ------------------------------------------------------------------
 
     def get_weekdays(self) -> list[DayOfWeekDto]:
@@ -752,6 +751,77 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     element=r["z_element"],
                     image_url=r["z_image_url"],
                 ),
+            )
+            for r in self._session.execute(stmt).mappings().all()
+        ]
+
+    def get_celestial_bodies(self) -> list[CelestialBodyDto]:
+        TW = aliased(Word)
+        EW = aliased(Word)
+        TrW = aliased(Transcription)
+        TrE = aliased(Transcription)
+        WlW = aliased(WordLexeme)
+        WlE = aliased(WordLexeme)
+        LmW = aliased(Lexeme)
+        LmE = aliased(Lexeme)
+        stmt = (
+            select(
+                CelestialBody.ordinal,
+                CelestialBody.glyph,
+                CelestialBody.color_hex,
+                TW.id.label("th_word_id"),
+                TW.value.label("th_word_value"),
+                TrW.phonemic.label("th_word_phonemic"),
+                TrW.paiboon.label("th_word_paiboon"),
+                TrW.IPA.label("th_word_ipa"),
+                func.array_agg(LmW.value)
+                .filter(LmW.value.isnot(None))
+                .label("th_word_lexemes"),
+                EW.id.label("en_word_id"),
+                EW.value.label("en_word_value"),
+                TrE.phonemic.label("en_word_phonemic"),
+                TrE.paiboon.label("en_word_paiboon"),
+                TrE.IPA.label("en_word_ipa"),
+                func.array_agg(LmE.value)
+                .filter(LmE.value.isnot(None))
+                .label("en_word_lexemes"),
+            )
+            .select_from(CelestialBody)
+            .join(TW, TW.id == CelestialBody.thai_name_word_id)
+            .outerjoin(TrW, TrW.id == TW.transcription)
+            .outerjoin(WlW, WlW.word == TW.id)
+            .outerjoin(LmW, LmW.id == WlW.lexeme)
+            .join(EW, EW.id == CelestialBody.english_name_word_id)
+            .outerjoin(TrE, TrE.id == EW.transcription)
+            .outerjoin(WlE, WlE.word == EW.id)
+            .outerjoin(LmE, LmE.id == WlE.lexeme)
+            .group_by(
+                CelestialBody.id,
+                CelestialBody.ordinal,
+                CelestialBody.glyph,
+                CelestialBody.color_hex,
+                TW.id,
+                TW.value,
+                TrW.id,
+                TrW.phonemic,
+                TrW.paiboon,
+                TrW.IPA,
+                EW.id,
+                EW.value,
+                TrE.id,
+                TrE.phonemic,
+                TrE.paiboon,
+                TrE.IPA,
+            )
+            .order_by(CelestialBody.ordinal)
+        )
+        return [
+            CelestialBodyDto(
+                ordinal=r["ordinal"],
+                glyph=r["glyph"],
+                color_hex=r["color_hex"],
+                thai_name=_word_dto(r, "th_"),
+                english_name=_word_dto(r, "en_"),
             )
             for r in self._session.execute(stmt).mappings().all()
         ]

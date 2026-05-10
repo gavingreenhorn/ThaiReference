@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.core.deps import RepoDep
 from app.schemas.thai import (
+    CelestialBodyDto,
     ConsonantDto,
     DayOfWeekDto,
     HourDto,
@@ -58,6 +59,11 @@ def get_positions(repo: RepoDep) -> list[PositionCellDto]:
 @router.get("/weekdays", response_model=list[DayOfWeekDto])
 def get_weekdays(repo: RepoDep) -> list[DayOfWeekDto]:
     return repo.get_weekdays()
+
+
+@router.get("/celestial-bodies", response_model=list[CelestialBodyDto])
+def get_celestial_bodies(repo: RepoDep) -> list[CelestialBodyDto]:
+    return repo.get_celestial_bodies()
 
 
 @router.get("/time-of-day", response_model=list[TimeOfDayDto])

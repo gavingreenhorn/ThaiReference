@@ -1,6 +1,7 @@
 """Barrel exports for SQLAlchemy models. Each model lives in its own module."""
 
 from app.models.base import Base
+from app.models.celestial_body import CelestialBody
 from app.models.class_ import Class
 from app.models.composite_name import CompositeName
 from app.models.consonant import Consonant
@@ -38,6 +39,7 @@ __all__ = [
     "CompositeName",
     "Consonant",
     "ConsonantSample",
+    "CelestialBody",
     "DayOfWeek",
     "Ending",
     "Formality",

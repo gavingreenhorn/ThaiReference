@@ -97,6 +97,17 @@ class DayOfWeekDto(BaseModel):
     image_url: str | None = None
 
 
+class CelestialBodyDto(BaseModel):
+    """Planet / luminary for a weekday (ordinal aligns with ``DayOfWeek.ordinal``)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    ordinal: int
+    glyph: str
+    color_hex: str
+    thai_name: WordDto
+    english_name: WordDto
+
+
 class TimeOfDayDto(BaseModel):
     """One of the named Thai time-of-day bands (morning, evening, ...)."""
 

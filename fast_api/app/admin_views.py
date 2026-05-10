@@ -2,6 +2,7 @@
 from sqladmin import ModelView
 
 from app.models import (
+    CelestialBody,
     Class,
     CompositeName,
     Consonant,
@@ -98,6 +99,19 @@ class PronounTypeAdmin(_ThaiModelView, model=PronounType):
 # Content
 
 
+class CelestialBodyAdmin(_ThaiModelView, model=CelestialBody):
+    name = "Celestial body"
+    category = "Content"
+    column_list = [
+        CelestialBody.id,
+        CelestialBody.ordinal,
+        CelestialBody.glyph,
+        CelestialBody.color_hex,
+        CelestialBody.thai_name_word_id,
+        CelestialBody.english_name_word_id,
+    ]
+
+
 class DayOfWeekAdmin(_ThaiModelView, model=DayOfWeek):
     name = "Day of week"
     category = "Content"
@@ -105,6 +119,7 @@ class DayOfWeekAdmin(_ThaiModelView, model=DayOfWeek):
         DayOfWeek.id,
         DayOfWeek.ordinal,
         DayOfWeek.word_id,
+        DayOfWeek.celestial_body_id,
         DayOfWeek.deity,
         DayOfWeek.image_url,
     ]
@@ -269,6 +284,7 @@ def get_admin_views():
         PluralityAdmin,
         PronounTypeAdmin,
         WordAdmin,
+        CelestialBodyAdmin,
         DayOfWeekAdmin,
         TimeOfDayAdmin,
         WordLexemeAdmin,
