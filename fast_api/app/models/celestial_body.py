@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from __future__ import annotations
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.word import Word
 
 
 class CelestialBody(Base):
@@ -29,10 +32,10 @@ class CelestialBody(Base):
         nullable=False,
     )
 
-    thai_name_word_rel: Mapped["Word"] = relationship(
+    thai_name_word_rel: Mapped[Word] = relationship(
         "Word", foreign_keys=[thai_name_word_id]
     )
-    english_name_word_rel: Mapped["Word"] = relationship(
+    english_name_word_rel: Mapped[Word] = relationship(
         "Word", foreign_keys=[english_name_word_id]
     )
 
