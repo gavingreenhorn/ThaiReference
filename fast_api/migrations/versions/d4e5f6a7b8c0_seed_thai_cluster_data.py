@@ -25,7 +25,8 @@ down_revision: Union[str, Sequence[str], None] = "c2d3e4f5a6b7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-_SEED_SQL = Path(__file__).resolve().parent / "sql" / "d4e5f6a7b8c0_cluster_seed.sql"
+# __file__ is migrations/versions/*.py — SQL lives under migrations/sql/
+_SEED_SQL = Path(__file__).resolve().parent.parent / "sql" / "d4e5f6a7b8c0_cluster_seed.sql"
 
 
 def _run_seed_sql() -> None:
