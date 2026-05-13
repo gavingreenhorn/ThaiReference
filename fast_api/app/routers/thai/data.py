@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from app.core.deps import RepoDep
 from app.schemas.thai import (
     CelestialBodyDto,
-    ClusterOverviewDto,
+    ClusterDto,
     ConsonantDto,
     DayOfWeekDto,
     HourDto,
@@ -32,9 +32,9 @@ def get_consonants(repo: RepoDep) -> list[ConsonantDto]:
     return repo.get_consonants()
 
 
-@router.get("/cluster-overview", response_model=ClusterOverviewDto)
-def get_cluster_overview(repo: RepoDep) -> ClusterOverviewDto:
-    return repo.get_cluster_overview()
+@router.get("/clusters", response_model=list[ClusterDto])
+def get_clusters(repo: RepoDep) -> list[ClusterDto]:
+    return repo.get_clusters()
 
 
 @router.get("/vowels", response_model=list[VowelDto])

@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class ClusterWord(Base):
-    """Sample dictionary word illustrating a cluster (ordered, max ~5 per cluster)."""
+    """Sample dictionary word illustrating a cluster (max ~5 per cluster); order by ``id`` ascending."""
 
     __tablename__ = "ClusterWord"
     __table_args__ = (
@@ -26,7 +26,6 @@ class ClusterWord(Base):
         Integer, ForeignKey("Cluster.id", ondelete="CASCADE"), nullable=False
     )
     word_id: Mapped[int] = mapped_column(Integer, ForeignKey("Word.id"), nullable=False)
-    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     cluster_rel: Mapped["Cluster"] = relationship("Cluster", back_populates="sample_links")
     word_rel: Mapped["Word"] = relationship("Word", foreign_keys=[word_id])

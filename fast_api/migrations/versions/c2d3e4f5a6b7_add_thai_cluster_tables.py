@@ -1,10 +1,6 @@
-"""Add thai.Cluster (type, value) + ClusterWord and seed v1.
+"""add thai Cluster / ClusterWord (subtype, no sort_order)
 
-Runs when you ``alembic upgrade head``: creates tables if missing, then
-``apply_cluster_v1_seed`` fills ``Cluster`` / ``ClusterWord`` (skips if
-``Cluster`` already has rows).
-
-Revision ID: d4e5f6a7b8c0
+Revision ID: c2d3e4f5a6b7
 Revises: a1b2c3d4e5f7
 Create Date: 2026-05-10
 """
@@ -16,9 +12,7 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-from app.seeds.cluster_v1 import apply_cluster_v1_seed
-
-revision: str = "d4e5f6a7b8c0"
+revision: str = "c2d3e4f5a6b7"
 down_revision: Union[str, Sequence[str], None] = "a1b2c3d4e5f7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -36,6 +30,7 @@ def upgrade() -> None:
             "Cluster",
             sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
             sa.Column("type", sa.String(length=64), nullable=False),
+            sa.Column("subtype", sa.String(length=64), nullable=True),
             sa.Column("value", sa.String(length=64), nullable=False),
             sa.UniqueConstraint("type", "value", name="uq_thai_cluster_type_value"),
             schema=SCHEMA,
@@ -49,27 +44,20 @@ def upgrade() -> None:
             sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
             sa.Column("cluster_id", sa.Integer(), nullable=False),
             sa.Column("word_id", sa.Integer(), nullable=False),
-            sa.Column("sort_order", sa.Integer(), nullable=False, server_default="0"),
             sa.ForeignKeyConstraint(
                 ["cluster_id"],
                 ["Cluster.id"],
-                name="fk_thai_cluster_word_cluster",
                 ondelete="CASCADE",
-                source_schema=SCHEMA,
                 referent_schema=SCHEMA,
             ),
             sa.ForeignKeyConstraint(
                 ["word_id"],
                 ["Word.id"],
-                name="fk_thai_cluster_word_word",
-                source_schema=SCHEMA,
                 referent_schema=SCHEMA,
             ),
             sa.UniqueConstraint("cluster_id", "word_id", name="uq_thai_cluster_word_pair"),
             schema=SCHEMA,
         )
-
-    apply_cluster_v1_seed(bind, SCHEMA)
 
 
 def downgrade() -> None:

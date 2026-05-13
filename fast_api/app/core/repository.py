@@ -44,8 +44,7 @@ from app.models import (
 )
 from app.schemas.thai import (
     CelestialBodyDto,
-    ClusterOverviewDto,
-    ClusterRowDto,
+    ClusterDto,
     ConsonantDto,
     DayOfWeekDto,
     HourDto,
@@ -107,7 +106,7 @@ class ThaiRepository(ABC):
     def get_celestial_bodies(self) -> list[CelestialBodyDto]: ...
 
     @abstractmethod
-    def get_cluster_overview(self) -> ClusterOverviewDto: ...
+    def get_clusters(self) -> list[ClusterDto]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -810,23 +809,16 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             for r in self._session.execute(stmt).mappings().all()
         ]
 
-    def get_cluster_overview(self) -> ClusterOverviewDto:
-        def _cluster_page_key(ctype: str) -> str | None:
-            if ctype == "true":
-                return "true"
-            if ctype.startswith("false"):
-                return "false"
-            if ctype in ("leading_tone", "leading_enepenthetic", "final_rt"):
-                return "leading"
-            return None
-
-        cluster_stmt = select(Cluster).order_by(Cluster.type, Cluster.value, Cluster.id)
+    def get_clusters(self) -> list[ClusterDto]:
+        cluster_stmt = select(Cluster).order_by(
+            Cluster.type, Cluster.subtype.nulls_last(), Cluster.value, Cluster.id
+        )
         clusters = list(self._session.scalars(cluster_stmt).all())
 
         cw_stmt = (
             select(
                 ClusterWord.cluster_id,
-                ClusterWord.sort_order,
+                ClusterWord.id.label("cluster_word_row_id"),
                 *_word_columns(),
             )
             .select_from(ClusterWord)
@@ -834,42 +826,21 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(ClusterWord.id, ClusterWord.cluster_id, ClusterWord.sort_order, Word.id, Transcription.id)
-            .order_by(ClusterWord.cluster_id, ClusterWord.sort_order)
+            .group_by(ClusterWord.id, ClusterWord.cluster_id, Word.id, Transcription.id)
+            .order_by(ClusterWord.cluster_id, ClusterWord.id)
         )
         by_cluster: dict[int, list[tuple[int, WordDto]]] = defaultdict(list)
         for r in self._session.execute(cw_stmt).mappings().all():
             cid = int(r["cluster_id"])
-            by_cluster[cid].append((int(r["sort_order"]), _word_dto(r)))
+            by_cluster[cid].append((int(r["cluster_word_row_id"]), _word_dto(r)))
 
-        cluster_dtos = [
-            ClusterRowDto(
+        return [
+            ClusterDto(
                 id=c.id,
                 type=c.type,
+                subtype=c.subtype,
                 value=c.value,
                 sample_words=[w for _, w in sorted(by_cluster.get(c.id, []), key=lambda x: x[0])],
             )
             for c in clusters
         ]
-
-        # Carousel strip words are not persisted; derive from first sample per cluster in page order.
-        max_strip = 16
-        page_strip: dict[str, list[WordDto]] = {k: [] for k in ("true", "false", "leading")}
-        seen_ids: dict[str, set[int]] = {k: set() for k in page_strip}
-        for c in clusters:
-            page_key = _cluster_page_key(c.type)
-            if page_key is None:
-                continue
-            strip = page_strip[page_key]
-            if len(strip) >= max_strip:
-                continue
-            ordered = sorted(by_cluster.get(c.id, []), key=lambda x: x[0])
-            if not ordered:
-                continue
-            w = ordered[0][1]
-            if w.id in seen_ids[page_key]:
-                continue
-            seen_ids[page_key].add(w.id)
-            strip.append(w)
-
-        return ClusterOverviewDto(clusters=cluster_dtos, page_strip_samples=page_strip)

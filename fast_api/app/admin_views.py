@@ -210,6 +210,7 @@ class ClusterAdmin(_ThaiModelView, model=Cluster):
     column_list = [
         Cluster.id,
         Cluster.type,
+        Cluster.subtype,
         Cluster.value,
     ]
 
@@ -217,7 +218,7 @@ class ClusterAdmin(_ThaiModelView, model=Cluster):
 class ClusterWordAdmin(_ThaiModelView, model=ClusterWord):
     name = "Cluster Sample Word"
     category = "Associations"
-    column_list = [ClusterWord.id, ClusterWord.cluster_id, ClusterWord.word_id, ClusterWord.sort_order]
+    column_list = [ClusterWord.id, ClusterWord.cluster_id, ClusterWord.word_id]
 
 
 class VowelAdmin(_ThaiModelView, model=Vowel):

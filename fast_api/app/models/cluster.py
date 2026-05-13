@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Cluster(Base):
-    """One teachable consonant cluster: ``thai.Cluster.type`` + ``thai.Cluster.value``."""
+    """One teachable cluster: ``type`` ∈ {true, false, leading}; optional ``subtype`` for leading variants."""
 
     __tablename__ = "Cluster"
     __table_args__ = (
@@ -22,6 +22,7 @@ class Cluster(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     type: Mapped[str] = mapped_column("type", String(64), nullable=False)  # noqa: A003
+    subtype: Mapped[str | None] = mapped_column(String(64), nullable=True)
     value: Mapped[str] = mapped_column("value", String(64), nullable=False)
 
     sample_links: Mapped[list["ClusterWord"]] = relationship(
@@ -29,4 +30,4 @@ class Cluster(Base):
     )
 
     def __repr__(self) -> str:
-        return f"Cluster({self.type!r}, {self.value!r})"
+        return f"Cluster({self.type!r}, {self.subtype!r}, {self.value!r})"

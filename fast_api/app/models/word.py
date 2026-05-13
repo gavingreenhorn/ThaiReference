@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -14,7 +14,10 @@ if TYPE_CHECKING:
 
 class Word(Base):
     __tablename__ = "Word"
-    __table_args__ = {"extend_existing": True}
+    __table_args__ = (
+        UniqueConstraint("value", name="uq_thai_word_value"),
+        {"extend_existing": True},
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     transcription: Mapped[int | None] = mapped_column(
