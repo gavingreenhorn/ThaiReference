@@ -133,6 +133,24 @@ class ZodiacDto(BaseModel):
     image_url: str | None = None
 
 
+class ClusterRowDto(BaseModel):
+    """One cluster row: ``thai.Cluster`` columns ``type`` and ``value`` plus samples."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    id: int
+    type: str  # noqa: A003
+    value: str
+    sample_words: list[WordDto] = []
+
+
+class ClusterOverviewDto(BaseModel):
+    """Full cluster reference payload for the consonant-clusters carousel screen."""
+
+    model_config = ConfigDict(populate_by_name=True)
+    clusters: list[ClusterRowDto]
+    page_strip_samples: dict[str, list[WordDto]]
+
+
 class MonthDto(BaseModel):
     """Standalone month entity with its underlying Word and zodiac association."""
 

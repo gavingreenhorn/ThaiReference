@@ -4,6 +4,8 @@ from sqladmin import ModelView
 from app.models import (
     CelestialBody,
     Class,
+    Cluster,
+    ClusterWord,
     CompositeName,
     Consonant,
     ConsonantSample,
@@ -202,6 +204,22 @@ class ConsonantSampleAdmin(_ThaiModelView, model=ConsonantSample):
     column_list = [ConsonantSample.id, ConsonantSample.consonant, ConsonantSample.word]
 
 
+class ClusterAdmin(_ThaiModelView, model=Cluster):
+    name = "Consonant Cluster"
+    category = "Associations"
+    column_list = [
+        Cluster.id,
+        Cluster.type,
+        Cluster.value,
+    ]
+
+
+class ClusterWordAdmin(_ThaiModelView, model=ClusterWord):
+    name = "Cluster Sample Word"
+    category = "Associations"
+    column_list = [ClusterWord.id, ClusterWord.cluster_id, ClusterWord.word_id, ClusterWord.sort_order]
+
+
 class VowelAdmin(_ThaiModelView, model=Vowel):
     name = "Vowel"
     category = "Content"
@@ -292,6 +310,8 @@ def get_admin_views():
         SoundAdmin,
         ConsonantAdmin,
         ConsonantSampleAdmin,
+        ClusterAdmin,
+        ClusterWordAdmin,
         VowelAdmin,
         VowelGraphemeAdmin,
         VowelSampleAdmin,

@@ -2,6 +2,8 @@
 
 from app.models.base import Base
 from app.models.celestial_body import CelestialBody
+from app.models.cluster import Cluster
+from app.models.cluster_word import ClusterWord
 from app.models.class_ import Class
 from app.models.composite_name import CompositeName
 from app.models.consonant import Consonant
@@ -40,6 +42,8 @@ __all__ = [
     "Consonant",
     "ConsonantSample",
     "CelestialBody",
+    "Cluster",
+    "ClusterWord",
     "DayOfWeek",
     "Ending",
     "Formality",
