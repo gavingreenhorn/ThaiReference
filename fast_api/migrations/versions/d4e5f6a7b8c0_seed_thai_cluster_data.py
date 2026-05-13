@@ -1,10 +1,10 @@
 """Apply static Thai cluster seed SQL (no runtime parsing).
 
-Revision ID: d4e5f6a7b8c9
+Revision ID: d4e5f6a7b8c0
 Revises: c2d3e4f5a6b7
 Create Date: 2026-05-13
 
-SQL file: ``migrations/sql/d4e5f6a7b8c9_cluster_seed.sql`` (maintain in-repo; optional
+SQL file: ``migrations/sql/d4e5f6a7b8c0_cluster_seed.sql`` (maintain in-repo; optional
 regenerator lives next to the matrix markdown under ``~/.cursor/plans/``, see that folder's
 ``cluster_matrix.py`` — not shipped with this repo).
 
@@ -20,12 +20,12 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "d4e5f6a7b8c9"
+revision: str = "d4e5f6a7b8c0"
 down_revision: Union[str, Sequence[str], None] = "c2d3e4f5a6b7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-_SEED_SQL = Path(__file__).resolve().parent / "sql" / "d4e5f6a7b8c9_cluster_seed.sql"
+_SEED_SQL = Path(__file__).resolve().parent / "sql" / "d4e5f6a7b8c0_cluster_seed.sql"
 
 
 def _run_seed_sql() -> None:
