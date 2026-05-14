@@ -59,6 +59,7 @@ class MarkDto(BaseModel):
     grapheme: str
     tone_mark: bool
     words: list[WordDto] = []
+    english_label: str | None = None
 
 
 class NumeralDto(BaseModel):

@@ -438,6 +438,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             select(
                 ToneMark.id.label("tm_id"),
                 ToneMark.mark.label("mark"),
+                ToneMark.english_label.label("english_label"),
                 CompositeName.word1.label("w1"),
                 CompositeName.word2.label("w2"),
                 CompositeName.word3.label("w3"),
@@ -499,6 +500,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     grapheme=(r["mark"] or ""),
                     tone_mark=True,
                     words=words,
+                    english_label=r.get("english_label"),
                 )
             )
 

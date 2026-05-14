@@ -21,6 +21,7 @@ class ToneMark(Base):
         Integer, ForeignKey("CompositeName.id"), nullable=True
     )
     mediapath: Mapped[str | None] = mapped_column(Text, nullable=True)
+    english_label: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     name_rel: Mapped[CompositeName | None] = relationship(
         "CompositeName", foreign_keys=[name]

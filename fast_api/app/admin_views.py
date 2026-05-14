@@ -286,7 +286,7 @@ class CompositeNameAdmin(_ThaiModelView, model=CompositeName):
 class ToneMarkAdmin(_ThaiModelView, model=ToneMark):
     name = "Tone Mark"
     category = "Content"
-    column_list = [ToneMark.id, ToneMark.mark, ToneMark.name, ToneMark.mediapath]
+    column_list = [ToneMark.id, ToneMark.mark, ToneMark.name, ToneMark.english_label, ToneMark.mediapath]
 
 
 def get_admin_views():
