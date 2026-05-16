@@ -1,7 +1,7 @@
 """Add thai.Cluster.subtype when table exists without it (legacy / partial DDL).
 
 Revision ID: e5f6a7b8c9d2
-Revises: d4e5f6a7b8c0
+Revises: c2d3e4f5a6b7
 Create Date: 2026-05-14
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "e5f6a7b8c9d2"
-down_revision: Union[str, Sequence[str], None] = "d4e5f6a7b8c0"
+down_revision: Union[str, Sequence[str], None] = "c2d3e4f5a6b7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

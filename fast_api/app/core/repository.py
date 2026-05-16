@@ -137,26 +137,22 @@ def _sound_dto(r: RowMapping, prefix: str = "") -> SoundDto | None:
         return None
     return SoundDto(
         id=sid,
+        value=(r.get(f"{prefix}sound_value") or ""),
         sound_type=(r.get(f"{prefix}sound_type_name") or ""),
         is_consonant_sound=bool(r.get(f"{prefix}sound_consonant_sound")),
         is_initial_only=bool(r.get(f"{prefix}sound_initial_only")),
         media_url=r.get(f"{prefix}sound_media_url"),
-        transcription=TranscriptionDto(
-            phonemic=r.get(f"{prefix}sound_phonemic"),
-            paiboon=r.get(f"{prefix}sound_paiboon"),
-            ipa=r.get(f"{prefix}sound_ipa"),
-        ),
     )
 
 
 def _empty_sound() -> SoundDto:
     return SoundDto(
         id=0,
+        value="",
         sound_type="",
         is_consonant_sound=False,
         is_initial_only=False,
         media_url=None,
-        transcription=TranscriptionDto(),
     )
 
 
@@ -182,18 +178,15 @@ def _word_columns(prefix: str = ""):
     )
 
 
-def _sound_columns(sound_alias, transcription_alias, sound_type_alias, prefix: str):
-    """Project a Sound + its Transcription + sound_type name (already-aliased
-    to allow multiple sounds in one row, e.g. consonant initial vs final)."""
+def _sound_columns(sound_alias, sound_type_alias, prefix: str):
+    """Project a Sound + sound_type name (aliased for initial/final on one row)."""
     return (
         sound_alias.id.label(f"{prefix}sound_id"),
+        sound_alias.value.label(f"{prefix}sound_value"),
         sound_type_alias.name.label(f"{prefix}sound_type_name"),
         sound_alias.consonant_sound.label(f"{prefix}sound_consonant_sound"),
         sound_alias.initial_only.label(f"{prefix}sound_initial_only"),
         sound_alias.mediapath.label(f"{prefix}sound_media_url"),
-        transcription_alias.phonemic.label(f"{prefix}sound_phonemic"),
-        transcription_alias.paiboon.label(f"{prefix}sound_paiboon"),
-        transcription_alias.IPA.label(f"{prefix}sound_ipa"),
     )
 
 
@@ -225,16 +218,13 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                     cast(Sound.sound_type, Text),
                     literal(""),
                 ).label("sound_type_name"),
+                Sound.value.label("sound_value"),
                 Sound.consonant_sound.label("sound_consonant_sound"),
                 Sound.initial_only.label("sound_initial_only"),
                 Sound.mediapath.label("sound_media_url"),
-                Transcription.phonemic.label("sound_phonemic"),
-                Transcription.paiboon.label("sound_paiboon"),
-                Transcription.IPA.label("sound_ipa"),
             )
             .select_from(Sound)
             .outerjoin(SoundType, SoundType.id == Sound.sound_type)
-            .outerjoin(Transcription, Transcription.id == Sound.transcription)
             .order_by(Sound.id)
         )
         return [
@@ -266,8 +256,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         # Aliases: Consonant has both initial and final Sound joins.
         SInit = aliased(Sound)
         SFinal = aliased(Sound)
-        STInit = aliased(Transcription)  # initial sound's transcription
-        STFinal = aliased(Transcription)  # final sound's transcription
         STypeInit = aliased(SoundType)
         STypeFinal = aliased(SoundType)
 
@@ -281,16 +269,14 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 Transcription.phonemic.label("c_phonemic"),
                 Transcription.paiboon.label("c_paiboon"),
                 Transcription.IPA.label("c_ipa"),
-                *_sound_columns(SInit, STInit, STypeInit, prefix="init_"),
-                *_sound_columns(SFinal, STFinal, STypeFinal, prefix="final_"),
+                *_sound_columns(SInit, STypeInit, prefix="init_"),
+                *_sound_columns(SFinal, STypeFinal, prefix="final_"),
             )
             .select_from(Consonant)
             .outerjoin(Transcription, Transcription.id == Consonant.transcription)
             .outerjoin(SInit, SInit.id == Consonant.initial)
-            .outerjoin(STInit, STInit.id == SInit.transcription)
             .outerjoin(STypeInit, STypeInit.id == SInit.sound_type)
             .outerjoin(SFinal, SFinal.id == Consonant.final_sound_id)
-            .outerjoin(STFinal, STFinal.id == SFinal.transcription)
             .outerjoin(STypeFinal, STypeFinal.id == SFinal.sound_type)
             .order_by(Consonant.id)
         )
@@ -342,7 +328,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
 
     def get_vowels(self) -> list[VowelDto]:
         VS = aliased(Sound)
-        VST = aliased(Transcription)
         VSType = aliased(SoundType)
 
         base = (
@@ -350,11 +335,10 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 Vowel.id.label("vowel_id"),
                 Vowel.is_diphtong.label("is_diphtong"),
                 Vowel.mediapath.label("media_url"),
-                *_sound_columns(VS, VST, VSType, prefix=""),
+                *_sound_columns(VS, VSType, prefix=""),
             )
             .select_from(Vowel)
             .outerjoin(VS, VS.id == Vowel.sound_id)
-            .outerjoin(VST, VST.id == VS.transcription)
             .outerjoin(VSType, VSType.id == VS.sound_type)
             .order_by(Vowel.id)
         )

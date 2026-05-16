@@ -172,7 +172,7 @@ class SoundAdmin(_ThaiModelView, model=Sound):
     category = "Content"
     column_list = [
         Sound.id,
-        Sound.transcription,
+        Sound.value,
         Sound.mediapath,
         Sound.initial_only,
         Sound.consonant_sound,

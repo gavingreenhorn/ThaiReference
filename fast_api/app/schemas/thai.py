@@ -11,10 +11,10 @@ class TranscriptionDto(BaseModel):
 class SoundDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: int
+    value: str
     sound_type: str
     is_consonant_sound: bool
     is_initial_only: bool
-    transcription: TranscriptionDto
     media_url: str | None = None
 
 

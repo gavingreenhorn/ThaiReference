@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, Integer, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
 if TYPE_CHECKING:
     from app.models.sound_type import SoundType
-    from app.models.transcription import Transcription
 
 
 class Sound(Base):
@@ -17,9 +16,7 @@ class Sound(Base):
     __table_args__ = {"extend_existing": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    transcription: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("Transcription.id"), nullable=True
-    )
+    value: Mapped[str] = mapped_column(String(25), nullable=False, default="")
     mediapath: Mapped[str | None] = mapped_column(Text, nullable=True)
     initial_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     consonant_sound: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -27,9 +24,6 @@ class Sound(Base):
         Integer, ForeignKey("SoundType.id"), nullable=True
     )
 
-    transcription_rel: Mapped[Transcription | None] = relationship(
-        "Transcription", foreign_keys=[transcription]
-    )
     sound_type_rel: Mapped[SoundType | None] = relationship(
         "SoundType", foreign_keys=[sound_type]
     )
