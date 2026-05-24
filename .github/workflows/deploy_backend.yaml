@@ -134,7 +134,7 @@ jobs:
             echo ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }} >> ${{ env.INFRA_DIR }}/.env
             echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
 
-            sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d
+            sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d --wait --wait-timeout 180 || exit 1
 
             if [ -d ${{ env.INFRA_DIR }}/media ] && [ "$(ls -A ${{ env.INFRA_DIR }}/media 2>/dev/null)" ]; then
               echo "Syncing ${{ env.INFRA_DIR }}/media into volume thai_media..."

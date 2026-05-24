@@ -23,6 +23,7 @@ from app.models import (
     PronounTypeBreakout,
     Sound,
     SoundType,
+    Spelling,
     SpecialSymbol,
     TimeOfDay,
     ToneMark,
@@ -132,10 +133,16 @@ class TimeOfDayAdmin(_ThaiModelView, model=TimeOfDay):
     column_list = [TimeOfDay.id, TimeOfDay.ordinal, TimeOfDay.word_id]
 
 
+class SpellingAdmin(_ThaiModelView, model=Spelling):
+    name = "Spelling"
+    category = "Reference"
+    column_list = [Spelling.id, Spelling.value]
+
+
 class WordAdmin(_ThaiModelView, model=Word):
     name = "Word"
     category = "Content"
-    column_list = [Word.id, Word.transcription, Word.value]
+    column_list = [Word.id, Word.spelling_id, Word.transcription, Word.is_primary]
 
 
 class WordLexemeAdmin(_ThaiModelView, model=WordLexeme):
@@ -293,6 +300,7 @@ def get_admin_views():
     """Return all admin view classes in menu order."""
     return [
         TranscriptionAdmin,
+        SpellingAdmin,
         SoundTypeAdmin,
         LexemeAdmin,
         ClassAdmin,

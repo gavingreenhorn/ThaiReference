@@ -31,6 +31,7 @@ from app.models import (
     PronounTypeBreakout,
     Sound,
     SoundType,
+    Spelling,
     SpecialSymbol,
     TimeOfDay,
     ToneMark,
@@ -46,6 +47,10 @@ from app.schemas.thai import (
     CelestialBodyDto,
     ClusterDto,
     ConsonantDto,
+    HomographGroupDto,
+    HomophoneGroupDto,
+    HomonymsDto,
+    TrueHomonymGroupDto,
     DayOfWeekDto,
     HourDto,
     MarkDto,
@@ -108,6 +113,9 @@ class ThaiRepository(ABC):
     @abstractmethod
     def get_clusters(self) -> list[ClusterDto]: ...
 
+    @abstractmethod
+    def get_homonyms(self) -> HomonymsDto: ...
+
 
 # ---------------------------------------------------------------------------
 # Row-mapping helpers (RowMapping in, Pydantic DTO out)
@@ -164,11 +172,12 @@ def _empty_sound() -> SoundDto:
 def _word_columns(prefix: str = ""):
     """Project Word + its Transcription + lexemes array. Caller must include
     a Word LEFT JOIN, an outerjoin to Transcription, an outerjoin chain
-    Word -> WordLexeme -> Lexeme, and ``Word.id, Transcription.id`` in
+    Word -> Spelling, an outerjoin to Transcription, an outerjoin chain
+    Word -> WordLexeme -> Lexeme, and ``Word.id, Spelling.id, Transcription.id`` in
     ``GROUP BY``."""
     return (
         Word.id.label(f"{prefix}word_id"),
-        Word.value.label(f"{prefix}word_value"),
+        Spelling.value.label(f"{prefix}word_value"),
         Transcription.phonemic.label(f"{prefix}word_phonemic"),
         Transcription.paiboon.label(f"{prefix}word_paiboon"),
         Transcription.IPA.label(f"{prefix}word_ipa"),
@@ -289,10 +298,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(ConsonantSample)
             .join(Word, Word.id == ConsonantSample.word)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(ConsonantSample.id, Word.id, Transcription.id)
+            .group_by(ConsonantSample.id, Word.id, Spelling.id, Transcription.id)
             .order_by(ConsonantSample.consonant, ConsonantSample.id)
         )
 
@@ -360,10 +370,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(VowelSample)
             .join(Word, Word.id == VowelSample.word)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(VowelSample.id, Word.id, Transcription.id)
+            .group_by(VowelSample.id, Word.id, Spelling.id, Transcription.id)
             .order_by(VowelSample.vowel, VowelSample.id)
         )
 
@@ -410,10 +421,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(SpecialSymbol)
             .outerjoin(Word, Word.id == SpecialSymbol.word_id)
+            .outerjoin(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(SpecialSymbol.id, Word.id, Transcription.id)
+            .group_by(SpecialSymbol.id, Word.id, Spelling.id, Transcription.id)
             .order_by(SpecialSymbol.id)
         )
 
@@ -462,11 +474,12 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             words_q = (
                 select(*_word_columns())
                 .select_from(Word)
+                .join(Spelling, Spelling.id == Word.spelling_id)
                 .outerjoin(Transcription, Transcription.id == Word.transcription)
                 .outerjoin(WordLexeme, WordLexeme.word == Word.id)
                 .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
                 .where(Word.id.in_(word_ids))
-                .group_by(Word.id, Transcription.id)
+                .group_by(Word.id, Spelling.id, Transcription.id)
             )
             word_map = {
                 r["word_id"]: _word_dto(r)
@@ -503,10 +516,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(Numeral)
             .join(Word, Word.id == Numeral.word)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(Numeral.id, Word.id, Transcription.id)
+            .group_by(Numeral.id, Word.id, Spelling.id, Transcription.id)
             .order_by(Numeral.id)
         )
         return [
@@ -533,6 +547,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(Pronoun)
             .join(Word, Word.id == Pronoun.word)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
@@ -542,6 +557,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             .group_by(
                 Pronoun.id,
                 Word.id,
+                Spelling.id,
                 Transcription.id,
                 Plurality.id,
                 Formality.id,
@@ -615,10 +631,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(PositionWord)
             .join(Word, Word.id == PositionWord.word_id)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(PositionWord.id, Word.id, Transcription.id)
+            .group_by(PositionWord.id, Word.id, Spelling.id, Transcription.id)
             .order_by(PositionWord.position_id, PositionWord.word_order)
         )
 
@@ -652,10 +669,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(DayOfWeek)
             .join(Word, Word.id == DayOfWeek.word_id)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(DayOfWeek.id, Word.id, Transcription.id)
+            .group_by(DayOfWeek.id, Word.id, Spelling.id, Transcription.id)
             .order_by(DayOfWeek.ordinal)
         )
         return [
@@ -676,10 +694,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(TimeOfDay)
             .join(Word, Word.id == TimeOfDay.word_id)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(TimeOfDay.id, Word.id, Transcription.id)
+            .group_by(TimeOfDay.id, Word.id, Spelling.id, Transcription.id)
             .order_by(TimeOfDay.ordinal)
         )
         return [
@@ -695,10 +714,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(Hour)
             .join(Word, Word.id == Hour.word_id)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(Hour.id, Word.id, Transcription.id)
+            .group_by(Hour.id, Word.id, Spelling.id, Transcription.id)
             .order_by(Hour.ordinal)
         )
         return [
@@ -722,11 +742,12 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(Month)
             .join(Word, Word.id == Month.word_id)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
             .join(Zodiac, Zodiac.id == Month.zodiac_id)
-            .group_by(Month.id, Word.id, Transcription.id, Zodiac.id)
+            .group_by(Month.id, Word.id, Spelling.id, Transcription.id, Zodiac.id)
             .order_by(Month.ordinal)
         )
         return [
@@ -758,7 +779,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 CelestialBody.glyph,
                 CelestialBody.color_hex,
                 W.id.label("word_id"),
-                W.value.label("word_value"),
+                Spelling.value.label("word_value"),
                 Tr.phonemic.label("word_phonemic"),
                 Tr.paiboon.label("word_paiboon"),
                 Tr.IPA.label("word_ipa"),
@@ -768,6 +789,7 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(CelestialBody)
             .join(W, W.id == CelestialBody.word_id)
+            .join(Spelling, Spelling.id == W.spelling_id)
             .outerjoin(Tr, Tr.id == W.transcription)
             .outerjoin(Wl, Wl.word == W.id)
             .outerjoin(Lm, Lm.id == Wl.lexeme)
@@ -777,7 +799,8 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 CelestialBody.glyph,
                 CelestialBody.color_hex,
                 W.id,
-                W.value,
+                Spelling.id,
+                Spelling.value,
                 Tr.id,
                 Tr.phonemic,
                 Tr.paiboon,
@@ -809,10 +832,11 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .select_from(ClusterWord)
             .join(Word, Word.id == ClusterWord.word_id)
+            .join(Spelling, Spelling.id == Word.spelling_id)
             .outerjoin(Transcription, Transcription.id == Word.transcription)
             .outerjoin(WordLexeme, WordLexeme.word == Word.id)
             .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
-            .group_by(ClusterWord.id, ClusterWord.cluster_id, Word.id, Transcription.id)
+            .group_by(ClusterWord.id, ClusterWord.cluster_id, Word.id, Spelling.id, Transcription.id)
             .order_by(ClusterWord.cluster_id, ClusterWord.id)
         )
         by_cluster: dict[int, list[tuple[int, WordDto]]] = defaultdict(list)
@@ -830,3 +854,94 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             for c in clusters
         ]
+
+    def get_homonyms(self) -> HomonymsDto:
+        stmt = (
+            select(
+                Word.spelling_id.label("spelling_id"),
+                Word.transcription.label("transcription_id"),
+                Word.is_primary.label("is_primary"),
+                Spelling.value.label("spelling_value"),
+                *_word_columns(),
+            )
+            .select_from(Word)
+            .join(Spelling, Spelling.id == Word.spelling_id)
+            .outerjoin(Transcription, Transcription.id == Word.transcription)
+            .outerjoin(WordLexeme, WordLexeme.word == Word.id)
+            .outerjoin(Lexeme, Lexeme.id == WordLexeme.lexeme)
+            .group_by(
+                Word.id,
+                Word.spelling_id,
+                Word.transcription,
+                Word.is_primary,
+                Spelling.id,
+                Spelling.value,
+                Transcription.id,
+                Transcription.phonemic,
+                Transcription.paiboon,
+                Transcription.IPA,
+            )
+            .order_by(Spelling.value, Word.is_primary.desc(), Word.id)
+        )
+        rows = self._session.execute(stmt).mappings().all()
+
+        records: list[dict] = []
+        for r in rows:
+            records.append(
+                {
+                    "spelling_id": r["spelling_id"],
+                    "transcription_id": r["transcription_id"],
+                    "spelling_value": r["spelling_value"] or "",
+                    "is_primary": bool(r["is_primary"]),
+                    "word": _word_dto(r),
+                }
+            )
+
+        by_spelling: dict[int, list[dict]] = defaultdict(list)
+        by_transcription: dict[int, list[dict]] = defaultdict(list)
+        for rec in records:
+            by_spelling[rec["spelling_id"]].append(rec)
+            tid = rec["transcription_id"]
+            if tid is not None:
+                by_transcription[tid].append(rec)
+
+        homographs: list[HomographGroupDto] = []
+        for group in sorted(by_spelling.values(), key=lambda g: g[0]["spelling_value"]):
+            if len(group) < 2:
+                continue
+            homographs.append(
+                HomographGroupDto(
+                    spelling=group[0]["spelling_value"],
+                    readings=[
+                        g["word"]
+                        for g in sorted(group, key=lambda x: (not x["is_primary"], x["word"].id))
+                    ],
+                )
+            )
+
+        homophones: list[HomophoneGroupDto] = []
+        for group in by_transcription.values():
+            if len({g["spelling_id"] for g in group}) < 2:
+                continue
+            homophones.append(
+                HomophoneGroupDto(
+                    transcription=group[0]["word"].transcription,
+                    words=[g["word"] for g in sorted(group, key=lambda x: x["word"].id)],
+                )
+            )
+        homophones.sort(key=lambda g: g.words[0].value if g.words else "")
+
+        true_homonyms = [
+            TrueHomonymGroupDto(word=rec["word"])
+            for rec in records
+            if len(rec["word"].lexemes) >= 2
+        ]
+        true_homonyms.sort(key=lambda g: g.word.value)
+
+        return HomonymsDto(
+            homophones=homophones,
+            homographs=homographs,
+            true_homonyms=true_homonyms,
+        )
+
+

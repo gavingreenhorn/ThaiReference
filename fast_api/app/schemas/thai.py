@@ -152,3 +152,27 @@ class MonthDto(BaseModel):
     short_name: str
     english_name: str
     zodiac: ZodiacDto
+
+
+class HomophoneGroupDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    transcription: TranscriptionDto
+    words: list[WordDto] = []
+
+
+class HomographGroupDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    spelling: str
+    readings: list[WordDto] = []
+
+
+class TrueHomonymGroupDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    word: WordDto
+
+
+class HomonymsDto(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    homophones: list[HomophoneGroupDto] = []
+    homographs: list[HomographGroupDto] = []
+    true_homonyms: list[TrueHomonymGroupDto] = []

@@ -8,6 +8,7 @@ from app.schemas.thai import (
     ClusterDto,
     ConsonantDto,
     DayOfWeekDto,
+    HomonymsDto,
     HourDto,
     MarkDto,
     MonthDto,
@@ -35,6 +36,11 @@ def get_consonants(repo: RepoDep) -> list[ConsonantDto]:
 @router.get("/clusters", response_model=list[ClusterDto])
 def get_clusters(repo: RepoDep) -> list[ClusterDto]:
     return repo.get_clusters()
+
+
+@router.get("/homonyms", response_model=HomonymsDto)
+def get_homonyms(repo: RepoDep) -> HomonymsDto:
+    return repo.get_homonyms()
 
 
 @router.get("/vowels", response_model=list[VowelDto])

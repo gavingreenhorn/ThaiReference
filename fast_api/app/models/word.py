@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
 
 if TYPE_CHECKING:
+    from app.models.spelling import Spelling
     from app.models.transcription import Transcription
     from app.models.word_lexeme import WordLexeme
 
@@ -15,16 +16,26 @@ if TYPE_CHECKING:
 class Word(Base):
     __tablename__ = "Word"
     __table_args__ = (
-        UniqueConstraint("value", name="uq_thai_word_value"),
+        UniqueConstraint(
+            "spelling_id",
+            "transcription",
+            name="uq_thai_word_spelling_transcription",
+        ),
         {"extend_existing": True},
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    spelling_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("Spelling.id"), nullable=False
+    )
     transcription: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("Transcription.id"), nullable=True
     )
-    value: Mapped[str | None] = mapped_column(String(25), nullable=True)
+    is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
+    spelling_rel: Mapped["Spelling"] = relationship(
+        "Spelling", back_populates="words", foreign_keys=[spelling_id]
+    )
     transcription_rel: Mapped[Transcription | None] = relationship(
         "Transcription", foreign_keys=[transcription]
     )
@@ -33,4 +44,5 @@ class Word(Base):
     )
 
     def __repr__(self) -> str:
-        return f"Word({self.value or f'id={self.id}'})"
+        label = self.spelling_rel.value if self.spelling_rel is not None else f"id={self.id}"
+        return f"Word({label!r})"

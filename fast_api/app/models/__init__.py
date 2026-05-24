@@ -23,6 +23,7 @@ from app.models.pronoun import Pronoun
 from app.models.pronoun_type import PronounType
 from app.models.pronoun_type_breakout import PronounTypeBreakout
 from app.models.sound import Sound
+from app.models.spelling import Spelling
 from app.models.sound_type import SoundType
 from app.models.special_symbol import SpecialSymbol
 from app.models.time_of_day import TimeOfDay
@@ -59,6 +60,7 @@ __all__ = [
     "PronounType",
     "PronounTypeBreakout",
     "Sound",
+    "Spelling",
     "SoundType",
     "SpecialSymbol",
     "TimeOfDay",
