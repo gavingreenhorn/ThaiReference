@@ -50,7 +50,6 @@ from app.schemas.thai import (
     HomographGroupDto,
     HomophoneGroupDto,
     HomonymsDto,
-    TrueHomonymGroupDto,
     DayOfWeekDto,
     HourDto,
     MarkDto,
@@ -856,13 +855,14 @@ class SQLAlchemyThaiRepository(ThaiRepository):
         ]
 
     def get_homonyms(self) -> HomonymsDto:
-        stmt = (
+        word = (
             select(
-                Word.spelling_id.label("spelling_id"),
-                Word.transcription.label("transcription_id"),
-                Word.is_primary.label("is_primary"),
-                Spelling.value.label("spelling_value"),
+                Word.spelling_id,
+                Word.transcription,
                 *_word_columns(),
+                func.count()
+                .over(partition_by=Word.spelling_id)
+                .label("spelling_count"),
             )
             .select_from(Word)
             .join(Spelling, Spelling.id == Word.spelling_id)
@@ -873,7 +873,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 Word.id,
                 Word.spelling_id,
                 Word.transcription,
-                Word.is_primary,
                 Spelling.id,
                 Spelling.value,
                 Transcription.id,
@@ -881,65 +880,60 @@ class SQLAlchemyThaiRepository(ThaiRepository):
                 Transcription.paiboon,
                 Transcription.IPA,
             )
-            .order_by(Spelling.value, Word.is_primary.desc(), Word.id)
+            .cte("word")
         )
-        rows = self._session.execute(stmt).mappings().all()
-
-        records: list[dict] = []
-        for r in rows:
-            records.append(
-                {
-                    "spelling_id": r["spelling_id"],
-                    "transcription_id": r["transcription_id"],
-                    "spelling_value": r["spelling_value"] or "",
-                    "is_primary": bool(r["is_primary"]),
-                    "word": _word_dto(r),
-                }
+        homograph = (
+            select(word.c.spelling_id)
+            .select_from(word)
+            .group_by(word.c.spelling_id)
+            .having(func.count() >= 2)
+            .cte("homograph")
+        )
+        homophone = (
+            select(word.c.transcription)
+            .select_from(word)
+            .where(
+                word.c.spelling_count == 1,
+                word.c.transcription.isnot(None),
             )
-
-        by_spelling: dict[int, list[dict]] = defaultdict(list)
-        by_transcription: dict[int, list[dict]] = defaultdict(list)
-        for rec in records:
-            by_spelling[rec["spelling_id"]].append(rec)
-            tid = rec["transcription_id"]
-            if tid is not None:
-                by_transcription[tid].append(rec)
-
-        homographs: list[HomographGroupDto] = []
-        for group in sorted(by_spelling.values(), key=lambda g: g[0]["spelling_value"]):
-            if len(group) < 2:
-                continue
-            homographs.append(
-                HomographGroupDto(
-                    spelling=group[0]["spelling_value"],
-                    readings=[
-                        g["word"]
-                        for g in sorted(group, key=lambda x: (not x["is_primary"], x["word"].id))
-                    ],
-                )
+            .group_by(word.c.transcription)
+            .having(func.count() >= 2)
+            .cte("homophone")
+        )
+        homonym = (
+            select(word.c.word_id, literal(True).label("is_homograph"))
+            .select_from(word)
+            .join(homograph, homograph.c.spelling_id == word.c.spelling_id)
+            .union_all(
+                select(word.c.word_id, literal(False).label("is_homograph"))
+                .select_from(word)
+                .join(homophone, homophone.c.transcription == word.c.transcription)
             )
+            .cte("homonym")
+        )
 
-        homophones: list[HomophoneGroupDto] = []
-        for group in by_transcription.values():
-            if len({g["spelling_id"] for g in group}) < 2:
-                continue
-            homophones.append(
-                HomophoneGroupDto(
-                    transcription=group[0]["word"].transcription,
-                    words=[g["word"] for g in sorted(group, key=lambda x: x["word"].id)],
-                )
-            )
-        homophones.sort(key=lambda g: g.words[0].value if g.words else "")
+        rows = self._session.execute(
+            select(word, homonym.c.is_homograph)
+            .select_from(word)
+            .join(homonym, homonym.c.word_id == word.c.word_id)
+        ).mappings().all()
 
-        true_homonyms = [
-            TrueHomonymGroupDto(word=rec["word"])
-            for rec in records
-            if len(rec["word"].lexemes) >= 2
-        ]
-        true_homonyms.sort(key=lambda g: g.word.value)
+        by_spelling: dict[int, list[WordDto]] = defaultdict(list)
+        by_transcription: dict[int, list[WordDto]] = defaultdict(list)
+        for row in rows:
+            dto = _word_dto(row)
+            if row["is_homograph"]:
+                by_spelling[row["spelling_id"]].append(dto)
+            else:
+                by_transcription[row["transcription"]].append(dto)
 
         return HomonymsDto(
-            homophones=homophones,
-            homographs=homographs,
-            true_homonyms=true_homonyms,
+            homographs=[
+                HomographGroupDto(spelling=words[0].value, words=words)
+                for words in by_spelling.values()
+            ],
+            homophones=[
+                HomophoneGroupDto(transcription=words[0].transcription, words=words)
+                for words in by_transcription.values()
+            ],
         )
