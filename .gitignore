@@ -32,3 +32,8 @@ venv/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+fast_api/seeds/
+fast_api/scripts/
+.cursor/
+AGENTS.md

@@ -60,7 +60,7 @@ class SoundTypeAdmin(_ThaiModelView, model=SoundType):
 class LexemeAdmin(_ThaiModelView, model=Lexeme):
     name = "Lexeme"
     category = "Reference"
-    column_list = [Lexeme.id, Lexeme.value]
+    column_list = [Lexeme.id, Lexeme.value, Lexeme.part_of_speech, Lexeme.tags]
 
 
 class ClassAdmin(_ThaiModelView, model=Class):
