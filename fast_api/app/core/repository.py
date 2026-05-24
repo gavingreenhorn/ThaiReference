@@ -944,4 +944,3 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             true_homonyms=true_homonyms,
         )
 
-
