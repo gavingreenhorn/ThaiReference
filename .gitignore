@@ -37,3 +37,11 @@ fast_api/seeds/
 fast_api/scripts/
 .cursor/
 AGENTS.md
+
+# Spring Boot
+SpringBoot/target/
+SpringBoot/.mvn/
+SpringBoot/mvnw
+SpringBoot/mvnw.cmd
+SpringBoot/mvnwDebug
+SpringBoot/mvnwDebug.cmd

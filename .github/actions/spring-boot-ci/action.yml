@@ -16,10 +16,5 @@ runs:
 
     - run: |
         cd SpringBoot
-        if [ -f ./mvnw ]; then
-          chmod +x ./mvnw
-          ./mvnw -B -ntp -DskipTests package
-        else
-          mvn -B -ntp -DskipTests package
-        fi
+        mvn -B -ntp test package
       shell: bash
