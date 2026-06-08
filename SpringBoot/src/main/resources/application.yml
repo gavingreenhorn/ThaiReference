@@ -17,6 +17,7 @@ spring:
       hibernate:
         default_schema: thai
         globally_quoted_identifiers: true
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
   flyway:
     enabled: true

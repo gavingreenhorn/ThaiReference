@@ -97,6 +97,8 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
+            set -euo pipefail
+
             if which docker &> /dev/null; then
               echo "docker already installed, skipping installation";
             else
@@ -149,11 +151,22 @@ jobs:
               exit 1
             }
 
-            curl -fsS http://127.0.0.1:5001/health
-            curl -fsS http://127.0.0.1:5001/thai/sounds | head -c 500
-            echo
-            curl -fsS http://127.0.0.1:5001/thai/consonants | head -c 500
-            echo
+            echo "=== backend logs (startup) ==="
+            sudo docker logs backend --tail 300 || true
+
+            smoke() {
+              local path="$1"
+              echo "=== smoke GET ${path} ==="
+              curl -fsS "http://127.0.0.1:5001${path}" | head -c 500 || true
+              echo
+            }
+
+            smoke /health
+            smoke /thai/sounds
+            smoke /thai/consonants
+            smoke /thai/vowels
+            smoke /thai/numerals
+            smoke /thai/homonyms
 
             if [ -d ${{ env.INFRA_DIR }}/media ] && [ "$(ls -A ${{ env.INFRA_DIR }}/media 2>/dev/null)" ]; then
               echo "Syncing ${{ env.INFRA_DIR }}/media into volume thai_media..."
