@@ -20,10 +20,11 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 ENV SERVER_PORT=5000
+ENV JAVA_TOOL_OPTIONS="-Xms128m -Xmx384m -XX:+UseSerialGC"
 EXPOSE 5000
 
 # curl only (no Python); try actuator / app / then root (shell form so || works)
-HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:5000/actuator/health >/dev/null 2>&1 || curl -fsS http://127.0.0.1:5000/health >/dev/null 2>&1 || curl -fsS -o /dev/null http://127.0.0.1:5000/ || exit 1
+HEALTHCHECK --interval=15s --timeout=10s --start-period=120s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:5000/health >/dev/null 2>&1 || curl -fsS http://127.0.0.1:5000/actuator/health >/dev/null 2>&1 || curl -fsS -o /dev/null http://127.0.0.1:5000/ || exit 1
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

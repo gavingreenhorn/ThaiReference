@@ -5,14 +5,14 @@ spring:
   application:
     name: thai-reference-api
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:thaidb}
+    url: jdbc:postgresql://${POSTGRES_HOST:thai_db}:${POSTGRES_PORT:5432}/${POSTGRES_DB:thaidb}?currentSchema=thai
     username: ${POSTGRES_USER:}
     password: ${POSTGRES_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     properties:
       hibernate:
         default_schema: thai

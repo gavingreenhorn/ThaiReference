@@ -114,11 +114,18 @@ jobs:
             fi
 
             mkdir -p ${{ env.INFRA_DIR }}/backups
-            sudo docker exec thai_db pg_dump -U ${{ secrets.POSTGRES_USER }} ${{ secrets.POSTGRES_DB }} > ${{ env.INFRA_DIR }}/backups/pg_$(date +%Y%m%d_%H%M%S).sql || true
-            cd ${{ env.INFRA_DIR }}/backups && for f in $(ls -t pg_*.sql 2>/dev/null | tail -n +6); do rm -f "$f"; done || true
+            df -h || true
+            sudo docker system df || true
 
             sudo docker compose -f ${{ env.COMPOSE_FILE }} down --remove-orphans || true
             sudo docker image prune -af || true
+            sudo docker builder prune -af || true
+
+            DB_CONTAINER=$(sudo docker ps -aq -f name=^${{ secrets.POSTGRES_HOST }}$ | head -n 1)
+            if [ -n "$DB_CONTAINER" ]; then
+              sudo docker exec "$DB_CONTAINER" pg_dump -U ${{ secrets.POSTGRES_USER }} ${{ secrets.POSTGRES_DB }} > ${{ env.INFRA_DIR }}/backups/pg_$(date +%Y%m%d_%H%M%S).sql || true
+            fi
+            cd ${{ env.INFRA_DIR }}/backups && for f in $(ls -t pg_*.sql 2>/dev/null | tail -n +6); do rm -f "$f"; done || true
 
             :> ${{ env.INFRA_DIR }}/.env
             chmod 640 ${{ env.INFRA_DIR }}/.env
@@ -134,7 +141,19 @@ jobs:
             echo ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }} >> ${{ env.INFRA_DIR }}/.env
             echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
 
-            sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d --wait --wait-timeout 180 || exit 1
+            sudo docker compose -f ${{ env.COMPOSE_FILE }} up -d --wait --wait-timeout 300 || {
+              echo "=== compose up failed; backend logs ==="
+              sudo docker logs backend --tail 300 || true
+              echo "=== compose ps ==="
+              sudo docker compose -f ${{ env.COMPOSE_FILE }} ps || true
+              exit 1
+            }
+
+            curl -fsS http://127.0.0.1:5001/health
+            curl -fsS http://127.0.0.1:5001/thai/sounds | head -c 500
+            echo
+            curl -fsS http://127.0.0.1:5001/thai/consonants | head -c 500
+            echo
 
             if [ -d ${{ env.INFRA_DIR }}/media ] && [ "$(ls -A ${{ env.INFRA_DIR }}/media 2>/dev/null)" ]; then
               echo "Syncing ${{ env.INFRA_DIR }}/media into volume thai_media..."
