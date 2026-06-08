@@ -169,6 +169,15 @@ jobs:
             smoke /thai/vowels
             smoke /thai/numerals
             smoke /thai/homonyms
+            smoke /thai/clusters
+            smoke /thai/marks
+            smoke /thai/pronouns
+            smoke /thai/positions
+            smoke /thai/weekdays
+            smoke /thai/celestial-bodies
+            smoke /thai/time-of-day
+            smoke /thai/hours
+            smoke /thai/months
 
             if [ -d ${{ env.INFRA_DIR }}/media ] && [ "$(ls -A ${{ env.INFRA_DIR }}/media 2>/dev/null)" ]; then
               echo "Syncing ${{ env.INFRA_DIR }}/media into volume thai_media..."
