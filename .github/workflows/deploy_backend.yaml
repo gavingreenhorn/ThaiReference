@@ -163,6 +163,13 @@ jobs:
               echo
             }
 
+            on_smoke_fail() {
+              echo "=== smoke test failed; backend logs ==="
+              sudo docker logs backend --tail 300 || true
+              exit 1
+            }
+            trap on_smoke_fail ERR
+
             smoke /health
             smoke /thai/sounds
             smoke /thai/consonants

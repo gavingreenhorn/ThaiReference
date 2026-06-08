@@ -14,63 +14,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
-    private static final String LEXEMES =
-            "(SELECT array_agg(l.value) FROM WordLexeme wl JOIN Lexeme l ON l.id = wl.lexemeId WHERE wl.wordId = w.id)";
-
     private static final String WORD_DTO =
             """
             new com.thaireference.dto.WordDto(
                 w.id,
                 sp.value,
-                new com.thaireference.dto.TranscriptionDto(tr.phonemic, tr.paiboon, tr.ipa),
-                """
-                    + LEXEMES
-                    + ")";
+                new com.thaireference.dto.TranscriptionDto(tr.phonemic, tr.paiboon, tr.ipa))
+            """;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    private record IdWordRow(Integer parentId, WordDto word) {}
-
-    private record IdStringRow(Integer parentId, String value) {}
-
-    private record IdGraphemeRow(Integer vowelId, VowelGraphemeDto grapheme) {}
-
-    private record ConsonantCoreRow(
-            Integer id,
-            String grapheme,
-            String phoneme,
-            String consonantClass,
-            String ending,
-            TranscriptionDto transcription,
-            SoundDto initialSound,
-            SoundDto endingSound,
-            String mediaUrl) {}
-
-    private record VowelCoreRow(
-            Integer id, boolean isDiphtong, SoundDto sound, String mediaUrl) {}
-
-    private record MarkCoreRow(Integer id, String grapheme, boolean toneMark, String englishLabel) {}
-
-    private record PronounCoreRow(
-            Integer id,
-            WordDto name,
-            int person,
-            int plurality,
-            String formality,
-            String gender) {}
-
-    private record ClusterCoreRow(Integer id, String clusterType, String subtype, String value) {}
-
-    private record PositionCoreRow(
-            Integer id, Integer rowIndex, Integer colIndex, String tileStyle, String label) {}
-
-    private record HomographCoreRow(Integer spellingId, String spelling) {}
-
-    private record HomophoneCoreRow(Integer transcriptionId, TranscriptionDto transcription) {}
-
     @Override
     public List<NumeralDto> findNumerals() {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         return entityManager
                 .createQuery(
                         """
@@ -87,11 +44,15 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         ORDER BY n.id
                         """,
                         NumeralDto.class)
-                .getResultList();
+                .getResultList()
+                .stream()
+                .map(n -> new NumeralDto(n.grapheme(), enrichWord(n.name(), lexemes)))
+                .toList();
     }
 
     @Override
     public List<DayOfWeekDto> findWeekdays() {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         return entityManager
                 .createQuery(
                         """
@@ -110,11 +71,15 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         ORDER BY d.ordinal
                         """,
                         DayOfWeekDto.class)
-                .getResultList();
+                .getResultList()
+                .stream()
+                .map(d -> new DayOfWeekDto(d.ordinal(), enrichWord(d.word(), lexemes), d.deity(), d.imageUrl()))
+                .toList();
     }
 
     @Override
     public List<TimeOfDayDto> findTimeOfDay() {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         return entityManager
                 .createQuery(
                         """
@@ -131,11 +96,15 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         ORDER BY td.ordinal
                         """,
                         TimeOfDayDto.class)
-                .getResultList();
+                .getResultList()
+                .stream()
+                .map(td -> new TimeOfDayDto(td.ordinal(), enrichWord(td.word(), lexemes)))
+                .toList();
     }
 
     @Override
     public List<HourDto> findHours() {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         return entityManager
                 .createQuery(
                         """
@@ -152,11 +121,15 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         ORDER BY h.ordinal
                         """,
                         HourDto.class)
-                .getResultList();
+                .getResultList()
+                .stream()
+                .map(h -> new HourDto(h.ordinal(), enrichWord(h.word(), lexemes)))
+                .toList();
     }
 
     @Override
     public List<MonthDto> findMonths() {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         return entityManager
                 .createQuery(
                         """
@@ -183,11 +156,20 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         ORDER BY m.ordinal
                         """,
                         MonthDto.class)
-                .getResultList();
+                .getResultList()
+                .stream()
+                .map(m -> new MonthDto(
+                        m.ordinal(),
+                        enrichWord(m.word(), lexemes),
+                        m.shortName(),
+                        m.englishName(),
+                        m.zodiac()))
+                .toList();
     }
 
     @Override
     public List<CelestialBodyDto> findCelestialBodies() {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         return entityManager
                 .createQuery(
                         """
@@ -206,7 +188,11 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         ORDER BY cb.ordinal
                         """,
                         CelestialBodyDto.class)
-                .getResultList();
+                .getResultList()
+                .stream()
+                .map(cb -> new CelestialBodyDto(
+                        cb.ordinal(), cb.glyph(), cb.colorHex(), enrichWord(cb.word(), lexemes)))
+                .toList();
     }
 
     @Override
@@ -214,7 +200,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<ConsonantCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$ConsonantCoreRow(
+                        SELECT new com.thaireference.repository.ConsonantCoreRow(
                             c.id,
                             c.grapheme,
                             c.phoneme,
@@ -251,7 +237,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
         Map<Integer, List<WordDto>> samples = loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     cs.consonantId,
                     """
                         + WORD_DTO
@@ -283,7 +269,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<VowelCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$VowelCoreRow(
+                        SELECT new com.thaireference.repository.VowelCoreRow(
                             v.id,
                             COALESCE(v.isDiphtong, false),
                             new com.thaireference.dto.SoundDto(
@@ -305,7 +291,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         Map<Integer, List<VowelGraphemeDto>> graphemes = loadGraphemesByVowel();
         Map<Integer, List<WordDto>> samples = loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     vsmp.vowelId,
                     """
                         + WORD_DTO
@@ -341,7 +327,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<PronounCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$PronounCoreRow(
+                        SELECT new com.thaireference.repository.PronounCoreRow(
                             p.id,
                             """
                                 + WORD_DTO
@@ -368,10 +354,11 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                 .getResultList();
 
         Map<Integer, List<String>> types = loadPronounTypes();
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
 
         return cores.stream()
                 .map(p -> new PronounDto(
-                        p.name(),
+                        enrichWord(p.name(), lexemes),
                         p.person(),
                         p.plurality(),
                         p.formality(),
@@ -385,7 +372,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<PositionCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$PositionCoreRow(
+                        SELECT new com.thaireference.repository.PositionCoreRow(
                             pos.id,
                             pos.rowIndex,
                             pos.colIndex,
@@ -399,7 +386,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
         Map<Integer, List<WordDto>> words = loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     pw.positionId,
                     """
                         + WORD_DTO
@@ -428,7 +415,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<ClusterCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$ClusterCoreRow(
+                        SELECT new com.thaireference.repository.ClusterCoreRow(
                             cl.id,
                             cl.clusterType,
                             cl.subtype,
@@ -441,7 +428,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
         Map<Integer, List<WordDto>> samples = loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     cw.clusterId,
                     """
                         + WORD_DTO
@@ -465,7 +452,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<HomographCoreRow> homographCores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$HomographCoreRow(
+                        SELECT new com.thaireference.repository.HomographCoreRow(
                             sp.id,
                             sp.value)
                         FROM Spelling sp
@@ -486,7 +473,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<HomophoneCoreRow> homophoneCores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$HomophoneCoreRow(
+                        SELECT new com.thaireference.repository.HomophoneCoreRow(
                             t.id,
                             new com.thaireference.dto.TranscriptionDto(t.phonemic, t.paiboon, t.ipa))
                         FROM Transcription t
@@ -509,19 +496,49 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     }
 
     private Map<Integer, List<WordDto>> loadWordsByParent(String jpql) {
+        Map<Integer, List<String>> lexemes = loadLexemesByWord();
         List<IdWordRow> rows = entityManager.createQuery(jpql, IdWordRow.class).getResultList();
         Map<Integer, List<WordDto>> grouped = new LinkedHashMap<>();
         for (IdWordRow row : rows) {
-            grouped.computeIfAbsent(row.parentId(), ignored -> new ArrayList<>()).add(row.word());
+            grouped.computeIfAbsent(row.parentId(), ignored -> new ArrayList<>())
+                    .add(enrichWord(row.word(), lexemes));
         }
         return grouped;
+    }
+
+    private Map<Integer, List<String>> loadLexemesByWord() {
+        List<IdStringRow> rows = entityManager
+                .createQuery(
+                        """
+                        SELECT new com.thaireference.repository.IdStringRow(
+                            wl.wordId,
+                            l.value)
+                        FROM WordLexeme wl
+                        JOIN Lexeme l ON l.id = wl.lexemeId
+                        ORDER BY wl.wordId, wl.id
+                        """,
+                        IdStringRow.class)
+                .getResultList();
+        Map<Integer, List<String>> grouped = new LinkedHashMap<>();
+        for (IdStringRow row : rows) {
+            grouped.computeIfAbsent(row.parentId(), ignored -> new ArrayList<>()).add(row.value());
+        }
+        return grouped;
+    }
+
+    private WordDto enrichWord(WordDto word, Map<Integer, List<String>> lexemesByWord) {
+        return new WordDto(
+                word.id(),
+                word.value(),
+                word.transcription(),
+                lexemesByWord.getOrDefault(word.id(), List.of()));
     }
 
     private Map<Integer, List<VowelGraphemeDto>> loadGraphemesByVowel() {
         List<IdGraphemeRow> rows = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdGraphemeRow(
+                        SELECT new com.thaireference.repository.IdGraphemeRow(
                             vg.vowelId,
                             new com.thaireference.dto.VowelGraphemeDto(
                                 COALESCE(vg.value, ''),
@@ -542,7 +559,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<IdStringRow> rows = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdStringRow(
+                        SELECT new com.thaireference.repository.IdStringRow(
                             ptb.pronounId,
                             pt.name)
                         FROM PronounTypeBreakout ptb
@@ -562,7 +579,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     private Map<Integer, List<WordDto>> loadWordsBySpelling() {
         return loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     w.spellingId,
                     """
                         + WORD_DTO
@@ -578,7 +595,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     private Map<Integer, List<WordDto>> loadWordsByTranscription() {
         return loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     w.transcriptionId,
                     """
                         + WORD_DTO
@@ -596,7 +613,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<MarkCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$MarkCoreRow(
+                        SELECT new com.thaireference.repository.MarkCoreRow(
                             ss.id,
                             COALESCE(ss.grapheme, ''),
                             false,
@@ -609,7 +626,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
         Map<Integer, List<WordDto>> words = loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     ss.id,
                     """
                         + WORD_DTO
@@ -632,7 +649,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<MarkCoreRow> cores = entityManager
                 .createQuery(
                         """
-                        SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$MarkCoreRow(
+                        SELECT new com.thaireference.repository.MarkCoreRow(
                             tm.id,
                             COALESCE(tm.mark, ''),
                             true,
@@ -645,7 +662,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
         Map<Integer, List<WordDto>> words = loadWordsByParent(
                 """
-                SELECT new com.thaireference.repository.ThaiReadRepositoryImpl$IdWordRow(
+                SELECT new com.thaireference.repository.IdWordRow(
                     tm.id,
                     """
                         + WORD_DTO
