@@ -157,7 +157,9 @@ jobs:
             smoke() {
               local path="$1"
               echo "=== smoke GET ${path} ==="
-              curl -fsS "http://127.0.0.1:5001${path}" | head -c 500 || true
+              local body
+              body=$(curl -fsS "http://127.0.0.1:5001${path}")
+              echo "${body:0:500}"
               echo
             }
 
