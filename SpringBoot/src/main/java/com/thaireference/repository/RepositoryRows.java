@@ -32,6 +32,4 @@ record ClusterCoreRow(Integer id, String clusterType, String subtype, String val
 
 record PositionCoreRow(Integer id, Integer rowIndex, Integer colIndex, String tileStyle, String label) {}
 
-record HomographCoreRow(Integer spellingId, String spelling) {}
-
 record HomophoneCoreRow(Integer transcriptionId, TranscriptionDto transcription) {}

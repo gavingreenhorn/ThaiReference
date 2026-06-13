@@ -47,9 +47,7 @@ from app.schemas.thai import (
     CelestialBodyDto,
     ClusterDto,
     ConsonantDto,
-    HomographGroupDto,
     HomophoneGroupDto,
-    HomonymsDto,
     DayOfWeekDto,
     HourDto,
     MarkDto,
@@ -113,7 +111,7 @@ class ThaiRepository(ABC):
     def get_clusters(self) -> list[ClusterDto]: ...
 
     @abstractmethod
-    def get_homonyms(self) -> HomonymsDto: ...
+    def get_homophones(self) -> list[HomophoneGroupDto]: ...
 
 
 # ---------------------------------------------------------------------------
@@ -854,9 +852,10 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             for c in clusters
         ]
 
-    def get_homonyms(self) -> HomonymsDto:
+    def get_homophones(self) -> list[HomophoneGroupDto]:
         word = (
             select(
+                Word.id.label("word_id"),
                 Word.spelling_id,
                 Word.transcription,
                 *_word_columns(),
@@ -882,13 +881,6 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             )
             .cte("word")
         )
-        homograph = (
-            select(word.c.spelling_id)
-            .select_from(word)
-            .group_by(word.c.spelling_id)
-            .having(func.count() >= 2)
-            .cte("homograph")
-        )
         homophone = (
             select(word.c.transcription)
             .select_from(word)
@@ -900,40 +892,19 @@ class SQLAlchemyThaiRepository(ThaiRepository):
             .having(func.count() >= 2)
             .cte("homophone")
         )
-        homonym = (
-            select(word.c.word_id, literal(True).label("is_homograph"))
-            .select_from(word)
-            .join(homograph, homograph.c.spelling_id == word.c.spelling_id)
-            .union_all(
-                select(word.c.word_id, literal(False).label("is_homograph"))
-                .select_from(word)
-                .join(homophone, homophone.c.transcription == word.c.transcription)
-            )
-            .cte("homonym")
-        )
 
         rows = self._session.execute(
-            select(word, homonym.c.is_homograph)
+            select(word)
             .select_from(word)
-            .join(homonym, homonym.c.word_id == word.c.word_id)
+            .join(homophone, homophone.c.transcription == word.c.transcription)
+            .order_by(word.c.transcription, word.c.word_id)
         ).mappings().all()
 
-        by_spelling: dict[int, list[WordDto]] = defaultdict(list)
         by_transcription: dict[int, list[WordDto]] = defaultdict(list)
         for row in rows:
-            dto = _word_dto(row)
-            if row["is_homograph"]:
-                by_spelling[row["spelling_id"]].append(dto)
-            else:
-                by_transcription[row["transcription"]].append(dto)
+            by_transcription[row["transcription"]].append(_word_dto(row))
 
-        return HomonymsDto(
-            homographs=[
-                HomographGroupDto(spelling=words[0].value, words=words)
-                for words in by_spelling.values()
-            ],
-            homophones=[
-                HomophoneGroupDto(transcription=words[0].transcription, words=words)
-                for words in by_transcription.values()
-            ],
-        )
+        return [
+            HomophoneGroupDto(transcription=words[0].transcription, words=words)
+            for words in by_transcription.values()
+        ]

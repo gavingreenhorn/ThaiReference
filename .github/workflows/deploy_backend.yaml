@@ -175,7 +175,7 @@ jobs:
             smoke /thai/consonants
             smoke /thai/vowels
             smoke /thai/numerals
-            smoke /thai/homonyms
+            smoke /thai/homophones
             smoke /thai/clusters
             smoke /thai/marks
             smoke /thai/pronouns

@@ -29,5 +29,5 @@ public interface ThaiReadRepositoryCustom {
 
     List<ClusterDto> findClusters();
 
-    HomonymsDto findHomonyms();
+    List<HomophoneGroupDto> findHomophones();
 }

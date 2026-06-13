@@ -5,7 +5,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.thaireference.dto.HomonymsDto;
 import com.thaireference.repository.ThaiReadRepository;
 import com.thaireference.web.ThaiController;
 import java.util.List;
@@ -22,7 +21,7 @@ class ThaiApiContractTest {
     void setUp() {
         ThaiReadRepository repository = mock(ThaiReadRepository.class);
         when(repository.findSounds()).thenReturn(List.of());
-        when(repository.findHomonyms()).thenReturn(new HomonymsDto());
+        when(repository.findHomophones()).thenReturn(List.of());
         mockMvc = MockMvcBuilders.standaloneSetup(new ThaiController(repository)).build();
     }
 
@@ -32,7 +31,7 @@ class ThaiApiContractTest {
     }
 
     @Test
-    void homonymsEndpointReturnsOk() throws Exception {
-        mockMvc.perform(get("/thai/homonyms")).andExpect(status().isOk());
+    void homophonesEndpointReturnsOk() throws Exception {
+        mockMvc.perform(get("/thai/homophones")).andExpect(status().isOk());
     }
 }

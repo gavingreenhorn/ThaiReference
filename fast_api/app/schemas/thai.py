@@ -158,15 +158,3 @@ class HomophoneGroupDto(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     transcription: TranscriptionDto
     words: list[WordDto] = []
-
-
-class HomographGroupDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    spelling: str
-    words: list[WordDto] = []
-
-
-class HomonymsDto(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    homophones: list[HomophoneGroupDto] = []
-    homographs: list[HomographGroupDto] = []

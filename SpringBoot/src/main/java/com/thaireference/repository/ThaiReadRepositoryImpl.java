@@ -448,28 +448,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     }
 
     @Override
-    public HomonymsDto findHomonyms() {
-        List<HomographCoreRow> homographCores = entityManager
-                .createQuery(
-                        """
-                        SELECT new com.thaireference.repository.HomographCoreRow(
-                            sp.id,
-                            sp.value)
-                        FROM Spelling sp
-                        JOIN Word w ON w.spellingId = sp.id
-                        GROUP BY sp.id, sp.value
-                        HAVING COUNT(w) >= 2
-                        ORDER BY sp.id
-                        """,
-                        HomographCoreRow.class)
-                .getResultList();
-
-        Map<Integer, List<WordDto>> homographWords = loadWordsBySpelling();
-
-        List<HomographGroupDto> homographs = homographCores.stream()
-                .map(h -> new HomographGroupDto(h.spelling(), homographWords.getOrDefault(h.spellingId(), List.of())))
-                .toList();
-
+    public List<HomophoneGroupDto> findHomophones() {
         List<HomophoneCoreRow> homophoneCores = entityManager
                 .createQuery(
                         """
@@ -488,11 +467,9 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
         Map<Integer, List<WordDto>> homophoneWords = loadWordsByTranscription();
 
-        List<HomophoneGroupDto> homophones = homophoneCores.stream()
+        return homophoneCores.stream()
                 .map(h -> new HomophoneGroupDto(h.transcription(), homophoneWords.getOrDefault(h.transcriptionId(), List.of())))
                 .toList();
-
-        return new HomonymsDto(homophones, homographs);
     }
 
     private Map<Integer, List<WordDto>> loadWordsByParent(String jpql) {
@@ -574,22 +551,6 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
             grouped.computeIfAbsent(row.parentId(), ignored -> new ArrayList<>()).add(row.value());
         }
         return grouped;
-    }
-
-    private Map<Integer, List<WordDto>> loadWordsBySpelling() {
-        return loadWordsByParent(
-                """
-                SELECT new com.thaireference.repository.IdWordRow(
-                    w.spellingId,
-                    """
-                        + WORD_DTO
-                        + """
-                )
-                FROM Word w
-                JOIN Spelling sp ON sp.id = w.spellingId
-                LEFT JOIN Transcription tr ON tr.id = w.transcriptionId
-                ORDER BY w.spellingId, w.id
-                """);
     }
 
     private Map<Integer, List<WordDto>> loadWordsByTranscription() {

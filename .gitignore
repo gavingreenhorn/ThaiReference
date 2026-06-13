@@ -1,4 +1,3 @@
-# MAUI client app (root only — do not use ThaiReference/ unanchored; it ignores com/thaireference/ on Windows)
 /ThaiReference/
 ThaiReference.sln
 mykeystore.keystore

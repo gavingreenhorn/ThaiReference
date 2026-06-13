@@ -32,9 +32,9 @@ public class ThaiController {
         return repository.findClusters();
     }
 
-    @GetMapping("/homonyms")
-    public HomonymsDto getHomonyms() {
-        return repository.findHomonyms();
+    @GetMapping("/homophones")
+    public List<HomophoneGroupDto> getHomophones() {
+        return repository.findHomophones();
     }
 
     @GetMapping("/vowels")
