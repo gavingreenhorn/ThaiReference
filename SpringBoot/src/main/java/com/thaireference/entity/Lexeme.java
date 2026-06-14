@@ -5,7 +5,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Lexeme", schema = "thai")
+@Table(
+    name = "Lexeme",
+    schema = "thai",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uq_thai_lexeme_value_part_of_speech",
+        columnNames = {"value", "part_of_speech"}
+    )
+)
 @Getter
 @Setter
 public class Lexeme {

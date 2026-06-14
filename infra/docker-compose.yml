@@ -7,11 +7,20 @@ services:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     env_file:
       - .env
+    command:
+      - postgres
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
     volumes:
       - thai_pg_data:/var/lib/postgresql/data
-      - ./postgres/init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB && psql -v ON_ERROR_STOP=1 -U $$POSTGRES_USER -d $$POSTGRES_DB -h 127.0.0.1 -c 'SELECT 1'",
+        ]
       start_period: 5s
       timeout: 5s
       retries: 3

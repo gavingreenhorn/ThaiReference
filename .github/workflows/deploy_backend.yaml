@@ -119,15 +119,15 @@ jobs:
             df -h || true
             sudo docker system df || true
 
-            sudo docker compose -f ${{ env.COMPOSE_FILE }} down --remove-orphans || true
-            sudo docker image prune -af || true
-            sudo docker builder prune -af || true
-
-            DB_CONTAINER=$(sudo docker ps -aq -f name=^${{ secrets.POSTGRES_HOST }}$ | head -n 1)
+            DB_CONTAINER=$(sudo docker ps -q -f name=^${{ secrets.POSTGRES_HOST }}$ | head -n 1)
             if [ -n "$DB_CONTAINER" ]; then
               sudo docker exec "$DB_CONTAINER" pg_dump -U ${{ secrets.POSTGRES_USER }} ${{ secrets.POSTGRES_DB }} > ${{ env.INFRA_DIR }}/backups/pg_$(date +%Y%m%d_%H%M%S).sql || true
             fi
             cd ${{ env.INFRA_DIR }}/backups && for f in $(ls -t pg_*.sql 2>/dev/null | tail -n +6); do rm -f "$f"; done || true
+
+            sudo docker compose -f ${{ env.COMPOSE_FILE }} down --remove-orphans || true
+            sudo docker image prune -af || true
+            sudo docker builder prune -af || true
 
             :> ${{ env.INFRA_DIR }}/.env
             chmod 640 ${{ env.INFRA_DIR }}/.env
@@ -148,6 +148,15 @@ jobs:
               sudo docker logs backend --tail 300 || true
               echo "=== compose ps ==="
               sudo docker compose -f ${{ env.COMPOSE_FILE }} ps || true
+              exit 1
+            }
+
+            echo "=== DB connectivity (published port, same path as DBeaver) ==="
+            sudo docker run --rm --network host postgres:16-alpine \
+              psql "postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@127.0.0.1:${{ secrets.POSTGRES_PORT }}/${{ secrets.POSTGRES_DB }}?sslmode=disable" \
+              -v ON_ERROR_STOP=1 -c "SELECT 1" || {
+              echo "=== DB smoke test failed; postgres logs ==="
+              sudo docker logs ${{ secrets.POSTGRES_HOST }} --tail 200 || true
               exit 1
             }
 
