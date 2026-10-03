@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView
+    x:Class="ThaiReference.Controls.OptionStrip"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    HorizontalOptions="Fill"
+    Padding="0,2">
+    <ContentView.Resources>
+        <ResourceDictionary>
+            <Style x:Key="OptionStripTrackChrome" TargetType="Border">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="HorizontalOptions" Value="Fill" />
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource OptionStripTrackFillLight}, Dark={StaticResource OptionStripTrackFillDark}}" />
+                <Setter Property="Stroke">
+                    <Setter.Value>
+                        <SolidColorBrush Color="{StaticResource OptionStripChromeGold}" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="OptionStripSeparator" TargetType="BoxView">
+                <Setter Property="HorizontalOptions" Value="Fill" />
+                <Setter Property="VerticalOptions" Value="Fill" />
+                <Setter Property="Color" Value="{StaticResource OptionStripChromeGold}" />
+            </Style>
+
+            <Style x:Key="OptionStripSegmentBorderIdle" TargetType="Border">
+                <Setter Property="Padding" Value="8,7" />
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="StrokeThickness" Value="0" />
+                <Setter Property="Stroke">
+                    <Setter.Value>
+                        <SolidColorBrush Color="Transparent" />
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="StrokeShape">
+                    <Setter.Value>
+                        <RoundRectangle CornerRadius="0" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="OptionStripSegmentBorderSelected" TargetType="Border">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="BackgroundColor" Value="{StaticResource ControlBG3}" />
+                <Setter Property="StrokeThickness" Value="0" />
+                <Setter Property="Stroke">
+                    <Setter.Value>
+                        <SolidColorBrush Color="Transparent" />
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="OptionStripCaptionIdle" TargetType="Label">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Opacity" Value="1" />
+                <Setter Property="FontAttributes" Value="None" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource MutedLight}, Dark={StaticResource MutedDark}}" />
+            </Style>
+
+            <Style x:Key="OptionStripCaptionSelected" TargetType="Label">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Opacity" Value="1" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource SubduedYellowDark}, Dark={StaticResource SubduedYellowDark}}" />
+            </Style>
+        </ResourceDictionary>
+    </ContentView.Resources>
+
+    <Border x:Name="Track" Style="{StaticResource OptionStripTrackChrome}">
+        <Grid x:Name="SegmentGrid" HorizontalOptions="Fill" VerticalOptions="Fill" />
+    </Border>
+</ContentView>

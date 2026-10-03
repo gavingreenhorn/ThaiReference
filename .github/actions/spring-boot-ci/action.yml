@@ -1,0 +1,20 @@
+name: Spring Boot CI
+description: JDK 23, Maven CLI, and package build (matches Docker build stage)
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: "23"
+
+    - run: |
+        sudo apt-get update -y
+        sudo apt-get install -y maven
+      shell: bash
+
+    - run: |
+        cd SpringBoot
+        mvn -B -ntp test package
+      shell: bash

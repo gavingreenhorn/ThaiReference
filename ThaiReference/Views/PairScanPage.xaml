@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:scanner="clr-namespace:BarcodeScanning;assembly=BarcodeScanning.Native.Maui"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             x:Class="ThaiReference.Views.PairScanPage"
+             Title="{ui:UiLabel account.scan_qr}">
+    <scanner:CameraView x:Name="BarcodeScanner"
+                        CameraEnabled="False"
+                        VibrationOnDetected="False"
+                        AimMode="True"
+                        OnDetectionFinished="OnDetectionFinished"
+                        HorizontalOptions="Fill"
+                        VerticalOptions="Fill"/>
+</ContentPage>

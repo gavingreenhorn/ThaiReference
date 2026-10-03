@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ThaiReference.Views.DaysView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:ThaiReference.ViewModels"
+    xmlns:ui="clr-namespace:ThaiReference.Ui"
+    x:DataType="vm:DaysViewModel"
+    Title="{ui:UiLabel shell.days}">
+
+    <Grid RowDefinitions="*, Auto" Padding="12" RowSpacing="12">
+
+        <CollectionView
+            Grid.Row="0"
+            ItemsSource="{Binding WeekdayItems}"
+            SelectionMode="None"
+            HorizontalOptions="Center"
+            VerticalOptions="Center">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:WeekdayItem">
+                    <Grid
+                        WidthRequest="88"
+                        HeightRequest="88"
+                        HorizontalOptions="Center">
+                        <Border
+                            x:Name="SelectionHalo"
+                            WidthRequest="86"
+                            HeightRequest="86"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            BackgroundColor="{Binding HaloFill}"
+                            StrokeShape="RoundRectangle 43"
+                            Stroke="Transparent"
+                            StrokeThickness="0"
+                            Opacity="0"
+                            InputTransparent="True">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="Opacity" Value="1"/>
+                                </DataTrigger>
+                            </Border.Triggers>
+                        </Border>
+                        <Border
+                            WidthRequest="64"
+                            HeightRequest="64"
+                            Padding="0"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center"
+                            StrokeShape="RoundRectangle 32"
+                            BackgroundColor="{Binding Background}"
+                            Stroke="Transparent"
+                            StrokeThickness="0">
+                            <Label
+                                Text="{Binding Celestial.Glyph}"
+                                FontSize="26"
+                                HorizontalTextAlignment="Center"
+                                VerticalTextAlignment="Center"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                TextColor="#ffffff"/>
+                        </Border>
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectWeekdayCommand}"
+                                CommandParameter="{Binding .}"/>
+                        </Grid.GestureRecognizers>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border
+            Grid.Row="1"
+            StrokeShape="RoundRectangle 10"
+            Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#2a2740}"
+            BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1a1825}"
+            Padding="16"
+            MinimumHeightRequest="100">
+            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto, Auto">
+
+                <Grid Grid.Row="0" Grid.Column="0">
+                    <Label
+                        Text="วัน"
+                        FontFamily="{DynamicResource CurrentThaiFont}"
+                        FontSize="28"
+                        TextColor="{AppThemeBinding Light=#b8860b, Dark=#e8c547}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label
+                        Text="{Binding SelectedItem.Weekday.Word.Value}"
+                        FontFamily="{DynamicResource CurrentThaiFont}"
+                        FontSize="28"
+                        TextColor="{AppThemeBinding Light=#b8860b, Dark=#e8c547}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+
+                <Grid Grid.Row="1" Grid.Column="0" Margin="0,2,0,0">
+                    <Label
+                        Text="{ui:UiLabel hint.days_wan}"
+                        FontFamily="{DynamicResource CurrentChromeFont}"
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light=#666, Dark=#a7a9be}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light=#666, Dark=#EEE8AA}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="SelectedItem.Weekday.Word.Transcription"/>
+                                <Binding Path="BindingContext.RomanizationOption" Source="{RelativeSource AncestorType={x:Type ContentPage}}"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </Grid>
+
+                <Grid Grid.Row="2" Grid.Column="0" Margin="0,4,0,0">
+                    <Label
+                        Text="{ui:UiLabel hint.days_tap}"
+                        FontFamily="{DynamicResource CurrentChromeFont}"
+                        FontSize="12"
+                        TextColor="{AppThemeBinding Light=#888, Dark=#a7a9be}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                        <HorizontalStackLayout.Triggers>
+                            <DataTrigger TargetType="HorizontalStackLayout" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </HorizontalStackLayout.Triggers>
+                        <Label
+                            Text="{Binding SelectedItem.Celestial.Word.LexemesString}"
+                            FontSize="12"
+                            TextColor="{AppThemeBinding Light=#888, Dark=#a7a9be}"
+                            VerticalTextAlignment="Center"/>
+                        <Label
+                            Text="{Binding SelectedItem.Celestial.Word.Value}"
+                            FontFamily="{DynamicResource CurrentThaiFont}"
+                            FontSize="13"
+                            TextColor="{AppThemeBinding Light=#888, Dark=#EEE8AA}"
+                            VerticalTextAlignment="Justify"/>
+                        <Label
+                            FontSize="12"
+                            TextColor="{AppThemeBinding Light=#888, Dark=#a7a9be}"
+                            VerticalTextAlignment="Center">
+                            <Label.Text>
+                                <MultiBinding Converter="{StaticResource PropertyAccessorConverter}" StringFormat='({0})'>
+                                    <Binding Path="SelectedItem.Celestial.Word.Transcription"/>
+                                    <Binding Path="BindingContext.RomanizationOption" Source="{RelativeSource AncestorType={x:Type ContentPage}}"/>
+                                </MultiBinding>
+                            </Label.Text>
+                        </Label>
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <Button
+                    Grid.Row="0" Grid.Column="1" Grid.RowSpan="3"
+                    Style="{StaticResource PlayButton}"
+                    TextColor="{AppThemeBinding Light=#b8860b, Dark=#e8c547}"
+                    BorderColor="{AppThemeBinding Light=#b8860b, Dark=#e8c547}"
+                    Command="{Binding PronounceCommand}"
+                    CommandParameter="{Binding SelectedItem.Weekday}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding SelectedItem}" Value="{x:Null}">
+                            <Setter Property="IsEnabled" Value="False"/>
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

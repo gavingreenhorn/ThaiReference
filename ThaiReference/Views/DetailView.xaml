@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             xmlns:models="clr-namespace:ThaiReference.Models.BaseModels;assembly=ThaiReference"
+             xmlns:refmodels="clr-namespace:ThaiReference.Models;assembly=ThaiReference"
+             xmlns:modelIF="clr-namespace:ThaiReference.Models.Interfaces;assembly=ThaiReference"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             x:Class="ThaiReference.Views.DetailView"
+             x:DataType="vms:DetailViewModel"
+             Title="DetailView">
+    <!--<ContentPage.Behaviors>
+        <toolkit:EventToCommandBehavior Command="{Binding AppearingCommand}" EventName="Appearing"/>
+        <toolkit:EventToCommandBehavior Command="{Binding DisappearingCommand}" EventName="Disappearing"/>
+    </ContentPage.Behaviors>-->
+    <ContentView BindingContext="{Binding DescriptionItem}">
+        <ContentView.Triggers>
+            <DataTrigger TargetType="ContentView" Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type models:Consonant}">
+                <Setter Property="ControlTemplate" Value="{StaticResource ConsonantDetails}" />
+            </DataTrigger>
+            <DataTrigger TargetType="ContentView" Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type models:Vowel}">
+                <Setter Property="ControlTemplate" Value="{StaticResource VowelDetails}" />
+            </DataTrigger>
+            <DataTrigger TargetType="ContentView" Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type models:Mark}">
+                <Setter Property="ControlTemplate" Value="{StaticResource MarkDetails}" />
+            </DataTrigger>
+            <DataTrigger TargetType="ContentView" Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type models:Pronoun}">
+                <Setter Property="ControlTemplate" Value="{StaticResource PronounDetails}" />
+            </DataTrigger>
+            <DataTrigger TargetType="ContentView" Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type refmodels:GridPositionCell}">
+                <Setter Property="ControlTemplate" Value="{StaticResource PositionCellDetails}" />
+            </DataTrigger>
+            <DataTrigger TargetType="ContentView" Binding="{Binding ., Converter={StaticResource DataTypeConverter}}" Value="{x:Type refmodels:Weekday}">
+                <Setter Property="ControlTemplate" Value="{StaticResource WeekdayDetails}" />
+            </DataTrigger>
+            <DataTrigger TargetType="ContentView">
+                <Setter Property="ControlTemplate" Value="{StaticResource DefaultDetails}" />
+            </DataTrigger>
+        </ContentView.Triggers>
+    </ContentView>
+</ContentPage>
+    

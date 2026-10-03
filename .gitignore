@@ -1,0 +1,59 @@
+mykeystore.keystore
+
+/media/
+
+SpringBoot/scripts/
+
+**/bin/
+**/obj/
+
+.env
+*.env
+
+# Seed DB (large binary; upload via scp instead)
+infra/seed/*.db
+ThaiReference/Resources/Raw/thai_lite.db
+ThaiReference/scripts/sync-api-endpoint.ps1
+
+# Local assets
+local/
+
+# Standalone Android Daydream
+ThaiClockDream/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+.cursor/
+AGENTS.md
+
+# Spring Boot
+SpringBoot/target/
+SpringBoot/.mvn/
+SpringBoot/mvnw
+SpringBoot/mvnw.cmd
+SpringBoot/mvnwDebug
+SpringBoot/mvnwDebug.cmd
+
+seed*.sql
+tmp_*.sql
+tmp_*.py
+tools/
+SpringBoot/src/main/resources/db/seed/

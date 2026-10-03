@@ -1,0 +1,170 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<!--<PropertyGroup Condition="$(TargetFramework.Contains('-android')) and '$(Configuration)' == 'Release'">
+	<AndroidKeyStore>true</AndroidKeyStore>
+	<AndroidSigningKeyStore>android.keystore</AndroidSigningKeyStore>
+  	<AndroidSigningKeyAlias>android</AndroidSigningKeyAlias>
+	<AndroidSigningKeyPass>env:androidkspwd</AndroidSigningKeyPass>
+	<AndroidSigningStorePass>env:androidkspwd</AndroidSigningStorePass>
+	<TrimMode>full</TrimMode>
+  	<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+  </PropertyGroup>-->
+	<PropertyGroup>
+		<TargetFrameworks>net10.0-android</TargetFrameworks>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">23.0</SupportedOSPlatformVersion>
+		<RunAOTCompilation>false</RunAOTCompilation>
+		<OutputType>Exe</OutputType>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>ThaiReference</RootNamespace>
+		<AssemblyName>ThaiReference.App</AssemblyName>
+		<ApplicationTitle>Thai Language Reference</ApplicationTitle>
+		<ApplicationId>com.jonecorp.thaireference</ApplicationId>
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
+		<AndroidKeyStore>false</AndroidKeyStore>
+		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+		<DebugType>portable</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<AndroidIncludeDebugSymbols>true</AndroidIncludeDebugSymbols>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
+		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+		<DebugSymbols>True</DebugSymbols>
+	</PropertyGroup>
+	<ItemGroup>
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#073B47" />
+		<MauiSplashScreen Include="Resources\Splash\splash.png" Color="#073B47" BaseSize="1152,1152" />
+		<MauiImage Include="Resources\Images\*" />
+		<MauiFont Include="Resources\Fonts\OpenSans-Regular.ttf" Alias="OpenSans" />
+		<MauiFont Include="Resources\Fonts\NotoSerifThai-Regular.ttf" Alias="NotoSerifThai" />
+		<MauiFont Include="Resources\Fonts\NotoSansThai-Regular.ttf" Alias="NotoSansThai" />
+		<MauiFont Include="Resources\Fonts\MaterialIconsSharp-Regular.otf" Alias="MaterialIconsSharp" />
+		<MauiFont Include="Resources\Fonts\DSEG7Classic-Regular.ttf" Alias="DSEG7Classic" />
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+		<Compile Remove="scripts\**\*" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\ThaiReference.Data\ThaiReference.Data.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="CommunityToolkit.Maui" Version="14.2.2" />
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.90" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.90" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<PackageReference Include="Plugin.Maui.Audio" Version="5.0.0-preview2" />
+		<PackageReference Include="BarcodeScanning.Native.Maui" Version="3.1.0" />
+		<PackageReference Include="QRCoder" Version="1.6.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<MauiXaml Update="Controls\OptionStrip.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Resources\Styles\Templates.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\ConsonantsView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\DetailView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\AllVowels.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\GraphemesBySound.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\MarksView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\ConsonantClustersView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\MonthsView.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\NumbersView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\PronounsView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\SettingsView.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\PairScanPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\ThaiClockView.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="Views\VowelsView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Update="Controls\OptionStrip.xaml.cs">
+			<DependentUpon>OptionStrip.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\ConsonantsView.xaml.cs">
+			<DependentUpon>ConsonantsView.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\DetailView.xaml.cs">
+			<DependentUpon>DetailView.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\AllVowels.xaml.cs">
+			<DependentUpon>AllVowels.xaml</DependentUpon>
+		</Compile>
+		<Compile Update="Views\VowelsView.xaml.cs">
+			<DependentUpon>VowelsView.xaml</DependentUpon>
+		</Compile>
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="Resources\Styles\Templates.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</None>
+		<None Update="Views\ConsonantsBySoundType.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Include="appsettings.json" />
+	</ItemGroup>
+	<ItemGroup>
+		<Folder Include="Handlers\" />
+		<Folder Include="Resources\Raw\" />
+	</ItemGroup>
+	<PropertyGroup>
+		<FetchProdDb>true</FetchProdDb>
+		<SyncApiEndpoint Condition="'$(SyncApiEndpoint)' == ''">false</SyncApiEndpoint>
+	</PropertyGroup>
+	<Target Name="SyncApiEndpoint"
+	        BeforeTargets="BuildLiteDb"
+	        Condition="'$(DesignTimeBuild)' != 'true' AND '$(SyncApiEndpoint)' == 'true' AND Exists('$(ProjectDir)scripts\sync-api-endpoint.ps1')">
+		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)scripts\sync-api-endpoint.ps1&quot;" WorkingDirectory="$(ProjectDir)" />
+	</Target>
+	<!-- Build: fetch from API and write thai_lite.db to Resources\Raw (embedded). Uses appsettings.json for ApiHost/ApiPort. -->
+	<Target Name="BuildLiteDb" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
+		<PropertyGroup>
+			<_LiteDbOutPath>$(ProjectDir)Resources\Raw\thai_lite.db</_LiteDbOutPath>
+			<_FetchLiteDbProject>$(ProjectDir)scripts\FetchLiteDb\FetchLiteDb.csproj</_FetchLiteDbProject>
+			<_ConfigPath>$(ProjectDir)appsettings.json</_ConfigPath>
+		</PropertyGroup>
+		<Exec Command="dotnet run --project &quot;$(_FetchLiteDbProject)&quot; -c $(Configuration) -- --out &quot;$(_LiteDbOutPath)&quot; --config &quot;$(_ConfigPath)&quot;" IgnoreExitCode="true" WorkingDirectory="$(ProjectDir)" />
+	</Target>
+	<Target Name="RunUnitTests" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
+		<Exec Command="dotnet test &quot;$(ProjectDir)..\ThaiReference.Tests\ThaiReference.Tests.csproj&quot; -c $(Configuration) --nologo" IgnoreStandardErrorWarningFormat="true" />
+	</Target>
+	<ProjectExtensions>
+		<VisualStudio>
+			<UserProperties XamarinHotReloadDebuggerTimeoutExceptionThaiReferenceHideInfoBar="True" XamarinHotReloadGenericExceptionInfoBarThaiReferenceHideInfoBar="True" XamarinHotReloadUnhandledDeviceExceptionThaiReferenceHideInfoBar="True" />
+		</VisualStudio>
+	</ProjectExtensions>
+</Project>  

@@ -1,0 +1,40 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DATABASE_TO_LOWER=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS thai
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
+      hibernate:
+        default_schema: thai
+        globally_quoted_identifiers: true
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        jdbc:
+          time_zone: UTC
+        hbm2ddl:
+          create_namespaces: true
+  flyway:
+    enabled: false
+
+snapadmin:
+  enabled: false
+
+app:
+  reference-data:
+    refresh-interval: 10m
+    http-cache-max-age: 10m
+    admin-debounce: 3s
+  account:
+    pair-ttl: 5m
+    email-ttl: 1h
+    rate-limit: 100
+    rate-limit-window: 1m
+    create-quota: 100
+    create-quota-window: 1h
+    max-devices: 5
+  mail:
+    from: test@localhost

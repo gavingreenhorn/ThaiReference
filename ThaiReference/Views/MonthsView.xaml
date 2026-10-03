@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="ThaiReference.Views.MonthsView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:ThaiReference.ViewModels"
+    xmlns:ui="clr-namespace:ThaiReference.Ui"
+    x:DataType="vm:MonthsViewModel"
+    Title="{ui:UiLabel shell.months}">
+
+    <Grid RowDefinitions="*, Auto" Padding="12" RowSpacing="12">
+
+        <GraphicsView
+            Grid.Row="0"
+            x:Name="MonthsWheel"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill"
+            StartInteraction="OnWheelTapped"/>
+
+        <Border
+            Grid.Row="1"
+            StrokeShape="RoundRectangle 10"
+            Stroke="{AppThemeBinding Light={StaticResource PanelStrokeLight}, Dark={StaticResource PanelStrokeDark}}"
+            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceInsetLight}, Dark={StaticResource SurfaceInsetDark}}"
+            Padding="16"
+            MinimumHeightRequest="110">
+            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto, Auto, Auto">
+
+                <Grid Grid.Row="0" Grid.Column="0">
+                    <Label
+                        Text="เดือน"
+                        FontFamily="{DynamicResource CurrentThaiFont}"
+                        FontSize="28"
+                        TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label
+                        Text="{Binding SelectedPanel.Thai}"
+                        FontFamily="{DynamicResource CurrentThaiFont}"
+                        FontSize="28"
+                        TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+
+                <Grid Grid.Row="1" Grid.Column="0" Margin="0,2,0,0">
+                    <Label
+                        Text=" "
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label
+                        FontSize="13"
+                        TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="SelectedPanel.Transcription"/>
+                                <Binding Path="BindingContext.RomanizationOption" Source="{RelativeSource AncestorType={x:Type ContentPage}}"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </Grid>
+
+                <Grid Grid.Row="2" Grid.Column="0" ColumnDefinitions="*,*" Margin="0,4,0,0">
+                    <Label
+                        Grid.ColumnSpan="2"
+                        Text="{ui:UiLabel hint.months_tap}"
+                        FontFamily="{DynamicResource CurrentChromeFont}"
+                        FontSize="12"
+                        TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource White}}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label
+                        Text="{Binding SelectedPanel.ZodiacLine}"
+                        FontFamily="{DynamicResource CurrentThaiFont}"
+                        FontSize="12"
+                        TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource White}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+
+                <Grid Grid.Row="3" Grid.Column="0" Margin="0,2,0,0">
+                    <Label
+                        Text=" "
+                        FontSize="11"
+                        TextColor="{AppThemeBinding Light={StaticResource FaintLight}, Dark={StaticResource FaintDark}}"
+                        IsVisible="False">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="True"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label
+                        Text="{Binding SelectedPanel.SanskritLine}"
+                        FontSize="11"
+                        TextColor="{AppThemeBinding Light={StaticResource FaintLight}, Dark={StaticResource FaintDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+
+                <Button
+                    Grid.Row="0" Grid.Column="1" Grid.RowSpan="4"
+                    Style="{StaticResource PlayButton}"
+                    Command="{Binding PronounceCommand}"
+                    CommandParameter="{Binding SelectedPanel.PronounceTarget}">
+                    <Button.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding SelectedPanel}" Value="{x:Null}">
+                            <Setter Property="IsEnabled" Value="False"/>
+                        </DataTrigger>
+                    </Button.Triggers>
+                </Button>
+
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>

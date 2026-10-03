@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:modelIF="clr-namespace:ThaiReference.Models.Interfaces;assembly=ThaiReference"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:conv="clr-namespace:ThaiReference.Converters;assembly=ThaiReference.App"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             x:Class="ThaiReference.Views.MarksView"
+             x:Name="This"
+             x:DataType="vms:MarksViewModel"
+             Title="{ui:UiLabel shell.marks}">
+
+    <ContentPage.Resources>
+        <conv:IsNonEmptyStringConverter x:Key="IsNonEmptyStringConverter"/>
+        <DataTemplate x:Key="MarksToneRowTemplate" x:DataType="modelIF:IMark">
+            <Grid ColumnDefinitions="*,Auto"
+                  Padding="10"
+                  ColumnSpacing="14"
+                  HorizontalOptions="Fill">
+                <VerticalStackLayout Grid.Column="0"
+                                     Spacing="5"
+                                     VerticalOptions="Center"
+                                     HorizontalOptions="Fill">
+                    <Label Text="{Binding EnglishLabel}"
+                           FontFamily="{DynamicResource UIFont}"
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           LineBreakMode="WordWrap"
+                           LineHeight="1.25"
+                           HorizontalOptions="Fill"
+                           HorizontalTextAlignment="Start"
+                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
+                           Opacity="0.95"
+                           Padding="0">
+                        <Label.IsVisible>
+                            <MultiBinding Converter="{StaticResource EnglishGlossVisibleConverter}">
+                                <Binding Path="EnglishLabel"/>
+                                <Binding Path="Language" Source="{x:Static ui:UiLanguageState.Instance}"/>
+                            </MultiBinding>
+                        </Label.IsVisible>
+                    </Label>
+                    <Label FontFamily="{DynamicResource CurrentThaiFont}"
+                           FontSize="17"
+                           LineBreakMode="WordWrap"
+                           LineHeight="1.35"
+                           HorizontalOptions="Fill"
+                           HorizontalTextAlignment="Start"
+                           Padding="0"
+                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource SubduedYellowDark}}">
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource MarkLine}">
+                                <Binding Path="."/>
+                                <Binding Path="BindingContext.RomanizationOption"
+                                         Source="{RelativeSource AncestorType={x:Type ContentPage}}"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </VerticalStackLayout>
+                <Border Grid.Column="1"
+                        Margin="0,2"
+                        Padding="6"
+                        HeightRequest="68"
+                        WidthRequest="76"
+                        HorizontalOptions="End"
+                        VerticalOptions="Center"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceInsetLight}, Dark={StaticResource SurfaceInsetDark}}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding Source={x:Reference This}, Path=BindingContext.PronounceCommand}"
+                                              CommandParameter="{Binding .}"/>
+                    </Border.GestureRecognizers>
+                    <Label Text="{Binding Grapheme}"
+                           TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource SubduedYellowDark}}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"
+                           VerticalOptions="Center"
+                           VerticalTextAlignment="Center"
+                           FontSize="32"
+                           FontFamily="{DynamicResource CurrentThaiFont}"/>
+                </Border>
+            </Grid>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ScrollView Padding="16,12">
+        <VerticalStackLayout Spacing="5"
+                             HorizontalOptions="Fill">
+            <VerticalStackLayout Spacing="10"
+                                 HorizontalOptions="Fill">
+                <VerticalStackLayout.Triggers>
+                    <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding ToneMarks.Count}" Value="0">
+                        <Setter Property="IsVisible" Value="False"/>
+                    </DataTrigger>
+                </VerticalStackLayout.Triggers>
+                <Label Text="{ui:UiLabel marks.tone_section}"
+                       FontFamily="{DynamicResource CurrentChromeFont}"
+                       FontSize="20"
+                       TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource White}}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+                <Border Style="{StaticResource GroupCard}"
+                        Padding="4,6,4,10"
+                        HorizontalOptions="Fill">
+                    <CollectionView ItemsSource="{Binding ToneMarks}"
+                                      ItemTemplate="{StaticResource MarksToneRowTemplate}"
+                                      SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="0"/>
+                        </CollectionView.ItemsLayout>
+                    </CollectionView>
+                </Border>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="10"
+                                 HorizontalOptions="Fill">
+                <VerticalStackLayout.Triggers>
+                    <DataTrigger TargetType="VerticalStackLayout" Binding="{Binding MiscMarks.Count}" Value="0">
+                        <Setter Property="IsVisible" Value="False"/>
+                    </DataTrigger>
+                </VerticalStackLayout.Triggers>
+                <Label Text="{ui:UiLabel marks.misc_section}"
+                       FontFamily="{DynamicResource CurrentChromeFont}"
+                       FontSize="20"
+                       TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource White}}"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+                <Border Style="{StaticResource GroupCard}"
+                        Padding="4,6,4,10"
+                        HorizontalOptions="Fill">
+                    <CollectionView ItemsSource="{Binding MiscMarks}"
+                                    ItemTemplate="{StaticResource MarksToneRowTemplate}"
+                                    SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Vertical" ItemSpacing="0"/>
+                        </CollectionView.ItemsLayout>
+                    </CollectionView>
+                </Border>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

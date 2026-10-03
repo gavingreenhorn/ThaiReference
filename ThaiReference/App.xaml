@@ -1,0 +1,236 @@
+<?xml version = "1.0" encoding = "UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sys="clr-namespace:System;assembly=mscorlib"
+             xmlns:local="clr-namespace:ThaiReference"
+             xmlns:IF="clr-namespace:ThaiReference.Contracts;assembly=ThaiReference.App"
+             xmlns:model="clr-namespace:ThaiReference.Models;assembly=ThaiReference.App"
+             xmlns:modelIF="clr-namespace:ThaiReference.Models.Interfaces;assembly=ThaiReference"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:conv="clr-namespace:ThaiReference.Converters;assembly=ThaiReference.App"
+             xmlns:ut="clr-namespace:ThaiReference.Utilities;assembly=ThaiReference.App"
+             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+             x:Class="ThaiReference.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml"/>
+                <ResourceDictionary Source="Resources/Styles/Styles.xaml"/>
+                <ResourceDictionary Source="Resources/Styles/Templates.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <conv:DataTypeConverter x:Key="DataTypeConverter"></conv:DataTypeConverter>
+            <conv:PropertyAccessorConverter x:Key="PropertyAccessorConverter"></conv:PropertyAccessorConverter>
+            <conv:MarkLineConverter x:Key="MarkLine"/>
+            <conv:IsNullConverter x:Key="IsNullConverter"/>
+            <conv:IsNotNullConverter x:Key="IsNotNullConverter"/>
+            <conv:HexToColorConverter x:Key="HexToColorConverter"/>
+            <conv:EnumerableAnyToBoolConverter x:Key="EnumerableAnyToBoolConverter"/>
+            <conv:GramPersonLookupConverter x:Key="GramPersonLookupConverter"></conv:GramPersonLookupConverter>
+            <conv:RelativeWidthConverter x:Key="RelativeWidthConverter"></conv:RelativeWidthConverter>
+            <conv:ShellNavGlyphConverter x:Key="ShellNavGlyphConverter"/>
+            <conv:ShellNavGlyphFontConverter x:Key="ShellNavGlyphFontConverter"/>
+            <conv:UiLabelConverter x:Key="UiLabelConverter"/>
+            <conv:EnglishGlossVisibleConverter x:Key="EnglishGlossVisibleConverter"/>
+            <conv:LocalizedColorLabelConverter x:Key="LocalizedColorLabelConverter"/>
+            <ut:TemplateByKeyConverter x:Key="TemplateByKeyConverter"/>
+            <Style x:Key="BorderBase" TargetType="Border">
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="Padding" Value="2"/>
+                <Setter Property="Stroke" Value="{x:StaticResource Gray500}"/>
+            </Style>
+            <Style x:Key="BoxedText" TargetType="Border" BasedOn="{StaticResource BorderBase}">
+                <Setter Property="StrokeShape" Value="RoundRectangle 5,5,5,5"/>
+            </Style>
+            <Style x:Key="GroupBorder" TargetType="Border"  BasedOn="{StaticResource BorderBase}">
+                <Setter Property="StrokeShape" Value="RoundRectangle 8"/>
+                <Setter Property="Stroke">
+                    <Setter.Value>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="{StaticResource GroupBorderGradientStart}" Offset="0"/>
+                            <GradientStop Color="{StaticResource GroupBorderGradientEnd}" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="StrokeThickness" Value="1"/>
+                <Setter Property="Margin" Value="0,4"/>
+                <Setter Property="Padding" Value="8,6"/>
+            </Style>
+            <Style x:Key="ButtonBase" TargetType="Button">
+                <Setter Property="FontSize" Value="30"/>
+                <Setter Property="FontFamily" Value="{DynamicResource CurrentThaiFont}"/>
+                <Setter Property="TextColor" Value="White"/>
+            </Style>
+            <Style x:Key="VowelButtonBase" x:DataType="{x:Type modelIF:IVowel}" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+                <Setter Property="HeightRequest" Value="50"/>
+                <Setter Property="MinimumWidthRequest" Value="75"/>
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="Padding" Value="1"/>
+                <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
+                <Setter Property="CommandParameter" Value="{Binding .}"/>
+                <Setter Property="Text">
+                    <Setter.Value>
+                        <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                            <Binding Path="Transcription"/>
+                            <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                        </MultiBinding>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding Sound.SoundType}" Value="short">
+                        <Setter Property="Background" Value="YellowGreen"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding Sound.SoundType}" Value="long">
+                        <Setter Property="Background" Value="CornflowerBlue"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsDiphtong}" Value="True">
+                        <Setter Property="TextColor" Value="{StaticResource ControlFG2}"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="VowelButton" BasedOn="{StaticResource VowelButtonBase}" TargetType="Button">
+                <Style.Triggers>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding Source={RelativeSource AncestorType={x:Type vms:AllVowelsViewModel}}, Path=SelectedVowelVisualizationOption.Latin}"
+                                 Value="Sound">
+                        <!--<Setter Property="Text">
+                            <Setter.Value>
+                                <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                    <Binding Path="Transcription"/>
+                                    <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                                </MultiBinding>
+                            </Setter.Value>
+                        </Setter>-->
+                        <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding Source={RelativeSource AncestorType={x:Type vms:AllVowelsViewModel}}, Path=SelectedVowelVisualizationOption.Latin}"
+                                 Value="Open">
+                        <Setter Property="Text" Value="{Binding GraphemeOpen}"/>
+                        <Setter Property="FontFamily" Value="{DynamicResource CurrentThaiFont}"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding Source={RelativeSource AncestorType={x:Type vms:AllVowelsViewModel}}, Path=SelectedVowelVisualizationOption.Latin}"
+                                 Value="Closed">
+                        <Setter Property="Text" Value="{Binding GraphemeClosed}"/>
+                        <Setter Property="FontFamily" Value="{DynamicResource CurrentThaiFont}"/>
+                    </DataTrigger>
+
+                    <MultiTrigger TargetType="Button">
+                        <MultiTrigger.Conditions>
+                            <BindingCondition Binding="{Binding Source={RelativeSource AncestorType={x:Type vms:AllVowelsViewModel}}, Path=SelectedVowelVisualizationOption.Latin}"
+                                              Value="Open"/>
+                            <BindingCondition Binding="{Binding GraphemeOpen}" Value="{x:Null}"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="IsEnabled" Value="False"/>
+                        <Setter Property="Background" Value="DarkGray"/>
+                    </MultiTrigger>
+
+                    <MultiTrigger TargetType="Button">
+                        <MultiTrigger.Conditions>
+                            <BindingCondition Binding="{Binding Source={RelativeSource AncestorType={x:Type vms:AllVowelsViewModel}}, Path=SelectedVowelVisualizationOption.Latin}"
+                                              Value="Closed"/>
+                            <BindingCondition Binding="{Binding GraphemeClosed}" Value="{x:Null}"/>
+                        </MultiTrigger.Conditions>
+                        <Setter Property="IsEnabled" Value="False"/>
+                        <Setter Property="Background" Value="DarkGray"/>
+                    </MultiTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="ConsonantButtonBase" x:DataType="{x:Type modelIF:IConsonant}" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+                <Setter Property="MinimumHeightRequest" Value="50"/>
+                <Setter Property="Text" Value="{Binding Grapheme, TargetNullValue={x:Static sys:String.Empty}}"/>
+                <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
+                <Setter Property="CommandParameter" Value="{Binding .}"/>
+                <Style.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding Class}" Value="high">
+                        <Setter Property="Background" Value="Crimson"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding Class}" Value="low">
+                        <Setter Property="Background" Value="RoyalBlue"/>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Button" Binding="{Binding Class}" Value="mid">
+                        <Setter Property="Background" Value="Goldenrod"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="ConsonantButton" BasedOn="{StaticResource ConsonantButtonBase}" TargetType="Button">
+                <Setter Property="Margin" Value="5"/>
+                <Setter Property="Padding" Value="5"/>
+            </Style>
+            <Style x:Key="ConsonantButtonSoundGroupStyle" BasedOn="{StaticResource ConsonantButtonBase}" TargetType="Button">
+                <Setter Property="MinimumWidthRequest" Value="80"/>
+                <Setter Property="Margin" Value="1,5"/>
+                <Setter Property="Padding" Value="1"/>
+            </Style>
+            <Style x:Key="ConsonantButtonSoundTypeGroupStyle" BasedOn="{StaticResource ConsonantButtonBase}" TargetType="Button">
+                <Setter Property="Margin" Value="1"/>
+                <Setter Property="Padding" Value="1"/>
+            </Style>
+            <Style x:Key="ConsonantButtonSoundTypeGroupStyleInitial" BasedOn="{StaticResource ConsonantButtonSoundTypeGroupStyle}" TargetType="Button">
+                <Setter Property="Text" Value="{Binding Grapheme, StringFormat='{0}-', TargetNullValue={x:Static sys:String.Empty}}"/>
+            </Style>
+            <Style x:Key="ConsonantButtonSoundTypeGroupStyleFinal" BasedOn="{StaticResource ConsonantButtonSoundTypeGroupStyle}" TargetType="Button">
+                <Setter Property="Text" Value="{Binding Grapheme, StringFormat='-{0}', TargetNullValue={x:Static sys:String.Empty}}"/>
+            </Style>
+            <Style x:Key="WordButtonBase" TargetType="Button">
+                <Setter Property="FontSize" Value="25"/>
+                <Setter Property="FontFamily" Value="{DynamicResource CurrentThaiFont}"/>
+                <Setter Property="HorizontalOptions" Value="Fill"/>
+                <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}"/>
+                <Setter Property="BorderColor" Value="{StaticResource Gray400}"/>
+                <Setter Property="BorderWidth" Value="1"/>
+            </Style>
+            <Style x:Key="WordButton" x:DataType="{x:Type modelIF:IWord}" BasedOn="{StaticResource WordButtonBase}" TargetType="Button">
+                <Setter Property="Text">
+                    <Setter.Value>
+                        <MultiBinding StringFormat="{}{0} [{1}]">
+                            <Binding Path="Value"/>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="Transcription"/>
+                                <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                            </MultiBinding>
+                        </MultiBinding>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
+                <Setter Property="CommandParameter" Value="{Binding .}"/>
+            </Style>
+            <Style x:Key="SoundButton" x:DataType="{x:Type modelIF:ISound}" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="TextColor" Value="OrangeRed"/>
+                <Setter Property="FontSize" Value="25"/>
+                <Setter Property="FontFamily" Value="{StaticResource UIFont}"/>
+                <Setter Property="BorderColor" Value="{StaticResource Gray400}"/>
+                <Setter Property="BorderWidth" Value="1"/>
+                <Setter Property="Text" Value="{Binding Value, TargetNullValue={x:Static sys:String.Empty}}"/>
+            </Style>
+            <Style x:Key="SoundButtonDetail" BasedOn="{StaticResource SoundButton}" TargetType="Button">
+                <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
+                <Setter Property="CommandParameter" Value="{Binding .}"/>
+            </Style>
+            <Style x:Key="ConsonantsSoundButton" BasedOn="{StaticResource SoundButton}" TargetType="Button">
+                <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
+                <Setter Property="CommandParameter" Value="{Binding .}"/>
+            </Style>
+            <Style x:Key="ClusterMatrixHeaderConsonantButton" TargetType="Button" BasedOn="{StaticResource ConsonantButton}">
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="WidthRequest" Value="{StaticResource ClusterMatrixTile}"/>
+                <Setter Property="HeightRequest" Value="{StaticResource ClusterMatrixTile}"/>
+                <Setter Property="MinimumWidthRequest" Value="{StaticResource ClusterMatrixTile}"/>
+                <Setter Property="MinimumHeightRequest" Value="{StaticResource ClusterMatrixTile}"/>
+                <Setter Property="FontSize" Value="22"/>
+            </Style>
+            <Style x:Key="ClusterMatrixHeaderConsonantButtonFlex" TargetType="Button" BasedOn="{StaticResource ConsonantButton}">
+                <Setter Property="Margin" Value="2,0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="HeightRequest" Value="{StaticResource ClusterMatrixTile}"/>
+                <Setter Property="MinimumHeightRequest" Value="{StaticResource ClusterMatrixTile}"/>
+                <Setter Property="MinimumWidthRequest" Value="0"/>
+                <Setter Property="HorizontalOptions" Value="Fill"/>
+                <Setter Property="FontSize" Value="22"/>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

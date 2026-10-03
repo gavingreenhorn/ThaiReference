@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:ThaiReference"
+		xmlns:views="clr-namespace:ThaiReference.Views"
+    xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+    xmlns:conv="clr-namespace:ThaiReference.Converters;assembly=ThaiReference.App"
+    xmlns:sys="clr-namespace:System;assembly=netstandard"
+    x:Class="ThaiReference.AppShell"
+    x:DataType="vms:AppShellViewModel"
+    x:Name="RootShell"
+    Shell.FlyoutBehavior="Flyout"
+    Shell.NavBarIsVisible="True"
+    Shell.CurrentItem="{Binding ShellCurrentItem, Mode=OneWayToSource}"
+    FlyoutBackgroundColor="{StaticResource ControlBG3}"
+    Title="ThaiReference">
+    <Shell.TitleView>
+        <Grid ColumnDefinitions="1*, 1*"
+              Padding="12,8"
+              ColumnSpacing="12"
+              IsVisible="{Binding TitleViewVisible, Mode=TwoWay}">
+            <HorizontalStackLayout
+                Spacing="5"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+                <Switch
+                    IsToggled="{Binding IsModern}"
+                    VerticalOptions="Center"/>
+                <Label
+                    Text="{Binding ModernFontLabel}"
+                    VerticalOptions="Center"
+                    FontSize="13"
+                    FontFamily="{DynamicResource CurrentChromeFont}"
+                    LineBreakMode="TailTruncation"/>
+            </HorizontalStackLayout>
+            <Picker
+                Grid.Column="1"
+                VerticalOptions="Center"
+                HorizontalOptions="Center"
+                Title="{Binding RomanisationTitle}"
+                ItemsSource="{Binding RomanizationOptions}"
+                SelectedItem="{Binding SelectedRomanizationOption, Mode=TwoWay}"/>
+        </Grid>
+    </Shell.TitleView>
+    <Shell.FlyoutFooter>
+        <VerticalStackLayout Spacing="0" BackgroundColor="{StaticResource ControlBG3}">
+            <Grid x:Name="SettingsFooter"
+                  ColumnDefinitions="0.2*,0.8*"
+                  Padding="8,10"
+                  StyleClass="FlyoutItemLayoutStyle">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="OnSettingsClicked"/>
+                </Grid.GestureRecognizers>
+                <Label Style="{x:Null}"
+                       Margin="8,6"
+                       WidthRequest="36"
+                       HeightRequest="28"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       BackgroundColor="PaleGoldenrod"
+                       TextColor="{StaticResource ControlBG3}"
+                       FontFamily="MaterialIconsSharp-Regular"
+                       FontSize="22"
+                       Text="&#xE8B8;"/>
+                <Label x:Name="SettingsFooterLabel"
+                       Grid.Column="1"
+                       Text="Settings"
+                       FontFamily="{DynamicResource CurrentChromeFont}"
+                       FontAttributes="Bold"
+                       TextColor="PaleGoldenrod"
+                       VerticalTextAlignment="Center"/>
+            </Grid>
+            <VerticalStackLayout
+                Padding="16,10"
+                Spacing="2"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}">
+                <Label
+                    Text="Thai Reference"
+                    FontSize="13"
+                    TextColor="{AppThemeBinding Light={StaticResource Gray900}, Dark={StaticResource Gray100}}"
+                    FontAttributes="Bold"
+                    HorizontalOptions="Center"/>
+                <Label
+                    FontSize="11"
+                    Opacity="0.85"
+                    Text="{Binding Source={x:Static sys:DateTime.Now}, StringFormat='{0:MMMM dd, yyyy HH:mm}'}"
+                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray200}}"
+                    HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </Shell.FlyoutFooter>
+    <Shell.ItemTemplate>
+        <DataTemplate x:DataType="FlyoutItem">
+            <Grid ColumnDefinitions="0.2*,0.8*"
+                StyleClass="FlyoutItemLayoutStyle">
+                <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="Transparent"/>
+                                <Setter TargetName="FlyoutGlyph" Property="Label.BackgroundColor" Value="PaleGoldenrod"/>
+                                <Setter TargetName="FlyoutGlyph" Property="Label.TextColor" Value="{StaticResource ControlBG3}"/>
+                                <Setter TargetName="FlyoutItemLabel" Property="Label.TextColor" Value="PaleGoldenrod"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Selected">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="PaleGoldenrod"/>
+                                <Setter TargetName="FlyoutGlyph" Property="Label.BackgroundColor" Value="{StaticResource ControlBG3}"/>
+                                <Setter TargetName="FlyoutGlyph" Property="Label.TextColor" Value="PaleGoldenrod"/>
+                                <Setter TargetName="FlyoutItemLabel" Property="Label.TextColor" Value="{StaticResource ControlBG3}"/>
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+                <Label x:Name="FlyoutGlyph"
+                       Style="{x:Null}"
+                       Margin="8,6"
+                       Padding="0"
+                       WidthRequest="36"
+                       HeightRequest="28"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       FontFamily="{Binding Route, Converter={StaticResource ShellNavGlyphFontConverter}}"
+                       FontSize="22"
+                       Text="{Binding Route, Converter={StaticResource ShellNavGlyphConverter}, ConverterParameter=FlyoutItem}"/>
+                <Label
+                    x:Name="FlyoutItemLabel"
+                    Grid.Column="1"
+                    Text="{Binding Title}"
+                    FontFamily="{DynamicResource CurrentChromeFont}"
+                    FontAttributes="Bold"
+                    VerticalTextAlignment="Center"/>
+            </Grid>
+        </DataTemplate>
+    </Shell.ItemTemplate>
+    <Shell.MenuItemTemplate>
+        <!-- No x:DataType: compiled bindings break MenuItem.Text on Android Shell -->
+        <DataTemplate>
+            <Grid ColumnDefinitions="0.2*,0.8*"
+                  StyleClass="FlyoutItemLayoutStyle">
+                <Label Style="{x:Null}"
+                       Margin="8,6"
+                       Padding="0"
+                       WidthRequest="36"
+                       HeightRequest="28"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       BackgroundColor="PaleGoldenrod"
+                       TextColor="{StaticResource ControlBG3}"
+                       FontFamily="{Binding ClassId, Converter={StaticResource ShellNavGlyphFontConverter}}"
+                       FontSize="22"
+                       Text="{Binding ClassId, Converter={StaticResource ShellNavGlyphConverter}, ConverterParameter=MenuItem}"/>
+                <Label
+                    Grid.Column="1"
+                    Text="{Binding Text}"
+                    FontFamily="{DynamicResource CurrentChromeFont}"
+                    FontAttributes="Bold"
+                    TextColor="PaleGoldenrod"
+                    VerticalTextAlignment="Center"/>
+            </Grid>
+        </DataTemplate>
+    </Shell.MenuItemTemplate>
+    <FlyoutItem Title="Orphography" Route="orphography">
+        <ShellSection CurrentItem="{Binding SelectedThaiItem, Mode=OneWayToSource}">
+            <ShellContent
+                Title="Consonants"
+                ContentTemplate="{DataTemplate views:ConsonantsView}"
+                Route="Consonants"/>
+            <ShellContent
+                Title="Vowels"
+                ContentTemplate="{DataTemplate views:VowelsView}"
+                Route="Vowels"/>
+            <ShellContent
+                Title="Marks"
+                ContentTemplate="{DataTemplate views:MarksView}"
+                Route="Marks"/>
+        </ShellSection>
+    </FlyoutItem>
+    <FlyoutItem Title="Grammar" Route="grammar">
+        <ShellSection>
+            <ShellContent
+                Title="Tone rules"
+                ContentTemplate="{DataTemplate views:ToneRulesView}"
+                Route="ToneRules"/>
+            <ShellContent
+                Title="Clusters"
+                ContentTemplate="{DataTemplate views:ConsonantClustersView}"
+                Route="Clusters"/>
+        </ShellSection>
+    </FlyoutItem>
+    <FlyoutItem Title="Basic Terms" Route="terms">
+        <ShellSection>
+            <ShellContent
+                Title="Numbers"
+                ContentTemplate="{DataTemplate views:NumbersView}"
+                Route="Numbers"/>
+            <ShellContent
+                Title="Pronouns"
+                ContentTemplate="{DataTemplate views:PronounsView}"
+                Route="Pronouns"/>
+            <ShellContent
+                Title="Colors"
+                ContentTemplate="{DataTemplate views:ColorsView}"
+                Route="Colors"/>
+        </ShellSection>
+    </FlyoutItem>
+    <FlyoutItem Title="Space" Route="space">
+        <ShellSection>
+            <ShellContent
+                Title="Directions"
+                ContentTemplate="{DataTemplate views:DirectionsView}"
+                Route="Directions"/>
+            <ShellContent
+                Title="Position"
+                ContentTemplate="{DataTemplate views:PositionsView}"
+                Route="Positions"/>
+            <ShellContent
+                Title="Grid"
+                ContentTemplate="{DataTemplate views:GridPositionsView}"
+                Route="Grid"/>
+        </ShellSection>
+    </FlyoutItem>
+    <FlyoutItem Title="Time" Route="time">
+        <ShellSection>
+            <ShellContent
+                Title="Hours"
+                ContentTemplate="{DataTemplate views:ThaiClockView}"
+                Route="Hours"/>
+            <ShellContent
+                Title="Days"
+                ContentTemplate="{DataTemplate views:DaysView}"
+                Route="Days"/>
+            <ShellContent
+                Title="Months"
+                ContentTemplate="{DataTemplate views:MonthsView}"
+                Route="Months"/>
+        </ShellSection>
+    </FlyoutItem>
+    <FlyoutItem Title="Homophones" Route="homophones">
+        <ShellContent
+            Title="Homophones"
+            ContentTemplate="{DataTemplate views:HomophonesView}"
+            Route="Homophones"/>
+    </FlyoutItem>
+    <FlyoutItem Title="Minimal sets" Route="minimalsets">
+        <ShellContent
+            Title="Minimal sets"
+            ContentTemplate="{DataTemplate views:MinimalSetsView}"
+            Route="MinimalSets"/>
+    </FlyoutItem>
+    <FlyoutItem Title="Settings"
+                Route="settings"
+                FlyoutItemIsVisible="False">
+        <ShellContent
+            Title="Settings"
+            ContentTemplate="{DataTemplate views:SettingsView}"
+            Route="Settings"/>
+    </FlyoutItem>
+</Shell>

@@ -1,0 +1,82 @@
+<ContentPage
+    x:Class="ThaiReference.Views.ThaiClockView"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+    xmlns:vm="clr-namespace:ThaiReference.ViewModels"
+    x:DataType="vm:ThaiClockViewModel"
+    Title="{ui:UiLabel shell.hours}">
+
+    <Grid RowDefinitions="*, Auto" Padding="12" RowSpacing="12">
+        <Grid Grid.Row="0">
+            <GraphicsView
+                x:Name="ClockView"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill"
+                StartInteraction="OnClockTapped"
+                SizeChanged="OnClockSizeChanged"/>
+            <Grid
+                x:Name="LcdHost"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                InputTransparent="True">
+                <Label
+                    x:Name="LcdGhostLabel"
+                    Style="{x:Null}"
+                    Text="88:88"
+                    FontFamily="{OnPlatform Android=DSEG7Classic-Regular, Default=DSEG7Classic}"
+                    TextColor="{StaticResource ClockLcdGhost}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    VerticalTextAlignment="Center"
+                    LineBreakMode="NoWrap"/>
+                <Label
+                    x:Name="LcdTimeLabel"
+                    Style="{x:Null}"
+                    Text="{Binding CurrentTimeText}"
+                    FontFamily="{OnPlatform Android=DSEG7Classic-Regular, Default=DSEG7Classic}"
+                    TextColor="{StaticResource ClockLcdDigit}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    VerticalTextAlignment="Center"
+                    LineBreakMode="NoWrap"/>
+            </Grid>
+        </Grid>
+
+        <Border
+            Grid.Row="1"
+            StrokeShape="RoundRectangle 10"
+            Stroke="{AppThemeBinding Light=#e0e0e0, Dark=#2a2740}"
+            BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1a1825}"
+            Padding="12,10">
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12" RowDefinitions="Auto, Auto">
+                <Label
+                    Grid.Row="0" Grid.Column="0"
+                    Text="{Binding SelectedPanel.Thai}"
+                    FontFamily="{DynamicResource CurrentThaiFont}"
+                    FontSize="20"
+                    TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}"
+                    LineBreakMode="WordWrap"/>
+                <Label
+                    Grid.Row="1" Grid.Column="0"
+                    FontSize="13"
+                    TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedYellowDark}}"
+                    Margin="0,2,0,0">
+                    <Label.Text>
+                        <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                            <Binding Path="SelectedPanel.Transcription"/>
+                            <Binding Path="BindingContext.RomanizationOption" Source="{RelativeSource AncestorType={x:Type ContentPage}}"/>
+                        </MultiBinding>
+                    </Label.Text>
+                </Label>
+                <Button
+                    Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+                    Style="{StaticResource PlayButton}"
+                    Command="{Binding PronounceCommand}"
+                    CommandParameter="{Binding SelectedPanel.PronounceTarget}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

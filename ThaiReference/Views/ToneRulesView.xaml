@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:ThaiReference.ViewModels"
+             x:Class="ThaiReference.Views.ToneRulesView"
+             x:DataType="vm:ToneRulesViewModel"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             Title="{ui:UiLabel shell.tone_rules}">
+    <Grid RowDefinitions="*, Auto" Padding="8" RowSpacing="8">
+        <Grid x:Name="ChartHost"
+              Grid.Row="0"
+              VerticalOptions="Fill"
+              RowSpacing="0"
+              ColumnSpacing="0"
+              SizeChanged="OnChartHostSizeChanged" />
+        <Border Grid.Row="1"
+                HeightRequest="128"
+                VerticalOptions="End"
+                StrokeThickness="1"
+                Stroke="{AppThemeBinding Light={StaticResource PanelStrokeLight}, Dark={StaticResource PanelStrokeDark}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceInsetLight}, Dark={StaticResource SurfaceInsetDark}}"
+                Padding="12,10">
+            <Grid ColumnDefinitions="44, *"
+                  ColumnSpacing="12"
+                  VerticalOptions="Center">
+
+                <Label Grid.Column="0"
+                       Text="{Binding DetailGlyph}"
+                       FontSize="32"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}"/>
+
+                <VerticalStackLayout Grid.Column="1"
+                                     Spacing="2"
+                                     VerticalOptions="Center">
+                    <!-- Named detail: Thai + transcription + English -->
+                    <Label Text="{Binding DetailThai}"
+                           FontFamily="{DynamicResource CurrentThaiFont}"
+                           FontSize="26"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding HasNamedDetail}" Value="False">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label FontSize="13"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding HasNamedDetail}" Value="False">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="DetailTranscription"/>
+                                <Binding Path="RomanizationOption"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                    <Label Text="{Binding DetailEnglish}"
+                           FontSize="12"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding HasNamedDetail}" Value="False">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+
+                    <!-- Rule-text detail -->
+                    <Label Text="{Binding DetailTitle}"
+                           FontSize="15"
+                           FontAttributes="Bold"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="1"
+                           TextColor="{AppThemeBinding Light={StaticResource AccentLight}, Dark={StaticResource AccentDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding HasNamedDetail}" Value="True">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label Text="{Binding DetailBody}"
+                           FontSize="12"
+                           LineBreakMode="TailTruncation"
+                           MaxLines="4"
+                           TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding HasNamedDetail}" Value="True">
+                                <Setter Property="IsVisible" Value="False"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentPage>

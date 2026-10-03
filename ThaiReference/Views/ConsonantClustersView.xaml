@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:ThaiReference.Models.BaseModels"
+             xmlns:modelIF="clr-namespace:ThaiReference.Models.Interfaces;assembly=ThaiReference"
+             xmlns:mdl="clr-namespace:ThaiReference.Models;assembly=ThaiReference.App"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:conv="clr-namespace:ThaiReference.Converters;assembly=ThaiReference.App"
+             xmlns:controls="clr-namespace:ThaiReference.Views.Controls;assembly=ThaiReference.App"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             x:Class="ThaiReference.Views.ConsonantClustersView"
+             x:Name="This"
+             x:DataType="vms:ConsonantClustersViewModel"
+             Title="{ui:UiLabel shell.clusters}">
+    <ContentPage.Resources>
+        <conv:IsNotNullConverter x:Key="IsNotNullConverter"/>
+        <conv:IsNullConverter x:Key="IsNullConverter"/>
+        <conv:EnumerableAnyToBoolConverter x:Key="AnyConverter"/>
+
+        <!-- Matrix: one flex column header consonant -->
+        <DataTemplate x:Key="ClusterMatrixColumnHeaderConsonant" x:DataType="mdl:ConsonantItem">
+            <Button Style="{StaticResource ClusterMatrixHeaderConsonantButtonFlex}"
+                    FlexLayout.Basis="0"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Shrink="1"
+                    BindingContext="{Binding .}"
+                    Text="{Binding Grapheme}"/>
+        </DataTemplate>
+
+        <!-- One carousel pane -->
+        <DataTemplate x:Key="ClusterCarouselPane" x:DataType="vms:ClusterTypePaneVm">
+            <Border Style="{StaticResource CarouselPaneCard}">
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                    <Label Style="{StaticResource GroupCardTitle}" Text="{Binding Title}"/>
+                    <BoxView Style="{StaticResource GroupCardSeparator}"/>
+                    <ScrollView HorizontalOptions="Fill"
+                                VerticalScrollBarVisibility="Never">
+                        <VerticalStackLayout Spacing="{StaticResource ClusterMatrixTileSpacing}" HorizontalOptions="Fill">
+                            <VerticalStackLayout IsVisible="{Binding MatrixRows, Converter={StaticResource AnyConverter}}"
+                                                 Spacing="{StaticResource ClusterMatrixTileSpacing}"
+                                                 Padding="0"
+                                                 HorizontalOptions="Fill">
+                                <Grid ColumnDefinitions="48,*"
+                                      ColumnSpacing="{StaticResource ClusterMatrixTileSpacing}"
+                                      HorizontalOptions="Fill"
+                                      HeightRequest="{StaticResource ClusterMatrixTile}"
+                                      Margin="0,0,0,4">
+                                    <Label Grid.Column="0"
+                                           FontFamily="{DynamicResource UIFont}"
+                                           FontSize="12"
+                                           Opacity="0.65"
+                                           VerticalTextAlignment="Center"
+                                           HorizontalTextAlignment="Center"/>
+                                    <Grid Grid.Column="1" HorizontalOptions="Fill">
+                                        <FlexLayout Direction="Row"
+                                                    Wrap="NoWrap"
+                                                    AlignItems="Center"
+                                                    JustifyContent="Start"
+                                                    HorizontalOptions="Fill"
+                                                    VerticalOptions="Center"
+                                                    BindableLayout.ItemsSource="{Binding MatrixColumnHeaders}"
+                                                    BindableLayout.ItemTemplate="{StaticResource ClusterMatrixColumnHeaderConsonant}"/>
+                                    </Grid>
+                                </Grid>
+                                <VerticalStackLayout Spacing="{StaticResource ClusterMatrixTileSpacing}"
+                                                     HorizontalOptions="Fill"
+                                                     BindableLayout.ItemsSource="{Binding MatrixRows}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vms:ClusterMatrixRow">
+                                            <Grid ColumnDefinitions="48,*"
+                                                  ColumnSpacing="{StaticResource ClusterMatrixTileSpacing}"
+                                                  Margin="0,0,0,4"
+                                                  HorizontalOptions="Fill">
+                                                <Button Grid.Column="0"
+                                                        Style="{StaticResource ClusterMatrixHeaderConsonantButton}"
+                                                        BindingContext="{Binding RowHeader}"/>
+                                                <Grid Grid.Column="1" HorizontalOptions="Fill">
+                                                    <FlexLayout Direction="Row"
+                                                                Wrap="NoWrap"
+                                                                AlignItems="Center"
+                                                                JustifyContent="Start"
+                                                                HorizontalOptions="Fill"
+                                                                VerticalOptions="Center"
+                                                                BindableLayout.ItemsSource="{Binding Cells}">
+                                                        <BindableLayout.ItemTemplate>
+                                                            <DataTemplate x:DataType="vms:ClusterMatrixCellSlot">
+                                                                <Button Style="{StaticResource ClusterMatrixCellButtonFlex}"
+                                                                        FlexLayout.Basis="0"
+                                                                        FlexLayout.Grow="1"
+                                                                        FlexLayout.Shrink="1"
+                                                                        HorizontalOptions="Fill"
+                                                                        Text="{Binding ThaiCluster}"
+                                                                        IsEnabled="{Binding HasCluster}"
+                                                                        Command="{Binding Source={x:Reference This}, Path=BindingContext.SelectClusterCommand}"
+                                                                        CommandParameter="{Binding Cluster}">
+                                                                    <Button.Triggers>
+                                                                        <DataTrigger TargetType="Button" Binding="{Binding HasCluster}" Value="False">
+                                                                            <Setter Property="Opacity" Value="0"/>
+                                                                            <Setter Property="InputTransparent" Value="True"/>
+                                                                        </DataTrigger>
+                                                                    </Button.Triggers>
+                                                                </Button>
+                                                            </DataTemplate>
+                                                        </BindableLayout.ItemTemplate>
+                                                    </FlexLayout>
+                                                </Grid>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="{StaticResource ClusterMatrixTileSpacing}"
+                                                 IsVisible="{Binding ClusterSections, Converter={StaticResource AnyConverter}}"
+                                                 BindableLayout.ItemsSource="{Binding ClusterSections}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vms:ClusterSectionVm">
+                                        <VerticalStackLayout Spacing="8">
+                                            <BoxView Style="{StaticResource GroupCardSeparator}"
+                                                     IsVisible="{Binding ShowSeparatorAbove}"/>
+                                            <Label Style="{StaticResource GroupCardTitle}"
+                                                   FontSize="15"
+                                                   IsVisible="{Binding Title, Converter={StaticResource IsNotNullConverter}}"
+                                                   Text="{Binding Title}"/>
+                                            <FlexLayout Wrap="Wrap"
+                                                        AlignItems="Start"
+                                                        AlignContent="Start"
+                                                        BindableLayout.ItemsSource="{Binding Clusters}">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate x:DataType="vms:ClusterRowVm">
+                                                        <Button Style="{StaticResource ClusterMatrixCellButtonChip}"
+                                                                Text="{Binding ThaiCluster}"
+                                                                Command="{Binding Source={x:Reference This}, Path=BindingContext.SelectClusterCommand}"
+                                                                CommandParameter="{Binding .}"/>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </FlexLayout>
+                                        </VerticalStackLayout>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                            <FlexLayout Wrap="Wrap"
+                                        AlignItems="Start"
+                                        AlignContent="Start"
+                                        IsVisible="{Binding Clusters, Converter={StaticResource AnyConverter}}"
+                                        BindableLayout.ItemsSource="{Binding Clusters}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vms:ClusterRowVm">
+                                        <Button Style="{StaticResource ClusterMatrixCellButtonChip}"
+                                                Text="{Binding ThaiCluster}"
+                                                Command="{Binding Source={x:Reference This}, Path=BindingContext.SelectClusterCommand}"
+                                                CommandParameter="{Binding .}"/>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </FlexLayout>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ClusterSampleWord" x:DataType="modelIF:IWord">
+            <VerticalStackLayout Spacing="4" HorizontalOptions="Fill">
+                <Button Style="{StaticResource WordButtonBase}"
+                        Padding="8,6"
+                        FontSize="18"
+                        LineBreakMode="WordWrap"
+                        Command="{Binding BindingContext.PronounceCommand, Source={x:Reference This}}"
+                        CommandParameter="{Binding .}">
+                    <Button.Text>
+                        <MultiBinding StringFormat="{}{0} [{1}]">
+                            <Binding Path="Value"/>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="Transcription"/>
+                                <Binding Path="BindingContext.RomanizationOption" Source="{x:Reference This}"/>
+                            </MultiBinding>
+                        </MultiBinding>
+                    </Button.Text>
+                </Button>
+                <Label HorizontalOptions="Fill"
+                       FontSize="11"
+                       LineBreakMode="WordWrap"
+                       HorizontalTextAlignment="Center"
+                       Text="{Binding LexemesString}"
+                       TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"/>
+            </VerticalStackLayout>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*"
+          Padding="{StaticResource PageContentPadding}"
+          RowSpacing="8">
+        <controls:ClusterAnatomyStripHost Grid.Row="0"
+                                          HeightRequest="92"
+                                          ActiveAnatomyType="{Binding ActiveClusterAnatomyType}"/>
+
+        <Grid x:Name="ClusterContentRoot"
+              Grid.Row="1"
+              SizeChanged="OnClusterContentSizeChanged">
+            <Grid RowDefinitions="*,Auto">
+                <CarouselView x:Name="ClusterCarousel"
+                              Grid.Row="0"
+                              Style="{StaticResource PeekCarousel}"
+                              ItemsSource="{Binding TypePanes}"
+                              Scrolled="OnClusterCarouselScrolled"
+                              CurrentItemChanged="OnClusterCarouselCurrentItemChanged"
+                              IndicatorView="{Reference ClusterIndicators}"
+                              InputTransparent="{Binding HasVisibleSamplesStrip}"
+                              ItemTemplate="{StaticResource ClusterCarouselPane}"/>
+                <IndicatorView x:Name="ClusterIndicators"
+                               Grid.Row="1"
+                               Style="{StaticResource CarouselIndicator}"
+                               InputTransparent="{Binding HasVisibleSamplesStrip}"/>
+            </Grid>
+        </Grid>
+
+        <!-- Overlay is a sibling on top of the carousel area (CarouselView ignores ZIndex on Android). -->
+        <Grid Grid.Row="1"
+              ZIndex="1000"
+              IsVisible="{Binding HasVisibleSamplesStrip}"
+              InputTransparent="False">
+            <Grid BackgroundColor="{StaticResource ModalOverlayScrim}"
+                  HorizontalOptions="Fill"
+                  VerticalOptions="Fill">
+                <Grid.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding Source={x:Reference This}, Path=BindingContext.ActiveClusterPane.ClearSelectionCommand}"/>
+                </Grid.GestureRecognizers>
+            </Grid>
+            <Border Style="{StaticResource GroupCard}"
+                    VerticalOptions="End"
+                    HorizontalOptions="Fill"
+                    Margin="8,0,8,8"
+                    Padding="{StaticResource GroupCardContentPadding}">
+                <ScrollView x:Name="SamplesScroll"
+                            VerticalOptions="Start"
+                            VerticalScrollBarVisibility="Default">
+                    <VerticalStackLayout x:DataType="vms:ClusterTypePaneVm"
+                                         Spacing="12"
+                                         BindingContext="{Binding Source={x:Reference This}, Path=BindingContext.ActiveClusterPane}">
+                        <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
+                            <Label FontFamily="{DynamicResource CurrentChromeFont}"
+                                   FontSize="12"
+                                   Text="{ui:UiLabel hint.clusters_examples_for}"
+                                   TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"
+                                   VerticalTextAlignment="Center"/>
+                            <Label Style="{StaticResource GroupCardTitle}"
+                                   FontSize="20"
+                                   Text="{Binding SelectedCluster.ThaiCluster}"
+                                   VerticalTextAlignment="Center"/>
+                        </HorizontalStackLayout>
+                        <BoxView Style="{StaticResource GroupCardSeparator}"/>
+                        <VerticalStackLayout Spacing="12"
+                                             BindableLayout.ItemsSource="{Binding SelectedCluster.SampleWords}"
+                                             BindableLayout.ItemTemplate="{StaticResource ClusterSampleWord}"/>
+                    </VerticalStackLayout>
+                </ScrollView>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+	<head></head>
+	<body>
+		<tr th:fragment="data_row(row, selectable)" class="table-data-row">
+			<td th:if=${selectable} class="table-checkbox">
+				<input type="checkbox" class="form-check-input" name="ids"
+					th:value="${row.getPrimaryKeyValue()}" form="multi-delete-form"
+					th:classAppend="|${!schema.isDeleteEnabled() ? 'disable' : ''}|">
+			</td>
+			<td class="text-center row-icons">
+				<a class="ps-1"
+					th:classAppend="|${!schema.isEditEnabled() ? 'disable' : ''}|" 
+					th:href="|/${snapadmin_baseUrl}/model/${schema.getJavaClass().getName()}/edit/${row.getPrimaryKeyValue()}|">
+					<i class="bi bi-pencil-square"></i></a>
+				<form class="delete-form" method="POST" 
+					th:action="|/${snapadmin_baseUrl}/model/${schema.getJavaClass().getName()}/delete/${row.getPrimaryKeyValue()}|">
+					<button th:class="|${!schema.isDeleteEnabled() ? 'disable' : ''}|"><i class="bi bi-trash"></i></button>
+				</form>
+			</td>
+			<td th:each="field : ${schema.getSortedFields()}"
+				th:classAppend="${field.isBinary() ? 'text-center' : ''}">
+				<th:block th:if="${!row.has(field)}">
+					 <span class="font-monospace null-label">NULL</span>
+				</th:block>
+				<th:block th:if="${row.has(field)}">
+					<th:block th:replace="~{snapadmin/fragments/data_row :: data_row_field(field=${field}, object=${row})}"></th:block>
+				</th:block>
+			</td>
+			
+			<td th:each="colName : ${schema.getComputedColumnNames()}">
+				<span th:text="${row.compute(colName)}"></span>
+			</td>
+		</tr>
+		
+		
+		<!-- data-row-field fragment -->
+		<th:block th:fragment="data_row_field(field, object)">
+			<th:block th:if="${field.getConnectedType() != null && object.traverse(field) != null}">
+				<a th:href="|/${snapadmin_baseUrl}/model/${field.getConnectedType().getName()}/show/${object.traverse(field).getPrimaryKeyValue()}|">
+					<span th:text="${object.has(field) ? object.traverse(field).getPrimaryKeyValue() : 'NULL'}"></span>
+				</a>
+				<p class="p-0 m-0"
+					th:text="${object.traverse(field).getDisplayName()}"></p>
+			</th:block>
+			<th:block th:if="${field.getConnectedType() == null}">
+				<th:block th:if="${field.isPrimaryKey()}">
+					<a th:href="|/${snapadmin_baseUrl}/model/${schema.getClassName()}/show/${object.get(field).getValue()}|">
+						<span th:text="${object.get(field).getFormattedValue()}">
+						</span>
+					</a>
+				</th:block>
+				<th:block th:if="${!field.isPrimaryKey()}">
+				
+					<th:block th:if="${!field.isBinary()}">
+						<span th:if="${object.get(field).getFormattedValue() == null}" class="font-monospace null-label">
+							NULL
+						</span>
+						<th:block th:unless="${object.get(field).getFormattedValue() == null}"
+							th:with="v=${object.get(field).getFormattedValue()}">
+							<span th:if="${v instanceof T(java.lang.String) and v.matches('^#[0-9A-Fa-f]{6}$')}"
+								th:style="|display:inline-block;width:1.1rem;height:1.1rem;border:1px solid #999;border-radius:3px;vertical-align:middle;margin-right:.35rem;background:${v}|"></span>
+							<span th:text="${v}"></span>
+						</th:block>
+					</th:block>
+					<span th:unless="${!field.isBinary()}">
+						<th:block th:if="${object.get(field).getValue()}">
+							<div th:if="${field.isImage()}" class="mb-2">
+								<img class="thumb-image" 
+									th:src="|/${snapadmin_baseUrl}/download/${schema.getClassName()}/${field.getJavaName()}/${object.getPrimaryKeyValue()}/image|">
+							</div>
+						
+							<a class="text-decoration-none null-label" 
+								th:href="|/${snapadmin_baseUrl}/download/${schema.getClassName()}/${field.getJavaName()}/${object.getPrimaryKeyValue()}|">
+								<i class="align-middle bi bi-box-arrow-down"></i><span class="align-middle"> Download 
+								<!--/*--> <span class="text-muted">([[ ${object.get(field).getValue().length} ]] bytes)</span> <!--*/-->
+								</span>
+							</a>
+							
+							
+						</th:block>
+						<th:block th:unless="${object.get(field).getValue()}">
+							<span class="font-monospace null-label">NULL</span>
+						</th:block>
+						
+					</span>
+				</th:block>
+			</th:block>
+		</th:block>
+		<!-- end data-row-field fragment -->
+	</body>
+</html>
+
+
+
+

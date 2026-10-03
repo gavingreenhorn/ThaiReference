@@ -1,0 +1,77 @@
+server:
+  port: ${SERVER_PORT:5000}
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: thai-reference-api
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:thai_db}:${POSTGRES_PORT:5432}/${POSTGRES_DB:thaidb}?currentSchema=thai
+    username: ${POSTGRES_USER:}
+    password: ${POSTGRES_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      connection-timeout: 5000
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: thai
+        globally_quoted_identifiers: true
+        physical_naming_strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        jdbc:
+          time_zone: UTC
+    show-sql: false
+  flyway:
+    enabled: true
+    schemas: thai
+    default-schema: thai
+    create-schemas: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations: classpath:db/migration
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+snapadmin:
+  enabled: true
+  baseUrl: admin
+  modelsPackage: com.thaireference.entity
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+app:
+  cors-origins: ${CORS_ORIGINS:}
+  admin:
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+  reference-data:
+    refresh-interval: ${REFERENCE_DATA_REFRESH_INTERVAL:10m}
+    http-cache-max-age: ${REFERENCE_DATA_HTTP_CACHE_MAX_AGE:10m}
+    admin-debounce: ${REFERENCE_DATA_ADMIN_DEBOUNCE:3s}
+  account:
+    pair-ttl: ${ACCOUNT_PAIR_TTL:5m}
+    email-ttl: ${ACCOUNT_EMAIL_TTL:24h}
+    rate-limit: ${ACCOUNT_RATE_LIMIT:30}
+    rate-limit-window: ${ACCOUNT_RATE_LIMIT_WINDOW:1m}
+    create-quota: ${ACCOUNT_CREATE_QUOTA:3}
+    create-quota-window: ${ACCOUNT_CREATE_QUOTA_WINDOW:1h}
+    max-devices: ${ACCOUNT_MAX_DEVICES:5}
+  mail:
+    from: ${ACCOUNT_MAIL_FROM:noreply@thaireference}

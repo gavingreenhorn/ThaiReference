@@ -1,0 +1,587 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:sys="clr-namespace:System;assembly=netstandard"
+             xmlns:IF="clr-namespace:ThaiReference.Contracts;assembly=ThaiReference.App"
+             xmlns:models="clr-namespace:ThaiReference.Models;assembly=ThaiReference.App"
+             xmlns:dataModels="clr-namespace:ThaiReference.Models;assembly=ThaiReference"
+             xmlns:modelIF="clr-namespace:ThaiReference.Models.Interfaces;assembly=ThaiReference"
+             xmlns:android="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.AndroidSpecific;assembly=Microsoft.Maui.Controls"
+             xmlns:conv="clr-namespace:ThaiReference.Converters;assembly=ThaiReference.App"
+             xmlns:ut="clr-namespace:ThaiReference.Utilities"
+             xmlns:ctrl="clr-namespace:ThaiReference.Controls"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels">
+    <DataTemplate x:Key="ConsonantButtonSoundGroupTemplate" x:DataType="{x:Type modelIF:IConsonant}">
+        <Button Style="{StaticResource ConsonantButtonSoundGroupStyle}"/>
+    </DataTemplate>
+    <DataTemplate x:Key="ConsonantButtonSoundTypeGroupTemplateInitial" x:DataType="{x:Type modelIF:IConsonant}">
+        <Button Style="{StaticResource ConsonantButtonSoundTypeGroupStyleInitial}"/>
+    </DataTemplate>
+    <DataTemplate x:Key="ConsonantButtonSoundTypeGroupTemplateFinal" x:DataType="{x:Type modelIF:IConsonant}">
+        <Button Style="{StaticResource ConsonantButtonSoundTypeGroupStyleFinal}"/>
+    </DataTemplate>
+    <DataTemplate x:Key="SampleWordItem" x:DataType="{x:Type modelIF:IWord}">
+        <StackLayout>
+            <Button BindingContext="{Binding .}" Style="{StaticResource WordButton}"/>
+            <Label HorizontalOptions="Center" Margin="5,0" Text="{Binding LexemesString, TargetNullValue={x:Null}, FallbackValue={x:Null}}"
+                   TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"/>
+        </StackLayout>
+    </DataTemplate>
+    <DataTemplate x:Key="ConsonantItem" x:DataType="{x:Type models:ConsonantItem}">
+        <SwipeView HeightRequest="60" Threshold="80" HorizontalOptions="Fill" IsVisible="{Binding IsVisible}">
+            <SwipeView.LeftItems>
+                <SwipeItemView>
+                    <StackLayout>
+                        <Label
+                            VerticalOptions="Center"
+                            VerticalTextAlignment="Center"
+                            Margin="5,0,0,0">
+                            <Label.Triggers>
+                                <DataTrigger
+                                    TargetType="Label"
+                                    Binding="{Binding RomanizationOption, Source={RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}}"
+                                    Value="IPA">
+                                    <Setter Property="Text">
+                                        <Setter.Value>
+                                            <MultiBinding Mode="OneWay" StringFormat="{}{0} {1}">
+                                                <Binding Path="Transcription.IPA" TargetNullValue="{x:Static sys:String.Empty}"/>
+                                                <Binding Path="Acrophonic.Transcription.IPA" TargetNullValue="{x:Static sys:String.Empty}"/>
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                                <DataTrigger
+                                    TargetType="Label"
+                                    Binding="{Binding RomanizationOption, Source={RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}}"
+                                    Value="Paiboon">
+                                    <Setter Property="Text">
+                                        <Setter.Value>
+                                            <MultiBinding Mode="OneWay" StringFormat="{}{0} {1}">
+                                                <Binding Path="Transcription.Paiboon" TargetNullValue="{x:Static sys:String.Empty}"/>
+                                                <Binding Path="Acrophonic.Transcription.Paiboon" TargetNullValue="{x:Static sys:String.Empty}"/>
+                                            </MultiBinding>
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        <Label
+                            VerticalOptions="Center"
+                            VerticalTextAlignment="Center"
+                            Margin="5,0,0,0"
+                            Text="{Binding Acrophonic.LexemesString}">
+                        </Label>
+                    </StackLayout>
+                </SwipeItemView>
+            </SwipeView.LeftItems>
+            <SwipeView.RightItems>
+                <SwipeItems Mode="Execute">
+                    <SwipeItem
+                        Text="To details"
+                        Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
+                        CommandParameter="{Binding Consonant}">
+                    </SwipeItem>
+                </SwipeItems>
+            </SwipeView.RightItems>
+            <Button Style="{StaticResource ConsonantButton}"/>
+        </SwipeView>
+    </DataTemplate>
+    <DataTemplate x:Key="ConsonantItemSoundGroup" x:DataType="{x:Type modelIF:IConsonant}">
+        <SwipeView HeightRequest="60" Threshold="80" HorizontalOptions="Fill">
+            <SwipeView.RightItems>
+                <SwipeItems Mode="Execute">
+                    <SwipeItem
+                        Text="To details"
+                        Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
+                        CommandParameter="{Binding .}">
+                    </SwipeItem>
+                </SwipeItems>
+            </SwipeView.RightItems>
+            <Button Style="{StaticResource ConsonantButtonSoundGroupStyle}"/>
+        </SwipeView>
+    </DataTemplate>
+    <DataTemplate x:Key="ConsonantSoundGroup" x:DataType="{x:Type models:ConsonantSoundGroup}">
+        <ScrollView Orientation="Horizontal" IsVisible="{Binding Visible}">
+            <Border Style="{StaticResource GroupBorder}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding InitialAndFinal}" Value="True">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <StackLayout Orientation="Horizontal">
+                                    <Grid RowDefinitions="1*,2*,1*">
+                                        <Button Grid.Row="1" BindingContext="{Binding Sound}" Style="{StaticResource ConsonantsSoundButton}"/>
+                                    </Grid>
+                                    <StackLayout Orientation="Vertical">
+                                        <StackLayout Orientation="Horizontal">
+                                            <Label WidthRequest="50" HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Initial"/>
+                                            <StackLayout Orientation="Horizontal" Spacing="5" BindableLayout.ItemsSource="{Binding InitialConsonants}" BindableLayout.ItemTemplate="{StaticResource ConsonantItemSoundGroup}"/>
+                                        </StackLayout>
+                                        <StackLayout Orientation="Horizontal">
+                                            <Label WidthRequest="50" HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Final"/>
+                                            <StackLayout Orientation="Horizontal" Spacing="5" BindableLayout.ItemsSource="{Binding FinalConsonants}" BindableLayout.ItemTemplate="{StaticResource ConsonantItemSoundGroup}"/>
+                                        </StackLayout>
+                                    </StackLayout>
+                                </StackLayout>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding OnlyInitial}" Value="True">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <StackLayout Orientation="Horizontal">
+                                    <Button BindingContext="{Binding Sound}" Style="{StaticResource ConsonantsSoundButton}"/>
+                                    <Label WidthRequest="50" HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Initial"/>
+                                    <StackLayout Orientation="Horizontal" Spacing="5" BindableLayout.ItemsSource="{Binding InitialConsonants}" BindableLayout.ItemTemplate="{StaticResource ConsonantItemSoundGroup}"/>
+                                </StackLayout>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding OnlyFinal}" Value="True">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <StackLayout Orientation="Horizontal" Spacing="1">
+                                    <Button BindingContext="{Binding Sound}" Style="{StaticResource ConsonantsSoundButton}"/>
+                                    <Label WidthRequest="50" HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Final"/>
+                                    <StackLayout Orientation="Horizontal" Spacing="1" BindableLayout.ItemsSource="{Binding FinalConsonants}" BindableLayout.ItemTemplate="{StaticResource ConsonantItemSoundGroup}"/>
+                                </StackLayout>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Border.Triggers>
+            </Border>
+        </ScrollView>
+    </DataTemplate>
+    <DataTemplate x:Key="ConsonantSoundGroupVertical" x:DataType="{x:Type models:ConsonantSoundGroup}">
+        <StackLayout Orientation="Vertical" HorizontalOptions="Fill">
+            <Button Margin="1,0" HorizontalOptions="Fill" BindingContext="{Binding Sound}" Style="{StaticResource ConsonantsSoundButton}"/>
+            <StackLayout Orientation="Vertical" BindableLayout.ItemsSource="{Binding InitialConsonants}" BindableLayout.ItemTemplate="{StaticResource ConsonantButtonSoundTypeGroupTemplateInitial}"/>
+            <StackLayout Orientation="Vertical" BindableLayout.ItemsSource="{Binding FinalConsonants}" BindableLayout.ItemTemplate="{StaticResource ConsonantButtonSoundTypeGroupTemplateFinal}"/>
+        </StackLayout>
+    </DataTemplate>
+    <DataTemplate x:Key="VowelItem" x:DataType="{x:Type models:VowelItem}">
+        <SwipeView HeightRequest="60" Threshold="100" HorizontalOptions="Fill">
+            <SwipeView.RightItems>
+                <SwipeItems Mode="Execute">
+                    <SwipeItem
+                        Text="To details"
+                        Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
+                        CommandParameter="{Binding Vowel}"/>
+                </SwipeItems>
+            </SwipeView.RightItems>
+            <Button Style="{StaticResource VowelButton}"/>
+        </SwipeView>
+    </DataTemplate>
+    <DataTemplate x:Key="GraphemeItem" x:DataType="{x:Type sys:String}">
+        <Border Style="{StaticResource BoxedText}" HeightRequest="50" MinimumWidthRequest="75">
+            <Label
+                Text="{Binding .}"
+                HorizontalOptions="Center"
+                HorizontalTextAlignment="Center"
+                VerticalTextAlignment="Center"
+                FontSize="25"
+                FontFamily="{DynamicResource CurrentThaiFont}"/>
+        </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="MarkItem" x:DataType="{x:Type modelIF:IMark}">
+        <SwipeView>
+            <SwipeView.RightItems>
+                <SwipeItems Mode="Execute">
+                    <SwipeItem
+                        Text="To details"
+                        Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
+                        CommandParameter="{Binding .}"/>
+                </SwipeItems>
+            </SwipeView.RightItems>
+            <Border Style="{StaticResource BoxedText}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" HeightRequest="60" MaximumWidthRequest="100" Margin="5">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Buttons="Primary"
+                        Command="{Binding Source={RelativeSource AncestorType={x:Type IF:IVoiced}}, Path=PronounceCommand}"
+                        CommandParameter="{Binding .}"/>
+                </Border.GestureRecognizers>
+                <Label
+                    Text="{Binding Grapheme}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"
+                    HorizontalOptions="Center"
+                    HorizontalTextAlignment="Center"
+                    VerticalOptions="Center"
+                    VerticalTextAlignment="Start"
+                    FontSize="35"
+                    FontFamily="{DynamicResource CurrentThaiFont}">
+                </Label>
+            </Border>
+        </SwipeView>
+    </DataTemplate>
+    <DataTemplate x:Key="NumberItem" x:DataType="{x:Type models:ThaiNumber}">
+        <Button Margin="1" Padding="0" Text="{Binding Content}" BackgroundColor="{StaticResource ControlBG3}" TextColor="PaleGoldenrod" FontSize="13" FontAutoScalingEnabled="True"
+                Command="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"
+                CommandParameter="{Binding .}"/>
+    </DataTemplate>
+    <DataTemplate x:Key="SoundGraphemeGroup" x:DataType="{x:Type modelIF:IVowel}">
+        <ScrollView Orientation="Horizontal">
+            <Border Style="{StaticResource GroupBorder}">
+                <Border.Triggers>
+                    <DataTrigger TargetType="Border" Binding="{Binding OpenAndClosed}" Value="True">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <StackLayout Orientation="Horizontal">
+                                    <Grid RowDefinitions="1*,2*,1*">
+                                        <Button Grid.Row="1" Style="{StaticResource VowelButtonBase}"/>
+                                    </Grid>
+                                    <StackLayout Orientation="Vertical">
+                                        <StackLayout VerticalOptions="Fill" Orientation="Horizontal">
+                                            <Label MinimumWidthRequest="50" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Open"/>
+                                            <StackLayout Orientation="Horizontal" Spacing="5" BindableLayout.ItemsSource="{Binding GraphemesOpen}" BindableLayout.ItemTemplate="{StaticResource GraphemeItem}"/>
+                                        </StackLayout>
+                                        <StackLayout VerticalOptions="Fill" Orientation="Horizontal">
+                                            <Label MinimumWidthRequest="50" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Closed"/>
+                                            <StackLayout Orientation="Horizontal" Spacing="5" BindableLayout.ItemsSource="{Binding GraphemesClosed}" BindableLayout.ItemTemplate="{StaticResource GraphemeItem}"/>
+                                        </StackLayout>
+                                    </StackLayout>
+                                </StackLayout>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding OnlyOpen}" Value="True">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <StackLayout Orientation="Horizontal">
+                                    <Button Grid.Row="1" Style="{StaticResource VowelButtonBase}"/>
+                                    <Label WidthRequest="50" HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Open"/>
+                                    <StackLayout Orientation="Horizontal" Spacing="5" BindableLayout.ItemsSource="{Binding GraphemesOpen}" BindableLayout.ItemTemplate="{StaticResource GraphemeItem}"/>
+                                </StackLayout>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                    <DataTrigger TargetType="Border" Binding="{Binding OnlyClosed}" Value="True">
+                        <Setter Property="Content">
+                            <Setter.Value>
+                                <StackLayout Orientation="Horizontal" Spacing="1">
+                                    <Button Grid.Row="1" Style="{StaticResource VowelButtonBase}"/>
+                                    <Label WidthRequest="50" HorizontalOptions="Center" VerticalOptions="Center" HorizontalTextAlignment="Center" Text="Closed"/>
+                                    <StackLayout Orientation="Horizontal" Spacing="1" BindableLayout.ItemsSource="{Binding GraphemesClosed}" BindableLayout.ItemTemplate="{StaticResource GraphemeItem}"/>
+                                </StackLayout>
+                            </Setter.Value>
+                        </Setter>
+                    </DataTrigger>
+                </Border.Triggers>
+            </Border>
+        </ScrollView>
+    </DataTemplate>
+    <ControlTemplate x:Key="AllConsonants">
+        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+            <ctrl:OptionStrip
+                AllowNullSelection="True"
+                StripOrientation="Horizontal"
+                ItemsSource="{Binding ClassOptions}"
+                SelectedItem="{Binding SelectedClassOption, Mode=TwoWay}"
+                TextPropertyName="Thai"
+                Margin="{StaticResource OptionStripOuterMargin}"/>
+            <CollectionView
+                ItemsSource="{Binding DisplayedConsonants}"
+                ItemTemplate="{StaticResource ConsonantItem}"
+                ItemsLayout="VerticalGrid, 3"
+                Margin="{StaticResource ContentListMargin}"
+                Grid.Row="1"/>
+        </Grid>
+    </ControlTemplate>
+    <ControlTemplate x:Key="ConsonantsBySound">
+        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+            <ctrl:OptionStrip
+                AllowNullSelection="True"
+                StripOrientation="Horizontal"
+                ItemsSource="{Binding ConsonantPositions}"
+                SelectedItem="{Binding SelectedConsonantPosition, Mode=TwoWay}"
+                TextPropertyName="Thai"
+                Margin="{StaticResource OptionStripOuterMargin}"/>
+            <ScrollView Orientation="Vertical" Grid.Row="1" Margin="{StaticResource ContentListMargin}">
+                <VerticalStackLayout
+                    Spacing="4"
+                    BindableLayout.ItemsSource="{Binding ConsonantSoundGroups}"
+                    BindableLayout.ItemTemplate="{StaticResource ConsonantSoundGroup}"/>
+            </ScrollView>
+        </Grid>
+    </ControlTemplate>
+    <ControlTemplate x:Key="ConsonantsBySoundType">
+        <Grid RowDefinitions="*,Auto">
+            <CarouselView Style="{StaticResource PeekCarousel}"
+                          ItemsSource="{Binding ConsonantSoundTypeGroups}"
+                          IndicatorView="{x:Reference SoundTypeIndicators}">
+                <CarouselView.ItemTemplate>
+                    <DataTemplate x:DataType="models:ConsonantSoundTypeGroup">
+                        <Border Style="{StaticResource CarouselPaneCard}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Style="{StaticResource GroupCardTitle}" Text="{Binding SoundType}"/>
+                                <BoxView Style="{StaticResource GroupCardSeparator}"/>
+                                <ScrollView VerticalScrollBarVisibility="Never">
+                                    <CollectionView
+                                        ItemsSource="{Binding SoundTypeGroup}"
+                                        ItemTemplate="{StaticResource ConsonantSoundGroupVertical}"
+                                        ItemSizingStrategy="MeasureAllItems"
+                                        HorizontalOptions="Fill">
+                                        <CollectionView.ItemsLayout>
+                                            <GridItemsLayout Orientation="Vertical" Span="{Binding SoundCount}"/>
+                                        </CollectionView.ItemsLayout>
+                                    </CollectionView>
+                                </ScrollView>
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </CarouselView.ItemTemplate>
+            </CarouselView>
+            <IndicatorView x:Name="SoundTypeIndicators"
+                           Grid.Row="1"
+                           Style="{StaticResource CarouselIndicator}"/>
+        </Grid>
+    </ControlTemplate>
+    <ControlTemplate x:Key="AllVowels">
+        <Grid RowDefinitions="Auto,*" RowSpacing="8">
+            <Grid RowDefinitions="Auto,Auto" RowSpacing="0">
+                <ctrl:OptionStrip
+                    Join="StackStart"
+                    ItemsSource="{Binding VowelVisualizationOptions}"
+                    SelectedItem="{Binding SelectedVowelVisualizationOption, Mode=TwoWay}"
+                    TextPropertyName="Thai"/>
+                <ctrl:OptionStrip
+                    Grid.Row="1"
+                    Join="StackEnd"
+                    ItemsSource="{Binding SoundTypeOptions}"
+                    SelectedItem="{Binding SelectedSoundTypeOption, Mode=TwoWay}"
+                    TextPropertyName="Thai"/>
+            </Grid>
+            <CollectionView
+                Grid.Row="1"
+                ItemsLayout="VerticalGrid, 3"
+                ItemsSource="{Binding DisplayedVowels}"
+                ItemTemplate="{StaticResource VowelItem}"
+                Margin="{StaticResource ContentListMargin}"/>
+        </Grid>
+    </ControlTemplate>
+    <ControlTemplate x:Key="GraphemesBySound">
+        <ScrollView Orientation="Vertical" Margin="{StaticResource ContentListMargin}">
+            <VerticalStackLayout
+                Spacing="4"
+                BindableLayout.ItemsSource="{Binding VowelItems}"
+                BindableLayout.ItemTemplate="{StaticResource SoundGraphemeGroup}"/>
+        </ScrollView>
+    </ControlTemplate>
+    <ControlTemplate x:Key="ConsonantDetails" x:DataType="{x:Type modelIF:IConsonant}">
+        <StackLayout Margin="8">
+            <Border Style="{StaticResource BorderBase}" Margin="0,8">
+                <Grid RowDefinitions="1*,1*,1*,1*" ColumnDefinitions="1*,1*" ColumnSpacing="8" RowSpacing="8">
+                    <Label Grid.ColumnSpan="2" HorizontalOptions="Center" Text="{Binding Grapheme}" FontSize="50" FontFamily="{DynamicResource CurrentThaiFont}"/>
+                    <Label Grid.Row="1" Text="Phoneme" HorizontalOptions="Center" FontFamily="{StaticResource UIFont}"/>
+                    <Border Grid.Row="2" Stroke="{StaticResource Gray400}" StrokeThickness="1" StrokeShape="RoundRectangle 5,5,5,5" Padding="8">
+                        <Label Text="{Binding Phoneme}" HorizontalOptions="Center" TextColor="{AppThemeBinding Light={StaticResource ControlBG}, Dark={StaticResource ControlFG2}}" FontSize="25" Padding="0" FontFamily="{DynamicResource CurrentThaiFont}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer
+                                            Buttons="Primary"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type IF:IVoiced}}, Path=PronounceCommand}"
+                                            CommandParameter="{Binding .}"/>
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </Border>
+                    <Label Grid.Row="1" Grid.Column="1" HorizontalOptions="Center" Text="Acrophonic" FontFamily="{StaticResource UIFont}"/>
+                    <SwipeView Grid.Row="2" Grid.Column="1" Threshold="80" android:SwipeView.SwipeTransitionMode="Drag">
+                        <SwipeView.RightItems>
+                            <SwipeItemView>
+                                <Label VerticalOptions="Center" Text="{Binding Acrophonic.LexemesString}"
+                                       TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"/>
+                            </SwipeItemView>
+                        </SwipeView.RightItems>
+                        <Border Stroke="{StaticResource Gray500}" StrokeThickness="1" StrokeShape="RoundRectangle 5,5,5,5" Padding="8">
+                            <Label Text="{Binding Acrophonic.Value}" HorizontalOptions="Center" TextColor="{StaticResource ControlFG3}" FontSize="25" Padding="0" FontFamily="{DynamicResource CurrentThaiFont}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                                Buttons="Primary"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type IF:IVoiced}}, Path=PronounceCommand}"
+                                                CommandParameter="{Binding Acrophonic}"/>
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Border>
+                    </SwipeView>
+                    <Label Grid.Row="3" HorizontalOptions="Center" TextColor="{AppThemeBinding Light={StaticResource ControlBG}, Dark={StaticResource ControlFG2}}">
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="Transcription"/>
+                                <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                    <Label Grid.Row="3" Grid.Column="1" HorizontalOptions="Center" TextColor="{StaticResource ControlFG3}">
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="Acrophonic.Transcription"/>
+                                <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                </Grid>
+            </Border>
+            <Label Text="{Binding Ending, StringFormat='Ending: \{0\}'}"/>
+            <Label Text="{Binding InitialSound.SoundType, StringFormat='Sound type: \{0\}'}"/>
+            <Border Style="{StaticResource BorderBase}" Margin="0,8">
+                <Grid RowDefinitions="1*,1*,1*,1*" ColumnDefinitions="1*,1*" ColumnSpacing="8" RowSpacing="8">
+                    <Label Grid.ColumnSpan="2" HorizontalOptions="Center" VerticalOptions="Center" >Sound</Label>
+                    <Label Grid.Row="1" HorizontalOptions="Center" VerticalOptions="Center">Initial</Label>
+                    <Label Grid.Row="1" HorizontalOptions="Center" VerticalOptions="Center" Grid.Column="1">Ending</Label>
+                    <Button Grid.Row="2" BindingContext="{Binding InitialSound}" Style="{StaticResource SoundButtonDetail}"/>
+                    <Label Grid.Row="3" HorizontalOptions="Center" Text="{Binding InitialSound.SoundType}"/>
+                    <Button Grid.Row="2" Grid.Column="1" BindingContext="{Binding EndingSound}" Style="{StaticResource SoundButtonDetail}">
+                        <Button.Triggers>
+                            <DataTrigger TargetType="Button" Binding="{Binding EndingSound, TargetNullValue={x:Null}}" Value="{x:Null}">
+                                 <!--open issue, inital null value is not detected by the datatrigger--> 
+                                <Setter Property="IsEnabled" Value="False"/>
+                            </DataTrigger>
+                        </Button.Triggers>
+                    </Button>
+                    <Label Grid.Row="3" Grid.Column="1" HorizontalOptions="Center" Text="{Binding EndingSound.SoundType, TargetNullValue={x:Null}}"/>
+                </Grid>
+            </Border>
+        </StackLayout>
+    </ControlTemplate>
+    <ControlTemplate x:Key="VowelDetails" x:DataType="{x:Type modelIF:IVowel}">
+        <StackLayout Margin="8">
+            <Border  Stroke="{StaticResource Gray500}" Margin="0,8" Padding="8">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="1*,1*">
+                    <Label HorizontalOptions="Center" VerticalOptions="Center" Grid.ColumnSpan="2" FontSize="45">
+                        <Label.Text>
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="Transcription"/>
+                                <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                            </MultiBinding>
+                        </Label.Text>
+                    </Label>
+                    <Label FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" Grid.Row="1" Text="Open"></Label>
+                    <Label FontSize="30" HorizontalOptions="Center" VerticalOptions="Center" Grid.Row="2" Text="{Binding GraphemesOpenString}" FontFamily="{DynamicResource CurrentThaiFont}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding GraphemesOpenString}" Value="{x:Static sys:String.Empty}">
+                                <Setter Property="Text" Value="&#x274C;"/>
+                                <Setter Property="FontSize" Value="15"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                    <Label FontSize="20" HorizontalOptions="Center" VerticalOptions="Center" Grid.Row="1" Grid.Column="1" Text="Closed"></Label>
+                    <Label FontSize="30" HorizontalOptions="Center" VerticalOptions="Center" Grid.Row="2" Grid.Column="1" Text="{Binding GraphemesClosedString}" FontFamily="{DynamicResource CurrentThaiFont}">
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding GraphemesClosedString}" Value="{x:Static sys:String.Empty}">
+                                <Setter Property="Text" Value="&#x274C;"/>
+                                <Setter Property="FontSize" Value="15"/>
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
+                </Grid>
+            </Border>
+            <StackLayout BindableLayout.ItemsSource="{Binding SampleWords}" BindableLayout.ItemTemplate="{StaticResource SampleWordItem}"/>
+        </StackLayout>
+    </ControlTemplate>
+    <ControlTemplate x:Key="MarkDetails" x:DataType="{x:Type modelIF:IMark}">
+        <StackLayout Margin="8">
+            <Border Style="{StaticResource BorderBase}" Margin="0,8">
+                <StackLayout Margin="8">
+                    <Label HorizontalOptions="Center" Text="{Binding Name}" FontFamily="{DynamicResource CurrentThaiFont}" FontSize="30" Margin="0,0,0,8"/>
+                    <StackLayout BindableLayout.ItemsSource="{Binding Words}" BindableLayout.ItemTemplate="{StaticResource SampleWordItem}"/>
+                </StackLayout>
+            </Border>
+        </StackLayout>
+    </ControlTemplate>
+    <ControlTemplate x:Key="PronounDetails" x:DataType="{x:Type modelIF:IPronoun}">
+        <StackLayout Margin="8">
+            <Border Style="{StaticResource BorderBase}" Margin="0,8">
+                <StackLayout Margin="8">
+                    <Label HorizontalOptions="Center" Text="{Binding Name}" FontFamily="{DynamicResource CurrentThaiFont}" FontSize="30" Margin="0,0,0,8"/>
+                </StackLayout>
+            </Border>
+        </StackLayout>
+    </ControlTemplate>
+    <ControlTemplate x:Key="WeekdayDetails" x:DataType="{x:Type dataModels:Weekday}">
+        <ScrollView>
+            <StackLayout Margin="8">
+                <Border Style="{StaticResource BorderBase}" Margin="0,8" Padding="12">
+                    <StackLayout Spacing="8">
+                        <Label FontFamily="{StaticResource UIFont}" FontSize="14" HorizontalOptions="Center" TextColor="{StaticResource Gray600}"
+                               Text="{Binding Ordinal, StringFormat='DayOfWeek · ordinal {0}'}"/>
+                        <Label Text="{Binding Word.Value}" FontSize="32" FontFamily="{DynamicResource CurrentThaiFont}" HorizontalOptions="Center"/>
+                        <Label Text="{Binding Word.LexemesString}"
+                               TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"
+                               FontSize="16" HorizontalOptions="Center" HorizontalTextAlignment="Center"/>
+                        <Button BindingContext="{Binding Word}" Style="{StaticResource WordButton}"/>
+                    </StackLayout>
+                </Border>
+            </StackLayout>
+        </ScrollView>
+    </ControlTemplate>
+    <DataTemplate x:Key="PositionGridCellItem" x:DataType="modelIF:IGridPositionCell">
+        <Border
+            Style="{StaticResource BoxedText}"
+            HeightRequest="56"
+            HorizontalOptions="Fill"
+            BackgroundColor="{StaticResource Gray200}">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer
+                    Buttons="Primary"
+                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SelectCellCommand}"
+                    CommandParameter="{Binding .}"/>
+            </Border.GestureRecognizers>
+            <Label
+                Text="{Binding Ordinal, Converter={StaticResource ArabicToThai}}"
+                FontSize="17"
+                FontFamily="{DynamicResource CurrentThaiFont}"
+                HorizontalOptions="Fill"
+                HorizontalTextAlignment="Center"
+                VerticalOptions="Center"
+                VerticalTextAlignment="Center"
+                MaxLines="2"
+                LineBreakMode="TailTruncation"
+                TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"/>
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding TileStyle}" Value="center">
+                    <Setter Property="BackgroundColor" Value="{StaticResource PositionTileCenter}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding TileStyle}" Value="corner">
+                    <Setter Property="BackgroundColor" Value="{StaticResource PositionTileCorner}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding TileStyle}" Value="axis">
+                    <Setter Property="BackgroundColor" Value="{StaticResource PositionTileAxis}"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding TileStyle}" Value="interior">
+                    <Setter Property="BackgroundColor" Value="{StaticResource PositionTileInterior}"/>
+                </DataTrigger>
+            </Border.Triggers>
+        </Border>
+    </DataTemplate>
+    <ControlTemplate x:Key="PositionCellDetails" x:DataType="{x:Type modelIF:IGridPositionCell}">
+        <ScrollView>
+            <StackLayout Margin="8">
+                <Border Style="{StaticResource BorderBase}" Margin="0,8" Padding="12">
+                    <StackLayout Spacing="8">
+                        <Label
+                            Text="{Binding Label}"
+                            FontSize="14"
+                            HorizontalOptions="Center"
+                            TextColor="{StaticResource Gray600}"/>
+                        <Label
+                            Text="{Binding Caption}"
+                            FontSize="32"
+                            FontFamily="{DynamicResource CurrentThaiFont}"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center"/>
+                        <Label
+                            Text="{Binding ItemNumber, StringFormat='({0})'}"
+                            FontSize="16"
+                            HorizontalOptions="Center"
+                            HorizontalTextAlignment="Center"
+                            TextColor="PaleGoldenrod"/>
+                    </StackLayout>
+                </Border>
+                <Label Text="Words" FontFamily="{StaticResource UIFont}" HorizontalOptions="Center"/>
+                <StackLayout BindableLayout.ItemsSource="{Binding Words}" BindableLayout.ItemTemplate="{StaticResource SampleWordItem}"/>
+            </StackLayout>
+        </ScrollView>
+    </ControlTemplate>
+    <ControlTemplate x:Key="DefaultDetails">
+        <StackLayout>
+            <Label Text="Here be dragons"/>
+        </StackLayout>
+    </ControlTemplate>
+</ResourceDictionary>

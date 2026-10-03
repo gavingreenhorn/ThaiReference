@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             xmlns:ctrl="clr-namespace:ThaiReference.Controls"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             x:Class="ThaiReference.Views.MinimalSetsView"
+             x:Name="This"
+             x:DataType="vms:MinimalSetsViewModel"
+             Title="{ui:UiLabel shell.minimal_sets}">
+    <ContentPage.Resources>
+        <DataTemplate x:Key="MinimalSetWordRow" x:DataType="vms:MinimalSetWordVm">
+            <Grid ColumnDefinitions="0.32*,0.3*,0.38*"
+                  ColumnSpacing="8"
+                  Padding="0,4"
+                  VerticalOptions="Center">
+                <Button Grid.Column="0"
+                        Style="{StaticResource WordButtonBase}"
+                        HorizontalOptions="Fill"
+                        Text="{Binding Word.Value}"
+                        Command="{Binding BindingContext.PronounceCommand, Source={x:Reference This}}"
+                        CommandParameter="{Binding Word}"/>
+                <Label Grid.Column="1"
+                       VerticalOptions="Center"
+                       FontSize="13"
+                       LineBreakMode="TailTruncation"
+                       TextColor="{AppThemeBinding Light={StaticResource FaintDark}, Dark={StaticResource LightYellow}}">
+                    <Label.Text>
+                        <MultiBinding StringFormat="[{0}]">
+                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                <Binding Path="Word.Transcription"/>
+                                <Binding Path="BindingContext.RomanizationOption" Source="{x:Reference This}"/>
+                            </MultiBinding>
+                        </MultiBinding>
+                    </Label.Text>
+                </Label>
+                <Label Grid.Column="2"
+                       VerticalOptions="Center"
+                       FontSize="12"
+                       LineBreakMode="WordWrap"
+                       Text="{Binding Word.LexemesString}"
+                       TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"/>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="MinimalSetCard" x:DataType="vms:MinimalSetVm">
+            <Border Style="{StaticResource GroupCard}"
+                    Margin="0,0,0,10"
+                    Padding="12,10">
+                <VerticalStackLayout Spacing="2"
+                                     BindableLayout.ItemsSource="{Binding WordLines}"
+                                     BindableLayout.ItemTemplate="{StaticResource MinimalSetWordRow}"/>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*" Padding="12,8">
+        <ScrollView Grid.Row="0"
+                    Orientation="Horizontal"
+                    HorizontalScrollBarVisibility="Never"
+                    Margin="0,0,0,8">
+            <ctrl:OptionStrip AllowNullSelection="True"
+                                     WidthRequest="{Binding FilterStripWidth}"
+                                     ItemsSource="{Binding InitialSoundFilters}"
+                                     SelectedItem="{Binding SelectedInitialSound, Mode=TwoWay}"
+                                     TextPropertyName="Value"/>
+        </ScrollView>
+
+        <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Spacing="0"
+                                 BindableLayout.ItemsSource="{Binding Sets}"
+                                 BindableLayout.ItemTemplate="{StaticResource MinimalSetCard}"/>
+        </ScrollView>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:conv="clr-namespace:ThaiReference.Converters;assembly=ThaiReference.App"
+             x:Class="ThaiReference.Views.HomophonesView"
+             x:Name="This"
+             x:DataType="vms:HomophonesViewModel"
+             Title="{ui:UiLabel shell.homophones}">
+    <ContentPage.Resources>
+        <conv:IsNotNullConverter x:Key="IsNotNullConverter"/>
+
+        <DataTemplate x:Key="HomophoneWordRow" x:DataType="vms:HomophoneWordLineVm">
+            <VerticalStackLayout Spacing="1" Padding="0,4">
+                <Label HorizontalOptions="Center"
+                       HorizontalTextAlignment="Center"
+                       FontSize="22"
+                       FontFamily="{DynamicResource CurrentThaiFont}"
+                       Text="{Binding Word.Value}"
+                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"/>
+                <Label HorizontalOptions="Center"
+                       FontSize="12"
+                       LineBreakMode="WordWrap"
+                       HorizontalTextAlignment="Center"
+                       Text="{Binding Word.LexemesString}"
+                       TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"/>
+            </VerticalStackLayout>
+        </DataTemplate>
+
+        <DataTemplate x:Key="HomophoneGroupCard" x:DataType="vms:HomophoneGroupVm">
+            <Border Style="{StaticResource GroupCard}"
+                    Margin="0,0,0,10"
+                    Padding="12,10">
+                <VerticalStackLayout Spacing="8">
+                    <!-- IPA centered on full card width; play overlaid on the end. -->
+                    <Grid IsVisible="{Binding SharedTranscription, Converter={StaticResource IsNotNullConverter}}">
+                        <Label FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"
+                               HorizontalTextAlignment="Center"
+                               VerticalOptions="Center"
+                               VerticalTextAlignment="Center"
+                               TextColor="{AppThemeBinding Light={StaticResource FaintDark}, Dark={StaticResource LightYellow}}">
+                            <Label.Text>
+                                <MultiBinding StringFormat="[{0}]">
+                                    <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                        <Binding Path="SharedTranscription"/>
+                                        <Binding Path="BindingContext.RomanizationOption" Source="{x:Reference This}"/>
+                                    </MultiBinding>
+                                </MultiBinding>
+                            </Label.Text>
+                        </Label>
+                        <Button Style="{StaticResource PlayButton}"
+                                HorizontalOptions="End"
+                                Command="{Binding BindingContext.PronounceCommand, Source={x:Reference This}}"
+                                CommandParameter="{Binding Sample}"/>
+                    </Grid>
+                    <BoxView Style="{StaticResource GroupCardSeparator}"/>
+                    <VerticalStackLayout Spacing="6"
+                                         BindableLayout.ItemsSource="{Binding WordLines}"
+                                         BindableLayout.ItemTemplate="{StaticResource HomophoneWordRow}"/>
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ScrollView Padding="12,8" VerticalScrollBarVisibility="Never">
+        <VerticalStackLayout Spacing="0"
+                             BindableLayout.ItemsSource="{Binding Groups}"
+                             BindableLayout.ItemTemplate="{StaticResource HomophoneGroupCard}"/>
+    </ScrollView>
+</ContentPage>

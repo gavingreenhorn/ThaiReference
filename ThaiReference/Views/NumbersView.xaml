@@ -1,0 +1,27 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             x:Class="ThaiReference.Views.NumbersView"
+             x:DataType="vms:NumbersViewModel"
+             Title="{ui:UiLabel shell.numbers}">
+    <VerticalStackLayout>
+        <Border Style="{StaticResource BorderBase}">
+            <CollectionView
+                ItemsLayout="VerticalGrid, 10"
+                VerticalOptions="Fill"
+                ItemsSource="{Binding Numbers}"
+                ItemTemplate="{StaticResource NumberItem}"/>
+        </Border>
+        <Border Style="{StaticResource BorderBase}">
+            <HorizontalStackLayout>
+                <Label Text="{ui:UiLabel numbers.units}" FontSize="25" VerticalTextAlignment="Center" VerticalOptions="Center" Margin="10" FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <CollectionView
+                    ItemsLayout="VerticalGrid, 3"
+                    VerticalOptions="Fill"
+                    ItemsSource="{Binding Units}"
+                    ItemTemplate="{StaticResource NumberItem}"/>
+            </HorizontalStackLayout>
+        </Border>
+    </VerticalStackLayout>
+</ContentPage>

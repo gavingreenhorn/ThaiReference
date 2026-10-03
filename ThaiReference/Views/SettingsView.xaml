@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="ThaiReference.Views.SettingsView"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:controls="clr-namespace:ThaiReference.Controls"
+             x:DataType="vms:SettingsViewModel"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             Title="{ui:UiLabel shell.settings}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="20">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="{Binding UiLanguageLabel}"
+                       FontSize="16"
+                       FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <controls:OptionStrip
+                    ItemsSource="{Binding UiLanguageOptions}"
+                    SelectedItem="{Binding SelectedUiLanguageOption, Mode=TwoWay}"
+                    TextPropertyName="Thai"
+                    HeightRequest="44"/>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                <Label Text="{Binding PreferRecordingsLabel}"
+                       VerticalTextAlignment="Center"
+                       FontSize="16"
+                       FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <Switch Grid.Column="1"
+                        IsToggled="{Binding PreferRecorded}"
+                        VerticalOptions="Center"/>
+            </Grid>
+
+            <VerticalStackLayout Spacing="10">
+                <Label Text="{Binding DevicesLabel}"
+                       FontSize="16"
+                       FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <Label Text="{Binding ThisDeviceLabel}"
+                       FontSize="14"
+                       FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <Label Text="{Binding ThisDeviceUuid}"
+                       FontSize="13"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Label Text="{Binding MembersLabel}"
+                       FontSize="14"
+                       FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Members}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vms:DeviceMemberItem">
+                            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="8" Padding="0,4">
+                                <Label Text="{Binding Display}"
+                                       VerticalTextAlignment="Center"
+                                       FontFamily="{DynamicResource UIFont}"/>
+                                <Button Grid.Column="1"
+                                        Style="{StaticResource UiButton}"
+                                        Text="{ui:UiLabel account.unlink}"
+                                        Command="{Binding UnlinkCommand}"
+                                        CommandParameter="{Binding .}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <HorizontalStackLayout Spacing="8">
+                    <Button Style="{StaticResource UiButton}"
+                            Text="{Binding ShowQrLabel}"
+                            Command="{Binding ShowQrCommand}"/>
+                    <Button Style="{StaticResource UiButton}"
+                            Text="{Binding ScanQrLabel}"
+                            Command="{Binding ScanQrCommand}"/>
+                </HorizontalStackLayout>
+                <VerticalStackLayout IsVisible="{Binding QrVisible}" Spacing="8">
+                    <Image Source="{Binding QrImage}"
+                           HeightRequest="220"
+                           WidthRequest="220"
+                           HorizontalOptions="Center"
+                           Aspect="AspectFit"/>
+                    <Button Style="{StaticResource UiButton}"
+                            Text="{Binding HideQrLabel}"
+                            Command="{Binding HideQrCommand}"/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout Spacing="8">
+                <Label Text="{Binding EmailLabel}"
+                       FontSize="16"
+                       FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <Label Text="{Binding EmailValue}"
+                       FontSize="13"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Entry Text="{Binding EmailInput}"
+                       Placeholder="{Binding EmailHint}"
+                       Keyboard="Email"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Button Style="{StaticResource UiButton}"
+                        Text="{Binding AttachEmailLabel}"
+                        Command="{Binding AttachEmailCommand}"/>
+                <Entry Text="{Binding EmailCodeInput}"
+                       Placeholder="{Binding CodeHint}"
+                       Keyboard="Numeric"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Button Style="{StaticResource UiButton}"
+                        Text="{Binding ConfirmEmailLabel}"
+                        Command="{Binding ConfirmEmailCommand}"/>
+                <Entry Text="{Binding RecoverInput}"
+                       Placeholder="{Binding EmailHint}"
+                       Keyboard="Email"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Button Style="{StaticResource UiButton}"
+                        Text="{Binding RecoverLabel}"
+                        Command="{Binding RecoverCommand}"/>
+                <Entry Text="{Binding RecoverCodeInput}"
+                       Placeholder="{Binding CodeHint}"
+                       Keyboard="Numeric"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Button Style="{StaticResource UiButton}"
+                        Text="{Binding ConfirmRecoverLabel}"
+                        Command="{Binding ConfirmRecoverCommand}"/>
+            </VerticalStackLayout>
+
+            <Label Text="{Binding StatusMessage}"
+                   FontSize="14"
+                   FontFamily="{DynamicResource CurrentChromeFont}"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

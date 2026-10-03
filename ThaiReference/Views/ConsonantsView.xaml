@@ -1,0 +1,23 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             x:Class="ThaiReference.Views.ConsonantsView"
+             x:DataType="vms:ConsonantsViewModel"
+             Title="{ui:UiLabel shell.consonants}">
+    <Grid RowDefinitions="Auto,*"
+          Padding="{StaticResource PageContentPadding}"
+          RowSpacing="8">
+        <Picker
+            Title="{Binding ViewOptionsTitle}"
+            ItemsSource="{Binding ConsonantViewOptions}"
+            SelectedItem="{Binding SelectedConsonantViewOption, Mode=TwoWay}"
+            ItemDisplayBinding="{Binding Name}"/>
+        <ContentView
+            Grid.Row="1"
+            BindingContext="{Binding SelectedConsonantViewOption.ViewModel}"
+            ControlTemplate="{Binding Path=BindingContext.SelectedConsonantViewOption.TemplateKey,
+                              Source={RelativeSource AncestorType={x:Type ContentPage}},
+                              Converter={StaticResource TemplateByKeyConverter}}"/>
+    </Grid>
+</ContentPage>

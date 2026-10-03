@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ctrl="clr-namespace:ThaiReference.Controls"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             xmlns:IF="clr-namespace:ThaiReference.Contracts;assembly=ThaiReference.App"
+             xmlns:model="clr-namespace:ThaiReference.Models;assembly=ThaiReference.App"
+             xmlns:modelIF="clr-namespace:ThaiReference.Models.Interfaces;assembly=ThaiReference"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             x:Class="ThaiReference.Views.PronounsView"
+             x:DataType="vms:PronounsViewModel"
+             Title="{ui:UiLabel shell.pronouns}">
+    <ContentPage.Resources>
+        <Style x:Key="PronounButton" x:DataType="{x:Type modelIF:IPronoun}" BasedOn="{StaticResource WordButtonBase}" TargetType="Button">
+            <Setter Property="HorizontalOptions" Value="Fill"/>
+            <Setter Property="Margin" Value="1"/>
+            <Setter Property="Text">
+                <Setter.Value>
+                    <MultiBinding StringFormat="{}{0} [{1}]">
+                        <Binding Path="Name.Value"/>
+                        <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                            <Binding Path="Name.Transcription"/>
+                            <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
+                        </MultiBinding>
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
+            <Setter Property="CommandParameter" Value="{Binding Name}"/>
+            <Style.Triggers>
+                <DataTrigger TargetType="Button" Binding="{Binding Gender}" Value="Masculine">
+                    <Setter Property="TextColor" Value="CornflowerBlue"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button" Binding="{Binding Gender}" Value="Feminine">
+                    <Setter Property="TextColor" Value="DeepPink"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button" Binding="{Binding Gender}" Value="Common">
+                    <Setter Property="TextColor" Value="ForestGreen"/>
+                </DataTrigger>
+                <DataTrigger TargetType="Button" Binding="{Binding Gender}" Value="Neuter">
+                    <Setter Property="TextColor" Value="{StaticResource Gray500}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Padding="{StaticResource PageContentPadding}"
+          RowSpacing="8">
+        <VerticalStackLayout Grid.Row="0" Spacing="0">
+            <ctrl:OptionStrip Join="StackStart"
+                              ItemsSource="{Binding PluralityOptions}"
+                              SelectedItem="{Binding SelectedPluralityOption, Mode=TwoWay}"
+                              TextPropertyName="Thai"/>
+            <ctrl:OptionStrip x:Name="PersonSegControl"
+                              Join="StackEnd"
+                              ItemsSource="{Binding GrammaticalPersonOptions}"
+                              TextPropertyName="Thai"/>
+        </VerticalStackLayout>
+
+        <CarouselView Grid.Row="1"
+                      Style="{StaticResource PeekCarousel}"
+                      ItemsSource="{Binding PronounGroups}"
+                      IndicatorView="{Reference PronounIndicators}">
+            <CarouselView.ItemTemplate>
+                <DataTemplate x:DataType="{x:Type model:PronounTypeGroup}">
+                    <Border Style="{StaticResource CarouselPaneCard}">
+                        <VerticalStackLayout Spacing="8">
+                            <Label Style="{StaticResource GroupCardTitle}" Text="{Binding TypeName}"/>
+                            <BoxView Style="{StaticResource GroupCardSeparator}"/>
+                            <ScrollView VerticalScrollBarVisibility="Never">
+                                <VerticalStackLayout>
+                                    <BindableLayout.ItemsSource>
+                                        <MultiBinding Converter="{StaticResource GramPersonLookupConverter}">
+                                            <Binding Path="Group"/>
+                                            <Binding Path="SelectedItem.Indexer" Source="{x:Reference PersonSegControl}"/>
+                                        </MultiBinding>
+                                    </BindableLayout.ItemsSource>
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="{x:Type model:PronounItem}">
+                                            <SwipeView IsVisible="{Binding IsVisible}" HorizontalOptions="Fill">
+                                                <Button BindingContext="{Binding .}" Style="{StaticResource PronounButton}"/>
+                                                <SwipeView.RightItems>
+                                                    <SwipeItems Mode="Execute">
+                                                        <SwipeItemView Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
+                                                                       CommandParameter="{Binding .}">
+                                                            <Label Text="{ui:UiLabel pronouns.details}"
+                                                                   FontFamily="{DynamicResource CurrentChromeFont}"
+                                                                   FontSize="25"
+                                                                   VerticalOptions="Center"
+                                                                   HorizontalOptions="End"
+                                                                   Margin="5,0"/>
+                                                        </SwipeItemView>
+                                                    </SwipeItems>
+                                                </SwipeView.RightItems>
+                                            </SwipeView>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </ScrollView>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+
+        <IndicatorView x:Name="PronounIndicators"
+                       Grid.Row="2"
+                       Style="{StaticResource CarouselIndicator}"/>
+    </Grid>
+</ContentPage>
