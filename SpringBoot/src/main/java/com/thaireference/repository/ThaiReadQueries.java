@@ -73,7 +73,7 @@ final class ThaiReadQueries {
 
     static final String MONTHS =
             """
-            SELECT new com.thaireference.dto.MonthDto(
+            SELECT new com.thaireference.repository.MonthRow(
                 m.ordinal,
                 new com.thaireference.dto.WordDto(
                     wv.id,
@@ -88,11 +88,38 @@ final class ThaiReadQueries {
                     z.sanskritName,
                     z.sanskritLexeme,
                     z.element,
-                    z.imageUrl))
+                    z.imageUrl),
+                s.id,
+                s.ordinal,
+                s.englishLabel)
             FROM Month m
             JOIN WordView wv ON wv.id = m.wordId
             JOIN Zodiac z ON z.id = m.zodiacId
+            JOIN Season s ON s.id = m.seasonId
             ORDER BY m.ordinal
+            """;
+
+    static final String MONTH_SEASON_WORDS =
+            """
+            SELECT new com.thaireference.repository.WordRow(
+                m.ordinal,
+                new com.thaireference.dto.WordDto(
+                    wv.id,
+                    wv.spelling,
+                    new com.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
+                    wv.lexemes))
+            FROM Month m
+            JOIN Season s ON s.id = m.seasonId
+            JOIN CompositeName cn ON cn.id = s.compositeNameId
+            JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
+            ORDER BY m.ordinal,
+                CASE
+                    WHEN wv.id = cn.word1Id THEN 1
+                    WHEN wv.id = cn.word2Id THEN 2
+                    WHEN wv.id = cn.word3Id THEN 3
+                    WHEN wv.id = cn.word4Id THEN 4
+                    WHEN wv.id = cn.word5Id THEN 5
+                    ELSE 6 END
             """;
 
     static final String CELESTIAL_BODIES =
@@ -293,23 +320,40 @@ final class ThaiReadQueries {
 
     static final String MINIMAL_SETS =
             """
-            SELECT new com.thaireference.dto.MinimalSetDto(ms.id, ms.label)
-            FROM MinimalSet ms
-            ORDER BY ms.id
+            SELECT m.set_id, m.label
+            FROM thai."MinimalSetComputedView" m
+            WHERE (:label IS NULL OR m.label = :label)
+            GROUP BY m.set_id, m.label
+            ORDER BY m.set_id
+            OFFSET :offset LIMIT :limit
             """;
 
-    static final String MINIMAL_SET_WORDS =
+    static final String MINIMAL_SET_COUNT =
             """
-            SELECT new com.thaireference.repository.WordRow(
-                msw.setId,
-                new com.thaireference.dto.WordDto(
-                    wv.id,
-                    wv.spelling,
-                    new com.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
-            FROM MinimalSetWord msw
-            JOIN WordView wv ON wv.id = msw.wordId
-            ORDER BY msw.setId, msw.id
+            SELECT COUNT(*)
+            FROM (
+                SELECT m.set_id
+                FROM thai."MinimalSetComputedView" m
+                WHERE (:label IS NULL OR m.label = :label)
+                GROUP BY m.set_id
+            ) s
+            """;
+
+    static final String MINIMAL_SET_LABELS =
+            """
+            SELECT DISTINCT m.label
+            FROM thai."MinimalSetComputedView" m
+            WHERE m.label IS NOT NULL AND m.label <> ''
+            ORDER BY m.label
+            """;
+
+    static final String MINIMAL_SET_WORDS_BY_SET_IDS =
+            """
+            SELECT m.set_id, wv.id, wv.spelling, wv.paiboon, wv.ipa, wv.lexemes
+            FROM thai."MinimalSetComputedView" m
+            JOIN thai."WordView" wv ON wv.id = m.word_id
+            WHERE m.set_id IN (:setIds)
+            ORDER BY m.set_id, m.set_word_order
             """;
 
     static final String HOMOPHONES =

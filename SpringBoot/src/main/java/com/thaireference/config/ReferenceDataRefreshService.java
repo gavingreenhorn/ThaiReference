@@ -24,7 +24,6 @@ public class ReferenceDataRefreshService {
             "thai.consonants",
             "thai.clusters",
             "thai.homophones",
-            "thai.minimalSets",
             "thai.vowels",
             "thai.marks",
             "thai.classes",
@@ -119,7 +118,6 @@ public class ReferenceDataRefreshService {
         thaiController.getConsonants();
         thaiController.getClusters();
         thaiController.getHomophones();
-        thaiController.getMinimalSets();
         thaiController.getVowels();
         thaiController.getMarks();
         thaiController.getClasses();

@@ -33,7 +33,11 @@ public interface ThaiReadRepositoryCustom {
 
     List<HomophoneGroupDto> findHomophones();
 
-    List<MinimalSetDto> findMinimalSets();
+    List<MinimalSetDto> findMinimalSetsPage(String label, int offset, int limit);
+
+    long countMinimalSets(String label);
+
+    List<String> findMinimalSetLabels();
 
     List<DirectionDto> findDirections();
 

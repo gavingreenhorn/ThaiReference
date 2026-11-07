@@ -7,10 +7,12 @@ import static java.util.stream.Collectors.toList;
 import com.thaireference.dto.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +45,20 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<MonthDto> findMonths() {
-        return entityManager.createQuery(ThaiReadQueries.MONTHS, MonthDto.class).getResultList();
+        Map<Integer, List<WordDto>> seasonWordsByMonthOrdinal = wordsByParentId(ThaiReadQueries.MONTH_SEASON_WORDS);
+
+        return entityManager.createQuery(ThaiReadQueries.MONTHS, MonthRow.class).getResultList().stream()
+                .map(m -> new MonthDto(
+                        m.ordinal(),
+                        m.word(),
+                        m.shortName(),
+                        m.englishName(),
+                        m.zodiac(),
+                        new SeasonDto(
+                                m.seasonOrdinal(),
+                                seasonWordsByMonthOrdinal.getOrDefault(m.ordinal(), List.of()),
+                                m.seasonEnglishLabel())))
+                .toList();
     }
 
     @Override
@@ -159,12 +174,47 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     }
 
     @Override
-    public List<MinimalSetDto> findMinimalSets() {
-        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.MINIMAL_SET_WORDS);
+    public List<MinimalSetDto> findMinimalSetsPage(String label, int offset, int limit) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> setRows = entityManager
+                .createNativeQuery(ThaiReadQueries.MINIMAL_SETS)
+                .setParameter("label", label)
+                .setParameter("offset", offset)
+                .setParameter("limit", limit)
+                .getResultList();
 
-        return entityManager.createQuery(ThaiReadQueries.MINIMAL_SETS, MinimalSetDto.class).getResultList().stream()
-                .map(s -> new MinimalSetDto(s.id(), s.label(), words.getOrDefault(s.id(), List.of())))
+        if (setRows.isEmpty()) {
+            return List.of();
+        }
+
+        List<Integer> setIds = setRows.stream()
+                .map(row -> ((Number) row[0]).intValue())
                 .toList();
+        Map<Integer, List<WordDto>> wordsBySet = wordsByMinimalSetIds(setIds);
+
+        return setRows.stream()
+                .map(row -> {
+                    int setId = ((Number) row[0]).intValue();
+                    String setLabel = (String) row[1];
+                    return new MinimalSetDto(setId, setLabel, wordsBySet.getOrDefault(setId, List.of()));
+                })
+                .toList();
+    }
+
+    @Override
+    public long countMinimalSets(String label) {
+        Object count = entityManager
+                .createNativeQuery(ThaiReadQueries.MINIMAL_SET_COUNT)
+                .setParameter("label", label)
+                .getSingleResult();
+        return ((Number) count).longValue();
+    }
+
+    @Override
+    public List<String> findMinimalSetLabels() {
+        @SuppressWarnings("unchecked")
+        List<Object> labels = entityManager.createNativeQuery(ThaiReadQueries.MINIMAL_SET_LABELS).getResultList();
+        return labels.stream().filter(Objects::nonNull).map(String::valueOf).toList();
     }
 
     @Override
@@ -235,6 +285,47 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     private Map<Integer, List<WordDto>> wordsByParentId(String wordQuery) {
         return entityManager.createQuery(wordQuery, WordRow.class).getResultList().stream()
                 .collect(groupingBy(WordRow::parentId, LinkedHashMap::new, mapping(WordRow::word, toList())));
+    }
+
+    private Map<Integer, List<WordDto>> wordsByMinimalSetIds(List<Integer> setIds) {
+        if (setIds.isEmpty()) {
+            return Map.of();
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager
+                .createNativeQuery(ThaiReadQueries.MINIMAL_SET_WORDS_BY_SET_IDS)
+                .setParameter("setIds", setIds)
+                .getResultList();
+
+        Map<Integer, List<WordDto>> result = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            Integer setId = ((Number) row[0]).intValue();
+            Integer wordId = ((Number) row[1]).intValue();
+            String spelling = (String) row[2];
+            String paiboon = (String) row[3];
+            String ipa = (String) row[4];
+            List<String> lexemes = toStringList(row[5]);
+
+            WordDto word = new WordDto(wordId, spelling, new TranscriptionDto(paiboon, ipa), lexemes);
+            result.computeIfAbsent(setId, _ -> new ArrayList<>()).add(word);
+        }
+
+        return result;
+    }
+
+    private static List<String> toStringList(Object sqlArrayOrNull) {
+        if (!(sqlArrayOrNull instanceof Array array)) {
+            return List.of();
+        }
+        try {
+            Object value = array.getArray();
+            if (value instanceof String[] strings) {
+                return List.of(strings);
+            }
+        } catch (Exception ignored) {
+        }
+        return List.of();
     }
 
     @Override

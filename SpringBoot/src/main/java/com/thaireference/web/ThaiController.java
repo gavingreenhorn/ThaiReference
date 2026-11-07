@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -44,9 +45,34 @@ public class ThaiController {
     }
 
     @GetMapping("/minimal-sets")
-    @Cacheable("thai.minimalSets")
-    public List<MinimalSetDto> getMinimalSets() {
-        return repository.findMinimalSets();
+    public PagedResultDto<MinimalSetDto> getMinimalSets(
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "pageSize", defaultValue = "50") int pageSize,
+            @RequestParam(name = "label", required = false) String label) {
+        int safePage = Math.max(1, page);
+        int safePageSize = Math.max(1, Math.min(pageSize, 200));
+        int offset = (safePage - 1) * safePageSize;
+        String normalizedLabel = (label == null || label.isBlank()) ? null : label;
+
+        long totalItems = repository.countMinimalSets(normalizedLabel);
+        int totalPages = Math.max(1, (int) Math.ceil(totalItems / (double) safePageSize));
+        if (safePage > totalPages)
+            safePage = totalPages;
+        offset = (safePage - 1) * safePageSize;
+
+        List<MinimalSetDto> items = repository.findMinimalSetsPage(normalizedLabel, offset, safePageSize);
+        List<String> availableFilters = repository.findMinimalSetLabels();
+
+        return new PagedResultDto<>(
+                items,
+                safePage,
+                safePageSize,
+                totalItems,
+                totalPages,
+                safePage < totalPages,
+                safePage > 1,
+                normalizedLabel,
+                availableFilters);
     }
 
     @GetMapping("/vowels")
