@@ -105,6 +105,13 @@ public class ReferenceDataRefreshService {
         } catch (RuntimeException ex) {
             log.warn("Could not refresh thai.\"WordView\": {}", ex.getMessage());
         }
+
+        try {
+            jdbcTemplate.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY thai.\"MinimalSetView\"");
+            log.debug("Refreshed materialized view thai.\"MinimalSetView\"");
+        } catch (RuntimeException ex) {
+            log.warn("Could not refresh thai.\"MinimalSetView\": {}", ex.getMessage());
+        }
     }
 
     private void refreshReferenceCaches() {

@@ -321,7 +321,7 @@ final class ThaiReadQueries {
     static final String MINIMAL_SETS =
             """
             SELECT m.set_id, m.label
-            FROM thai."MinimalSetComputedView" m
+            FROM thai."MinimalSetView" m
             WHERE (CAST(:label AS text) IS NULL OR m.label = CAST(:label AS text))
             GROUP BY m.set_id, m.label
             ORDER BY m.set_id
@@ -333,7 +333,7 @@ final class ThaiReadQueries {
             SELECT COUNT(*)
             FROM (
                 SELECT m.set_id
-                FROM thai."MinimalSetComputedView" m
+                FROM thai."MinimalSetView" m
                 WHERE (CAST(:label AS text) IS NULL OR m.label = CAST(:label AS text))
                 GROUP BY m.set_id
             ) s
@@ -342,7 +342,7 @@ final class ThaiReadQueries {
     static final String MINIMAL_SET_LABELS =
             """
             SELECT DISTINCT m.label
-            FROM thai."MinimalSetComputedView" m
+            FROM thai."MinimalSetView" m
             WHERE m.label IS NOT NULL AND m.label <> ''
             ORDER BY m.label
             """;
@@ -351,14 +351,14 @@ final class ThaiReadQueries {
             """
             WITH paged_sets AS (
                 SELECT m.set_id
-                FROM thai."MinimalSetComputedView" m
+                FROM thai."MinimalSetView" m
                 WHERE (CAST(:label AS text) IS NULL OR m.label = CAST(:label AS text))
                 GROUP BY m.set_id
                 ORDER BY m.set_id
                 OFFSET :offset LIMIT :limit
             )
             SELECT m.set_id, wv.id, wv.spelling, wv.paiboon, wv.ipa, wv.lexemes
-            FROM thai."MinimalSetComputedView" m
+            FROM thai."MinimalSetView" m
             JOIN paged_sets ps ON ps.set_id = m.set_id
             JOIN thai."WordView" wv ON wv.id = m.word_id
             ORDER BY m.set_id, m.word_id
