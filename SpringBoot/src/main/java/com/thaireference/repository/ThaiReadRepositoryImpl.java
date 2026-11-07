@@ -187,10 +187,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
             return List.of();
         }
 
-        List<Integer> setIds = setRows.stream()
-                .map(row -> ((Number) row[0]).intValue())
-                .toList();
-        Map<Integer, List<WordDto>> wordsBySet = wordsByMinimalSetIds(setIds);
+        Map<Integer, List<WordDto>> wordsBySet = wordsByMinimalSetsPage(label, offset, limit);
 
         return setRows.stream()
                 .map(row -> {
@@ -287,15 +284,13 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                 .collect(groupingBy(WordRow::parentId, LinkedHashMap::new, mapping(WordRow::word, toList())));
     }
 
-    private Map<Integer, List<WordDto>> wordsByMinimalSetIds(List<Integer> setIds) {
-        if (setIds.isEmpty()) {
-            return Map.of();
-        }
-
+    private Map<Integer, List<WordDto>> wordsByMinimalSetsPage(String label, int offset, int limit) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager
-                .createNativeQuery(ThaiReadQueries.MINIMAL_SET_WORDS_BY_SET_IDS)
-                .setParameter("setIds", setIds)
+                .createNativeQuery(ThaiReadQueries.MINIMAL_SET_WORDS_PAGE)
+                .setParameter("label", label)
+                .setParameter("offset", offset)
+                .setParameter("limit", limit)
                 .getResultList();
 
         Map<Integer, List<WordDto>> result = new LinkedHashMap<>();
