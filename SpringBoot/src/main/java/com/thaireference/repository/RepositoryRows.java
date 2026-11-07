@@ -4,6 +4,7 @@ import com.thaireference.dto.SoundDto;
 import com.thaireference.dto.TranscriptionDto;
 import com.thaireference.dto.VowelGraphemeDto;
 import com.thaireference.dto.WordDto;
+import com.thaireference.dto.ZodiacDto;
 
 /*
  * A JPQL constructor projection (SELECT new Dto(...)) cannot fill a nested List, so any parent
@@ -45,6 +46,16 @@ record HomophoneRow(Integer transcriptionId, TranscriptionDto transcription) {}
 record DirectionRow(Integer id, String label, String lexeme) {}
 
 record PositionHeadRow(Integer id, String lexeme, Integer sentenceId, String translation) {}
+
+record MonthRow(
+        Integer ordinal,
+        WordDto word,
+        String shortName,
+        String englishName,
+        ZodiacDto zodiac,
+        Integer seasonId,
+        Integer seasonOrdinal,
+        String seasonEnglishLabel) {}
 
 // --- child rows: (parentId, child), grouped back onto the parent by parentId ---
 

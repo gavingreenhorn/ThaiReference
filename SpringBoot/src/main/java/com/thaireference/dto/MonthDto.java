@@ -5,4 +5,5 @@ public record MonthDto(
         WordDto word,
         String shortName,
         String englishName,
-        ZodiacDto zodiac) {}
+        ZodiacDto zodiac,
+        SeasonDto season) {}

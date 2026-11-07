@@ -29,4 +29,7 @@ public class Month {
     @Column(name = "zodiac_id", nullable = false)
     private Integer zodiacId;
 
+    @Column(name = "season_id", nullable = false)
+    private Integer seasonId;
+
 }
