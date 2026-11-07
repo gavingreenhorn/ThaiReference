@@ -361,7 +361,7 @@ final class ThaiReadQueries {
             FROM thai."MinimalSetComputedView" m
             JOIN paged_sets ps ON ps.set_id = m.set_id
             JOIN thai."WordView" wv ON wv.id = m.word_id
-            ORDER BY m.set_id, m.set_word_order
+            ORDER BY m.set_id, m.word_id
             """;
 
     static final String HOMOPHONES =
