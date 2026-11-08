@@ -64,7 +64,8 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         new SeasonDto(
                                 m.seasonOrdinal(),
                                 seasonWordsByMonthOrdinal.getOrDefault(m.ordinal(), List.of()),
-                                m.seasonEnglishLabel())))
+                                m.seasonEnglishLabel(),
+                                m.seasonGlyph())))
                 .toList();
     }
 

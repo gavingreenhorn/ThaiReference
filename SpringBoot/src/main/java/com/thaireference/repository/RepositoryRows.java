@@ -55,7 +55,8 @@ record MonthRow(
         ZodiacDto zodiac,
         Integer seasonId,
         Integer seasonOrdinal,
-        String seasonEnglishLabel) {}
+        String seasonEnglishLabel,
+        String seasonGlyph) {}
 
 // --- child rows: (parentId, child), grouped back onto the parent by parentId ---
 

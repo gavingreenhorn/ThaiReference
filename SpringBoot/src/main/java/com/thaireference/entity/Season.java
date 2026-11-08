@@ -21,4 +21,7 @@ public class Season {
 
 	@Column(name = "english_label", nullable = false)
 	private String englishLabel;
+
+	@Column(name = "glyph", nullable = false)
+	private String glyph;
 }

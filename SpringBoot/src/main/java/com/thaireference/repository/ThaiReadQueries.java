@@ -91,7 +91,8 @@ final class ThaiReadQueries {
                     z.imageUrl),
                 s.id,
                 s.ordinal,
-                s.englishLabel)
+                s.englishLabel,
+                s.glyph)
             FROM Month m
             JOIN WordView wv ON wv.id = m.wordId
             JOIN Zodiac z ON z.id = m.zodiacId
