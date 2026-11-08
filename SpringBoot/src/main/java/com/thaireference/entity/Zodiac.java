@@ -29,9 +29,6 @@ public class Zodiac {
     @Column(name = "element", nullable = false)
     private String element;
 
-    @Column(name = "image_url", nullable = true)
-    private String imageUrl;
-
     @Column(name = "glyph", nullable = false)
     private String glyph;
 

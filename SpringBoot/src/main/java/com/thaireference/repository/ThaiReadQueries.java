@@ -101,7 +101,6 @@ final class ThaiReadQueries {
                         z.sanskritName,
                         z.sanskritLexeme,
                         z.element,
-                        z.imageUrl,
                         z.glyph)))
             FROM Month m
             JOIN WordView wv ON wv.id = m.wordId
