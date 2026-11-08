@@ -13,7 +13,7 @@ public interface ThaiReadRepositoryCustom {
 
     List<HourDto> findHours();
 
-    List<MonthDto> findMonths();
+    List<SeasonDto> findSeasons();
 
     List<CelestialBodyDto> findCelestialBodies();
 

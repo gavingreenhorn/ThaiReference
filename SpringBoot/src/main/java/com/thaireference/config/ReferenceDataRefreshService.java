@@ -35,7 +35,7 @@ public class ReferenceDataRefreshService {
             "thai.celestialBodies",
             "thai.timeOfDay",
             "thai.hours",
-            "thai.months",
+            "thai.seasons",
             "thai.directions",
             "thai.colors");
 
@@ -136,7 +136,7 @@ public class ReferenceDataRefreshService {
         thaiController.getCelestialBodies();
         thaiController.getTimeOfDay();
         thaiController.getHours();
-        thaiController.getMonths();
+        thaiController.getSeasons();
         thaiController.getDirections();
         thaiController.getColors();
     }

@@ -141,10 +141,10 @@ public class ThaiController {
         return repository.findHours();
     }
 
-    @GetMapping("/months")
-    @Cacheable("thai.months")
-    public List<MonthDto> getMonths() {
-        return repository.findMonths();
+    @GetMapping("/seasons")
+    @Cacheable("thai.seasons")
+    public List<SeasonDto> getSeasons() {
+        return repository.findSeasons();
     }
 
     @GetMapping("/directions")

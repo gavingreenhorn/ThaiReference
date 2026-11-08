@@ -71,49 +71,56 @@ final class ThaiReadQueries {
             ORDER BY h.ordinal
             """;
 
-    static final String MONTHS =
+    static final String SEASONS =
             """
-            SELECT new com.thaireference.repository.MonthRow(
-                m.ordinal,
-                new com.thaireference.dto.WordDto(
-                    wv.id,
-                    wv.spelling,
-                    new com.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes),
-                m.shortName,
-                m.englishName,
-                new com.thaireference.dto.ZodiacDto(
-                    z.ordinal,
-                    z.englishName,
-                    z.sanskritName,
-                    z.sanskritLexeme,
-                    z.element,
-                    z.imageUrl),
+            SELECT new com.thaireference.repository.SeasonRow(
                 s.id,
                 s.ordinal,
                 s.englishLabel,
                 s.glyph)
+            FROM Season s
+            ORDER BY s.ordinal
+            """;
+
+    static final String SEASON_MONTHS =
+            """
+            SELECT new com.thaireference.repository.MonthRow(
+                m.seasonId,
+                new com.thaireference.dto.MonthDto(
+                    m.ordinal,
+                    new com.thaireference.dto.WordDto(
+                        wv.id,
+                        wv.spelling,
+                        new com.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
+                        wv.lexemes),
+                    m.shortName,
+                    m.englishName,
+                    new com.thaireference.dto.ZodiacDto(
+                        z.ordinal,
+                        z.englishName,
+                        z.sanskritName,
+                        z.sanskritLexeme,
+                        z.element,
+                        z.imageUrl)))
             FROM Month m
             JOIN WordView wv ON wv.id = m.wordId
             JOIN Zodiac z ON z.id = m.zodiacId
-            JOIN Season s ON s.id = m.seasonId
             ORDER BY m.ordinal
             """;
 
-    static final String MONTH_SEASON_WORDS =
+    static final String SEASON_WORDS =
             """
             SELECT new com.thaireference.repository.WordRow(
-                m.ordinal,
+                s.id,
                 new com.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new com.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
                     wv.lexemes))
-            FROM Month m
-            JOIN Season s ON s.id = m.seasonId
+            FROM Season s
             JOIN CompositeName cn ON cn.id = s.compositeNameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
-            ORDER BY m.ordinal,
+            ORDER BY s.id,
                 CASE
                     WHEN wv.id = cn.word1Id THEN 1
                     WHEN wv.id = cn.word2Id THEN 2

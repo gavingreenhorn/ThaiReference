@@ -51,21 +51,19 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     }
 
     @Override
-    public List<MonthDto> findMonths() {
-        Map<Integer, List<WordDto>> seasonWordsByMonthOrdinal = wordsByParentId(ThaiReadQueries.MONTH_SEASON_WORDS);
+    public List<SeasonDto> findSeasons() {
+        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.SEASON_WORDS);
+        Map<Integer, List<MonthDto>> months = entityManager
+                .createQuery(ThaiReadQueries.SEASON_MONTHS, MonthRow.class).getResultList().stream()
+                .collect(groupingBy(MonthRow::seasonId, LinkedHashMap::new, mapping(MonthRow::month, toList())));
 
-        return entityManager.createQuery(ThaiReadQueries.MONTHS, MonthRow.class).getResultList().stream()
-                .map(m -> new MonthDto(
-                        m.ordinal(),
-                        m.word(),
-                        m.shortName(),
-                        m.englishName(),
-                        m.zodiac(),
-                        new SeasonDto(
-                                m.seasonOrdinal(),
-                                seasonWordsByMonthOrdinal.getOrDefault(m.ordinal(), List.of()),
-                                m.seasonEnglishLabel(),
-                                m.seasonGlyph())))
+        return entityManager.createQuery(ThaiReadQueries.SEASONS, SeasonRow.class).getResultList().stream()
+                .map(s -> new SeasonDto(
+                        s.ordinal(),
+                        words.getOrDefault(s.id(), List.of()),
+                        s.englishLabel(),
+                        s.glyph(),
+                        months.getOrDefault(s.id(), List.of())))
                 .toList();
     }
 

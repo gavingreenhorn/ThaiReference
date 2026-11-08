@@ -48,15 +48,14 @@ record DirectionRow(Integer id, String label, String lexeme) {}
 record PositionHeadRow(Integer id, String lexeme, Integer sentenceId, String translation) {}
 
 record MonthRow(
-        Integer ordinal,
-        WordDto word,
-        String shortName,
-        String englishName,
-        ZodiacDto zodiac,
         Integer seasonId,
-        Integer seasonOrdinal,
-        String seasonEnglishLabel,
-        String seasonGlyph) {}
+        MonthDto month) {}
+
+record SeasonRow(
+        Integer id,
+        Integer ordinal,
+        String englishLabel,
+        String glyph) {}
 
 // --- child rows: (parentId, child), grouped back onto the parent by parentId ---
 

@@ -6,4 +6,5 @@ public record SeasonDto(
 		Integer ordinal,
 		List<WordDto> words,
 		String englishLabel,
-		String glyph) {}
+		String glyph,
+		List<MonthDto> months) {}
