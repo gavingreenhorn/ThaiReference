@@ -8,17 +8,24 @@ import com.thaireference.dto.*;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.sql.Array;
+import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Transactional(readOnly = true)
 public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ThaiReadRepositoryImpl.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -310,16 +317,33 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     }
 
     private static List<String> toStringList(Object sqlArrayOrNull) {
-        if (!(sqlArrayOrNull instanceof Array array)) {
+        if (sqlArrayOrNull == null) {
             return List.of();
         }
-        try {
-            Object value = array.getArray();
-            if (value instanceof String[] strings) {
-                return List.of(strings);
-            }
-        } catch (Exception ignored) {
+        // Hibernate 6 maps a native-query text[] column to a Java array directly; only some
+        // drivers hand back java.sql.Array. Handle both rather than silently dropping the data.
+        if (sqlArrayOrNull instanceof String[] strings) {
+            return Arrays.stream(strings).filter(Objects::nonNull).toList();
         }
+        if (sqlArrayOrNull instanceof Object[] objects) {
+            return Arrays.stream(objects).filter(Objects::nonNull).map(String::valueOf).toList();
+        }
+        if (sqlArrayOrNull instanceof Collection<?> collection) {
+            return collection.stream().filter(Objects::nonNull).map(String::valueOf).toList();
+        }
+        if (sqlArrayOrNull instanceof Array array) {
+            try {
+                Object value = array.getArray();
+                if (value instanceof Object[] objects) {
+                    return Arrays.stream(objects).filter(Objects::nonNull).map(String::valueOf).toList();
+                }
+            } catch (SQLException e) {
+                LOGGER.warn("Could not read SQL array of lexemes", e);
+            }
+            return List.of();
+        }
+        LOGGER.warn("Unexpected lexemes column type {}; returning empty list",
+                sqlArrayOrNull.getClass().getName());
         return List.of();
     }
 
