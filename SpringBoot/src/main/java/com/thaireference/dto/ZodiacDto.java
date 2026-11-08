@@ -6,4 +6,5 @@ public record ZodiacDto(
         String sanskritName,
         String sanskritLexeme,
         String element,
-        String imageUrl) {}
+        String imageUrl,
+        String glyph) {}
