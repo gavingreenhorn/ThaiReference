@@ -47,7 +47,7 @@ public class ThaiController {
     @GetMapping("/minimal-sets")
     public PagedResultDto<MinimalSetDto> getMinimalSets(
             @RequestParam(name = "page", defaultValue = "1") int page,
-            @RequestParam(name = "pageSize", defaultValue = "50") int pageSize,
+            @RequestParam(name = "pageSize", defaultValue = "10") int pageSize,
             @RequestParam(name = "label", required = false) String label) {
         int safePage = Math.max(1, page);
         int safePageSize = Math.max(1, Math.min(pageSize, 200));
