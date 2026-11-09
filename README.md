@@ -17,3 +17,10 @@ V12 reconciles the word deduplication, missing คาว dependencies, and verif
 IPA corrections. Already-corrected databases retain their existing IDs and
 links. Flyway applies and records revisions during backend deployment;
 do not apply them separately to the live database.
+
+V14 removes the ten audited duplicate word pairs, retaining lower word IDs and
+remapping dependencies. Synonymous English glosses are consolidated into one
+lexeme; distinct senses remain separate. Missing meanings were verified against
+the [SEAlang Thai Dictionary Project](https://sealang.net/thai/dictionary.htm)
+using its individual Thai headword entries. The migration records the source
+URLs and checks for repeated spellings, missing meanings, and orphan references.
