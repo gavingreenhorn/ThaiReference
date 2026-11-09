@@ -16,5 +16,5 @@ runs:
 
     - run: |
         cd SpringBoot
-        mvn -B -ntp test package
+        mvn -B -ntp -Dapi.version=1.40 test package
       shell: bash
