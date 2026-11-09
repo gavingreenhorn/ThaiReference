@@ -1,4 +1,4 @@
--- Run after V11; fixtures are temporary and use the installed view definition.
+-- Run after V13; fixtures are temporary and use the installed view definition.
 DO $test$
 DECLARE
 	view_sql text;
@@ -61,13 +61,15 @@ BEGIN
 	) s;
 	SELECT jsonb_agg(members ORDER BY members) INTO expected_sets
 	FROM (VALUES
-		(ARRAY[1,2,3,7]), (ARRAY[4,5,6]),
-		(ARRAY[1,4]), (ARRAY[2,5]), (ARRAY[3,6]),
-		(ARRAY[10,11,12]), (ARRAY[30,31]), (ARRAY[60,61])
+		(ARRAY[1,2,3,4,5,6,7]), (ARRAY[10,11,12]),
+		(ARRAY[20,21]), (ARRAY[30,31]), (ARRAY[60,61])
 	) s(members);
 
 	IF actual_sets IS DISTINCT FROM expected_sets THEN
 		RAISE EXCEPTION 'Minimal-set regression: expected %, got %', expected_sets, actual_sets;
+	END IF;
+	IF EXISTS (SELECT 1 FROM minimal_test_sets GROUP BY word_id HAVING COUNT(*) > 1) THEN
+		RAISE EXCEPTION 'A word appears in more than one computed group';
 	END IF;
 	DROP VIEW minimal_test_sets;
 END $test$;
