@@ -1,3 +1,4 @@
+DROP MATERIALIZED VIEW IF EXISTS thai."MinimalSetComputedView";
 DROP MATERIALIZED VIEW IF EXISTS thai."MinimalSetView";
 
 CREATE MATERIALIZED VIEW thai."MinimalSetView" AS

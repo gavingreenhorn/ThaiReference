@@ -1,4 +1,4 @@
--- Run after V13; fixtures are temporary and use the installed view definition.
+-- Run after V6; fixtures are temporary and use the installed view definition.
 DO $test$
 DECLARE
 	view_sql text;

@@ -14,3 +14,5 @@ UPDATE thai."Zodiac" SET glyph = U&'\2652\FE0E' WHERE english_name = 'Aquarius';
 UPDATE thai."Zodiac" SET glyph = U&'\2653\FE0E' WHERE english_name = 'Pisces';
 
 ALTER TABLE thai."Zodiac" ALTER COLUMN glyph SET NOT NULL;
+
+ALTER TABLE thai."Zodiac" DROP COLUMN image_url;

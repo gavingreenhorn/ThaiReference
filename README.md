@@ -3,7 +3,7 @@ gh workflow run deploy_backend.yaml --ref main
 
 ## Minimal-set comparison
 
-V13 preserves stored IPA. Comparison uses NFD and ignores explicit mid-tone
+The minimal-set feature preserves stored IPA. Comparison uses NFD and ignores explicit mid-tone
 macrons, affricate ties, unreleased-stop and nonsyllabic annotations, and syllable
 separators. Other vowel symbols and diacritics remain significant.
 
@@ -13,14 +13,15 @@ group. For example, เขา, ขาว, ข้าว, เข่า, เข้�
 Equivalent pronunciations alone do not form a set. The hand-maintained sets
 are unchanged.
 
-V12 reconciles the word deduplication, missing คาว dependencies, and verified
-IPA corrections. Already-corrected databases retain their existing IDs and
-links. Flyway applies and records revisions during backend deployment;
-do not apply them separately to the live database.
+## Database changes
 
-V14 removes the ten audited duplicate word pairs, retaining lower word IDs and
-remapping dependencies. Synonymous English glosses are consolidated into one
-lexeme; distinct senses remain separate. Missing meanings were verified against
-the [SEAlang Thai Dictionary Project](https://sealang.net/thai/dictionary.htm)
-using its individual Thai headword entries. The migration records the source
-URLs and checks for repeated spellings, missing meanings, and orphan references.
+V1-V5 are unchanged. Later migrations are consolidated by feature:
+V6 minimal-set comparison, V7 season glyphs, and V8 zodiac schema.
+Existing glyph backfills are retained to support their required columns.
+Future migrations are for features/schema changes, not word-data hotfixes.
+
+Word corrections and lexeme maintenance are applied directly, with source
+verification and integrity checks. Synonymous English glosses belong to one
+lexeme; distinct senses remain separate. They are not replayed by Flyway.
+Fresh databases require a separate reference-data import; migrations do not
+recreate the removed word-data fixes.
