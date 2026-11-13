@@ -10,6 +10,7 @@ import com.thaireference.account.dto.AccountDtos.OkResponse;
 import com.thaireference.account.dto.AccountDtos.PairCompleteRequest;
 import com.thaireference.account.dto.AccountDtos.PairStartResponse;
 import com.thaireference.account.dto.AccountDtos.UnlinkRequest;
+import com.thaireference.account.dto.AccountDtos.TransferOwnerRequest;
 import com.thaireference.security.DevicePrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
@@ -37,9 +38,10 @@ public class AccountController {
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorization,
             @RequestHeader(value = "X-Platform", required = false) String platform,
             @RequestHeader(value = "X-Build-Number", required = false) String build,
+            @RequestHeader(value = "X-Device-Model", required = false) String model,
             HttpServletRequest request) {
         UUID uuid = AccountService.parseDeviceUuid(authorization);
-        return accountService.checkin(uuid, platform, build, OriginatingIp.resolve(request));
+        return accountService.checkin(uuid, platform, build, model, OriginatingIp.resolve(request));
     }
 
     @GetMapping("/info")
@@ -64,6 +66,12 @@ public class AccountController {
             @AuthenticationPrincipal DevicePrincipal device, @RequestBody UnlinkRequest body) {
         UUID target = body == null ? null : body.deviceUuid();
         return accountService.unlink(requireDevice(device), target);
+    }
+
+    @PostMapping("/devices/owner")
+    public AccountInfoResponse transferOwner(
+            @AuthenticationPrincipal DevicePrincipal device, @RequestBody TransferOwnerRequest body) {
+        return accountService.transferOwner(requireDevice(device), body == null ? null : body.deviceUuid());
     }
 
     @PostMapping("/email")

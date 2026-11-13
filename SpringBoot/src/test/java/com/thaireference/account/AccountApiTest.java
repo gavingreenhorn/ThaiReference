@@ -123,6 +123,49 @@ class AccountApiTest {
     }
 
     @Test
+    void ownershipControlsEmailAndTransferAndModelIsStored() throws Exception {
+        UUID host = UUID.randomUUID();
+        UUID other = UUID.randomUUID();
+        mockMvc.perform(post("/account/checkin")
+                        .header(HttpHeaders.AUTHORIZATION, host.toString())
+                        .header("X-Device-Model", "Test model"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.owner").value(true))
+                .andExpect(jsonPath("$.devices[0].model").value("Test model"))
+                .andExpect(jsonPath("$.devices[0].owner").value(true));
+        checkin(other).andExpect(status().isOk());
+        String token = tokenField(mockMvc.perform(post("/account/devices/pair/start")
+                        .header(HttpHeaders.AUTHORIZATION, host.toString()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString());
+        mockMvc.perform(post("/account/devices/pair/complete")
+                        .header(HttpHeaders.AUTHORIZATION, other.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"" + token + "\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.owner").value(false));
+        mockMvc.perform(post("/account/email")
+                        .header(HttpHeaders.AUTHORIZATION, other.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"test@example.com\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/account/devices/unlink")
+                        .header(HttpHeaders.AUTHORIZATION, host.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"device_uuid\":\"" + host + "\"}"))
+                .andExpect(status().isConflict());
+        mockMvc.perform(post("/account/devices/owner")
+                        .header(HttpHeaders.AUTHORIZATION, host.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"device_uuid\":\"" + other + "\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.owner").value(false));
+        info(other).andExpect(status().isOk()).andExpect(jsonPath("$.owner").value(true));
+        mockMvc.perform(post("/account/email")
+                        .header(HttpHeaders.AUTHORIZATION, host.toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"test@example.com\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void qrPairMovesScannerAndDeletesEmptyGroup() throws Exception {
         UUID host = UUID.randomUUID();
         UUID scanner = UUID.randomUUID();
@@ -251,7 +294,9 @@ class AccountApiTest {
         info(lost)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.group_id").value((int) hostGroup))
+                .andExpect(jsonPath("$.owner").value(true))
                 .andExpect(jsonPath("$.email_set").value(true));
+        info(host).andExpect(status().isOk()).andExpect(jsonPath("$.owner").value(false));
     }
 
     @Test

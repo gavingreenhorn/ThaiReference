@@ -30,6 +30,9 @@ public class DeviceGroup {
     @Column(name = "max_devices", nullable = false)
     private int maxDevices;
 
+    @Column(name = "owner_device_id")
+    private Long ownerDeviceId;
+
     @JdbcTypeCode(SqlTypes.TIMESTAMP_UTC)
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;

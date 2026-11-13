@@ -14,15 +14,18 @@ public class AccountDtos {
             UUID deviceUuid,
             boolean emailSet,
             String email,
+            boolean owner,
             List<DeviceMemberDto> devices) {}
 
     public record DeviceMemberDto(
             UUID uuid,
+            String model,
             String platform,
             String build,
             Instant linkedAt,
             Instant lastSeen,
             boolean thisDevice,
+            boolean owner,
             String lastIp) {}
 
     public record PairStartResponse(String token, Instant expiresAt) {}
@@ -30,6 +33,8 @@ public class AccountDtos {
     public record PairCompleteRequest(String token) {}
 
     public record UnlinkRequest(UUID deviceUuid) {}
+
+    public record TransferOwnerRequest(UUID deviceUuid) {}
 
     public record EmailRequest(String email) {}
 

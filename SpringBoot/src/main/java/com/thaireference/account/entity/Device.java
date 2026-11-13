@@ -34,6 +34,9 @@ public class Device {
     @Column(name = "platform")
     private String platform;
 
+    @Column(name = "model", length = 128)
+    private String model;
+
     @Column(name = "build")
     private String build;
 

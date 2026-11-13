@@ -58,7 +58,7 @@ public class AccountService {
     }
 
     @Transactional
-    public AccountInfoResponse checkin(UUID uuid, String platform, String build, String lastIp) {
+    public AccountInfoResponse checkin(UUID uuid, String platform, String build, String model, String lastIp) {
         requireUuidV4(uuid);
         Optional<Device> existing = deviceRepository.findByUuid(uuid);
         boolean created = existing.isEmpty();
@@ -75,11 +75,14 @@ public class AccountService {
             device.setGroupId(group.getId());
             device.setPlatform(blankToNull(platform));
             device.setBuild(blankToNull(build));
+            device.setModel(normalizeModel(model));
             device.setLastIp(lastIp);
             device.setCreatedAt(now);
             device.setLinkedAt(now);
             device.setLastSeen(now);
             device = deviceRepository.save(device);
+            group.setOwnerDeviceId(device.getId());
+            groupRepository.save(group);
         } else {
             device = existing.get();
             device.setLastSeen(now);
@@ -88,6 +91,9 @@ public class AccountService {
             }
             if (build != null && !build.isBlank()) {
                 device.setBuild(build.trim());
+            }
+            if (model != null && !model.isBlank()) {
+                device.setModel(normalizeModel(model));
             }
             if (lastIp != null) {
                 device.setLastIp(lastIp);
@@ -130,6 +136,11 @@ public class AccountService {
                 .findById(token.getGroupId())
                 .orElseThrow(() -> new AccountException("invalid_token", HttpStatus.BAD_REQUEST));
         if (!device.getGroupId().equals(target.getId())) {
+            DeviceGroup current = requireGroup(device.getGroupId());
+            if (device.getId().equals(current.getOwnerDeviceId())
+                    && deviceRepository.countByGroupId(current.getId()) > 1) {
+                throw new AccountException("transfer_owner_first", HttpStatus.CONFLICT);
+            }
             if (deviceRepository.countByGroupId(target.getId()) >= target.getMaxDevices()) {
                 throw new AccountException("max_devices", HttpStatus.CONFLICT);
             }
@@ -155,12 +166,19 @@ public class AccountService {
         if (!target.getGroupId().equals(actor.groupId())) {
             throw new AccountException("not_found", HttpStatus.NOT_FOUND);
         }
+        DeviceGroup current = requireGroup(actor.groupId());
+        if (target.getId().equals(current.getOwnerDeviceId())
+                && deviceRepository.countByGroupId(current.getId()) > 1) {
+            throw new AccountException("transfer_owner_first", HttpStatus.CONFLICT);
+        }
         Instant now = Instant.now();
         Long oldGroupId = target.getGroupId();
         DeviceGroup solo = new DeviceGroup();
         solo.setMaxDevices(accountProperties.maxDevices());
         solo.setCreatedAt(now);
         solo = groupRepository.save(solo);
+        solo.setOwnerDeviceId(target.getId());
+        groupRepository.save(solo);
         target.setGroupId(solo.getId());
         target.setLinkedAt(now);
         deviceRepository.save(target);
@@ -177,6 +195,7 @@ public class AccountService {
         DeviceGroup group = groupRepository
                 .findById(principal.groupId())
                 .orElseThrow(() -> new AccountException("unauthorized", HttpStatus.UNAUTHORIZED));
+        requireOwner(group, principal);
         if (normalized.equals(group.getEmail())) {
             return;
         }
@@ -218,6 +237,7 @@ public class AccountService {
         DeviceGroup group = groupRepository
                 .findById(token.getGroupId())
                 .orElseThrow(() -> new AccountException("invalid_token", HttpStatus.BAD_REQUEST));
+        requireOwner(group, principal);
         group.setEmail(email);
         groupRepository.save(group);
         token.setUsedAt(Instant.now());
@@ -257,6 +277,11 @@ public class AccountService {
                 .findById(token.getGroupId())
                 .orElseThrow(() -> new AccountException("invalid_token", HttpStatus.BAD_REQUEST));
         if (!device.getGroupId().equals(target.getId())) {
+            DeviceGroup current = requireGroup(device.getGroupId());
+            if (device.getId().equals(current.getOwnerDeviceId())
+                    && deviceRepository.countByGroupId(current.getId()) > 1) {
+                throw new AccountException("transfer_owner_first", HttpStatus.CONFLICT);
+            }
             if (deviceRepository.countByGroupId(target.getId()) >= target.getMaxDevices()) {
                 throw new AccountException("max_devices", HttpStatus.CONFLICT);
             }
@@ -266,6 +291,8 @@ public class AccountService {
             deviceRepository.save(device);
             deleteGroupIfEmpty(oldGroupId);
         }
+        target.setOwnerDeviceId(device.getId());
+        groupRepository.save(target);
         token.setUsedAt(Instant.now());
         tokenRepository.save(token);
     }
@@ -292,17 +319,54 @@ public class AccountService {
                     boolean thisDevice = member.getUuid().equals(device.getUuid());
                     return new DeviceMemberDto(
                             member.getUuid(),
+                            member.getModel(),
                             member.getPlatform(),
                             member.getBuild(),
                             member.getLinkedAt(),
                             member.getLastSeen(),
                             thisDevice,
+                            member.getId().equals(group.getOwnerDeviceId()),
                             thisDevice ? member.getLastIp() : null);
                 })
                 .toList();
         boolean emailSet = group.getEmail() != null && !group.getEmail().isBlank();
         return new AccountInfoResponse(
-                created, group.getId(), device.getUuid(), emailSet, emailSet ? group.getEmail() : null, members);
+                created, group.getId(), device.getUuid(), emailSet, emailSet ? group.getEmail() : null,
+                device.getId().equals(group.getOwnerDeviceId()), members);
+    }
+
+    @Transactional
+    public AccountInfoResponse transferOwner(DevicePrincipal principal, UUID targetUuid) {
+        DeviceGroup group = requireGroup(principal.groupId());
+        requireOwner(group, principal);
+        Device target = targetUuid == null ? null : deviceRepository.findByUuid(targetUuid).orElse(null);
+        if (target == null || !target.getGroupId().equals(group.getId())) {
+            throw new AccountException("not_found", HttpStatus.NOT_FOUND);
+        }
+        group.setOwnerDeviceId(target.getId());
+        groupRepository.save(group);
+        Device actor = deviceRepository.findById(principal.deviceId())
+                .orElseThrow(() -> new AccountException("unauthorized", HttpStatus.UNAUTHORIZED));
+        return toInfo(actor, false);
+    }
+
+    private DeviceGroup requireGroup(Long groupId) {
+        return groupRepository.findById(groupId)
+                .orElseThrow(() -> new AccountException("unauthorized", HttpStatus.UNAUTHORIZED));
+    }
+
+    private static void requireOwner(DeviceGroup group, DevicePrincipal principal) {
+        if (!principal.deviceId().equals(group.getOwnerDeviceId())) {
+            throw new AccountException("owner_required", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    private static String normalizeModel(String model) {
+        String value = blankToNull(model);
+        if (value != null && value.length() > 128) {
+            throw new AccountException("invalid_model", HttpStatus.BAD_REQUEST);
+        }
+        return value;
     }
 
     private void deleteGroupIfEmpty(Long groupId) {

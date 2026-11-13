@@ -30,6 +30,9 @@ class ReferenceFeatureMigrationTest {
                     CREATE TABLE thai."Season"(id integer, ordinal integer);
                     INSERT INTO thai."Season" VALUES (1,1),(2,2),(3,3);
                     CREATE TABLE thai."Zodiac"(id integer, english_name text, image_url text);
+                    CREATE TABLE thai.device_group(id bigint PRIMARY KEY);
+                    CREATE TABLE thai.device(
+                        id bigint PRIMARY KEY, device_group_id bigint, linked_at timestamptz);
                     INSERT INTO thai."Zodiac" VALUES
                         (1,'Aries',NULL),(2,'Taurus',NULL),(3,'Gemini',NULL),
                         (4,'Cancer',NULL),(5,'Leo',NULL),(6,'Virgo',NULL),
@@ -42,7 +45,7 @@ class ReferenceFeatureMigrationTest {
                     .baselineOnMigrate(true)
                     .baselineVersion("5")
                     .load();
-            assertEquals(3, flyway.migrate().migrationsExecuted);
+            assertEquals(4, flyway.migrate().migrationsExecuted);
             flyway.validate();
             assertEquals(0, flyway.migrate().migrationsExecuted);
             connection.setAutoCommit(false);
