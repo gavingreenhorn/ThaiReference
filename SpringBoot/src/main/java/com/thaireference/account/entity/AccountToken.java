@@ -20,7 +20,7 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "account_token", schema = "thai")
+@Table(name = "account_token", schema = "account")
 public class AccountToken {
 
     @Id

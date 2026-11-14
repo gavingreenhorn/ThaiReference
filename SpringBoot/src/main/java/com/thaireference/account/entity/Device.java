@@ -18,7 +18,7 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "device", schema = "thai")
+@Table(name = "device", schema = "account")
 public class Device {
 
     @Id

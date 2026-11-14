@@ -16,7 +16,8 @@ are unchanged.
 ## Database changes
 
 V1-V5 are unchanged. Later migrations are consolidated by feature:
-V6 minimal-set comparison, V7 season glyphs, V8 zodiac schema, and V9 device ownership.
+V6 minimal-set comparison, V7 season glyphs, V8 zodiac schema, V9 device ownership,
+and V10 account schema separation.
 Existing glyph backfills are retained to support their required columns.
 Future migrations are for features/schema changes, not word-data hotfixes.
 
@@ -34,6 +35,9 @@ multi-device group must transfer ownership before leaving it. Recovering a group
 by email transfers ownership to the recovering device. Device models are supplied
 on check-in; older clients do not supply them. V9 assigns existing groups to
 their earliest-linked remaining device, as the original creator was not recorded.
+The `account` schema contains admin credentials, devices, groups and account tokens;
+reference data and Flyway history remain in `thai`. V10 moves the existing tables
+and their data without resetting accounts.
 
 This account mechanism is not production-ready: device UUID credentials currently
 travel over HTTP, and email delivery and recovery-code protections require work.

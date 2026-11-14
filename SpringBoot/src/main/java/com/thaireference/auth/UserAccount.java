@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(
         name = "user_accounts",
-        schema = "thai",
+        schema = "account",
         uniqueConstraints = @UniqueConstraint(name = "uq_user_accounts_username", columnNames = "username"))
 public class UserAccount {
 
