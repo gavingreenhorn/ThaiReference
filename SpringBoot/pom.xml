@@ -44,10 +44,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
         <!-- Auto-generated CRUD admin UI over the JPA entities (replaces the FastAPI/SQLAdmin panel). -->
         <dependency>
             <groupId>tech.ailef</groupId>

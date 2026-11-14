@@ -74,4 +74,5 @@ app:
     create-quota-window: ${ACCOUNT_CREATE_QUOTA_WINDOW:1h}
     max-devices: ${ACCOUNT_MAX_DEVICES:5}
   mail:
-    from: ${ACCOUNT_MAIL_FROM:noreply@thaireference}
+    from: ${ACCOUNT_MAIL_FROM:thaireference@jonecorp.org}
+    resend-api-key: ${RESEND_API_KEY:}

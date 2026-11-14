@@ -67,11 +67,14 @@ jobs:
     steps:
       - name: Deploy on remote host
         uses: appleboy/ssh-action@master
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         with:
           host: ${{ vars.HOST }}
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+          envs: RESEND_API_KEY
           script: |
             set -euo pipefail
 
@@ -118,9 +121,11 @@ jobs:
             echo ADMIN_SECRET_KEY=${{ secrets.ADMIN_SECRET_KEY }} >> ${{ env.INFRA_DIR }}/.env
             echo CORS_ORIGINS=${{ secrets.CORS_ORIGINS }} >> ${{ env.INFRA_DIR }}/.env
             echo API_PORT=${{ vars.API_PORT }} >> ${{ env.INFRA_DIR }}/.env
+            printf 'RESEND_API_KEY=%s\n' "${RESEND_API_KEY:-}" >> ${{ env.INFRA_DIR }}/.env
 
             on_fail() {
               sudo docker logs backend --tail 300 2>/dev/null || true
+              sudo docker logs mailserver --tail 200 2>/dev/null || true
               sudo docker logs ${{ secrets.POSTGRES_HOST }} --tail 200 2>/dev/null || true
               exit 1
             }

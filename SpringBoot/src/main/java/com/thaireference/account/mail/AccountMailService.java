@@ -1,43 +1,45 @@
 package com.thaireference.account.mail;
 
 import com.thaireference.config.properties.AccountMailProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import java.util.List;
+import java.util.Map;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class AccountMailService implements AccountMailPort {
 
-    private static final Logger log = LoggerFactory.getLogger(AccountMailService.class);
-
-    private final ObjectProvider<JavaMailSender> mailSender;
+    private final RestClient restClient = RestClient.create("https://api.resend.com");
     private final AccountMailProperties mailProperties;
 
-    public AccountMailService(
-            ObjectProvider<JavaMailSender> mailSender, AccountMailProperties mailProperties) {
-        this.mailSender = mailSender;
+    public AccountMailService(AccountMailProperties mailProperties) {
         this.mailProperties = mailProperties;
     }
 
     @Override
     public void send(String to, String subject, String body) {
-        JavaMailSender sender = mailSender.getIfAvailable();
-        if (sender != null) {
-            try {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(mailProperties.from());
-                message.setTo(to);
-                message.setSubject(subject);
-                message.setText(body);
-                sender.send(message);
-                return;
-            } catch (Exception ex) {
-                log.warn("SMTP send failed; logging mail body instead", ex);
-            }
+        String apiKey = mailProperties.resendApiKey();
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("Resend API key is not configured");
         }
-        log.info("Mail for {} ({}): {}", to, subject, body);
+
+        try {
+            restClient
+                    .post()
+                    .uri("/emails")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .body(Map.of(
+                            "from", mailProperties.from(),
+                            "to", List.of(to),
+                            "subject", subject,
+                            "text", body))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException ex) {
+            throw new IllegalStateException("Resend email request failed", ex);
+        }
     }
 }

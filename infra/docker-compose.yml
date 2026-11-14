@@ -70,8 +70,38 @@ services:
       retries: 3
       interval: 10s
 
+  mailserver:
+    container_name: mailserver
+    image: ghcr.io/docker-mailserver/docker-mailserver:17.0.0
+    hostname: mail.jonecorp.org
+    restart: always
+    ports:
+      - "25:25"
+      - "993:993"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      ENABLE_FAIL2BAN: "1"
+      ENABLE_RSPAMD: "1"
+      PERMIT_DOCKER: none
+      POSTMASTER_ADDRESS: postmaster@jonecorp.org
+    volumes:
+      - mail_data:/var/mail/
+      - mail_state:/var/mail-state/
+      - mail_logs:/var/log/mail/
+      - mail_config:/tmp/docker-mailserver/
+      - /etc/localtime:/etc/localtime:ro
+
 volumes:
   thai_pg_data:
     name: thai_pg_data
   thai_media:
     name: thai_media
+  mail_data:
+    name: mail_data
+  mail_state:
+    name: mail_state
+  mail_logs:
+    name: mail_logs
+  mail_config:
+    name: mail_config
