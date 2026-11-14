@@ -259,9 +259,19 @@
     <FlyoutItem Title="Settings"
                 Route="settings"
                 FlyoutItemIsVisible="False">
-        <ShellContent
-            Title="Settings"
-            ContentTemplate="{DataTemplate views:SettingsView}"
-            Route="Settings"/>
+        <ShellSection>
+            <ShellContent
+                Title="Appearance"
+                ContentTemplate="{DataTemplate views:SettingsView}"
+                Route="SettingsAppearance"/>
+            <ShellContent
+                Title="Devices"
+                ContentTemplate="{DataTemplate views:SettingsDevicesView}"
+                Route="SettingsDevices"/>
+            <ShellContent
+                Title="Recovery"
+                ContentTemplate="{DataTemplate views:SettingsRecoveryView}"
+                Route="SettingsRecovery"/>
+        </ShellSection>
     </FlyoutItem>
 </Shell>

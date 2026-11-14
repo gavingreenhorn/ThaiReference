@@ -12,9 +12,11 @@ public sealed class MonthWheelItemVm
     public string ElementLightHex { get; }
     public string ElementDarkHex { get; }
     public int Ordinal => Month.Ordinal;
+    public int SeasonOrdinal { get; }
 
     public MonthWheelItemVm(
         IMonth month,
+        int seasonOrdinal,
         string shortName,
         string shortEnglish,
         string zodiacSymbol,
@@ -22,6 +24,7 @@ public sealed class MonthWheelItemVm
         string elementDarkHex)
     {
         Month = month;
+        SeasonOrdinal = seasonOrdinal;
         ShortName = shortName;
         ShortEnglish = shortEnglish;
         ZodiacSymbol = zodiacSymbol;

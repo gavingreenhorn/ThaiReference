@@ -24,6 +24,10 @@
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 	</PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+		<DebugSymbols>true</DebugSymbols>
+		<AndroidIncludeDebugSymbols>true</AndroidIncludeDebugSymbols>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
 		<AndroidKeyStore>false</AndroidKeyStore>
 		<EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
@@ -45,7 +49,13 @@
 		<MauiFont Include="Resources\Fonts\MaterialIconsSharp-Regular.otf" Alias="MaterialIconsSharp" />
 		<MauiFont Include="Resources\Fonts\DSEG7Classic-Regular.ttf" Alias="DSEG7Classic" />
 		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+		<AndroidResource Remove="Handlers\**" />
+		<Compile Remove="Handlers\**" />
 		<Compile Remove="scripts\**\*" />
+		<EmbeddedResource Remove="Handlers\**" />
+		<MauiCss Remove="Handlers\**" />
+		<MauiXaml Remove="Handlers\**" />
+		<None Remove="Handlers\**" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\ThaiReference.Data\ThaiReference.Data.csproj" />
@@ -55,8 +65,8 @@
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
-		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.90" />
-		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.90" />
+		<PackageReference Include="Microsoft.Maui.Controls" Version="10.0.120" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.120" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="5.0.0-preview2" />
 		<PackageReference Include="BarcodeScanning.Native.Maui" Version="3.1.0" />
@@ -138,17 +148,21 @@
 		<EmbeddedResource Include="appsettings.json" />
 	</ItemGroup>
 	<ItemGroup>
-		<Folder Include="Handlers\" />
 		<Folder Include="Resources\Raw\" />
 	</ItemGroup>
 	<PropertyGroup>
 		<FetchProdDb>true</FetchProdDb>
+		<SyncApiEndpoint Condition="'$(SyncApiEndpoint)' == '' AND !Exists('$(ProjectDir)appsettings.json')">true</SyncApiEndpoint>
 		<SyncApiEndpoint Condition="'$(SyncApiEndpoint)' == ''">false</SyncApiEndpoint>
+		<AllowOfflineLiteDb Condition="'$(AllowOfflineLiteDb)' == ''">false</AllowOfflineLiteDb>
 	</PropertyGroup>
-	<Target Name="SyncApiEndpoint"
-	        BeforeTargets="BuildLiteDb"
-	        Condition="'$(DesignTimeBuild)' != 'true' AND '$(SyncApiEndpoint)' == 'true' AND Exists('$(ProjectDir)scripts\sync-api-endpoint.ps1')">
+	<Target Name="SyncApiEndpoint" BeforeTargets="BuildLiteDb" Condition="'$(DesignTimeBuild)' != 'true' AND '$(SyncApiEndpoint)' == 'true' AND Exists('$(ProjectDir)scripts\sync-api-endpoint.ps1')">
 		<Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)scripts\sync-api-endpoint.ps1&quot;" WorkingDirectory="$(ProjectDir)" />
+	</Target>
+	<!-- appsettings.json is gitignored; a clean clone without the sync script still needs one to embed. -->
+	<Target Name="SeedApiEndpointFromTemplate" BeforeTargets="SyncApiEndpoint;BuildLiteDb" Condition="'$(DesignTimeBuild)' != 'true' AND !Exists('$(ProjectDir)appsettings.json')">
+		<Copy SourceFiles="$(ProjectDir)appsettings.template.json" DestinationFiles="$(ProjectDir)appsettings.json" />
+		<Warning Text="appsettings.json was missing; seeded from appsettings.template.json (loopback endpoint). Run scripts\sync-api-endpoint.ps1 to point at the real API." />
 	</Target>
 	<!-- Build: fetch from API and write thai_lite.db to Resources\Raw (embedded). Uses appsettings.json for ApiHost/ApiPort. -->
 	<Target Name="BuildLiteDb" BeforeTargets="BeforeBuild" Condition="'$(DesignTimeBuild)' != 'true'">
@@ -156,8 +170,9 @@
 			<_LiteDbOutPath>$(ProjectDir)Resources\Raw\thai_lite.db</_LiteDbOutPath>
 			<_FetchLiteDbProject>$(ProjectDir)scripts\FetchLiteDb\FetchLiteDb.csproj</_FetchLiteDbProject>
 			<_ConfigPath>$(ProjectDir)appsettings.json</_ConfigPath>
+			<_AllowOfflineArg Condition="'$(AllowOfflineLiteDb)' == 'true'"> --allow-offline</_AllowOfflineArg>
 		</PropertyGroup>
-		<Exec Command="dotnet run --project &quot;$(_FetchLiteDbProject)&quot; -c $(Configuration) -- --out &quot;$(_LiteDbOutPath)&quot; --config &quot;$(_ConfigPath)&quot;" IgnoreExitCode="true" WorkingDirectory="$(ProjectDir)" />
+		<Exec Command="dotnet run --project &quot;$(_FetchLiteDbProject)&quot; -c $(Configuration) -- --out &quot;$(_LiteDbOutPath)&quot; --config &quot;$(_ConfigPath)&quot;$(_AllowOfflineArg)" WorkingDirectory="$(ProjectDir)" />
 	</Target>
 	<Target Name="RunUnitTests" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
 		<Exec Command="dotnet test &quot;$(ProjectDir)..\ThaiReference.Tests\ThaiReference.Tests.csproj&quot; -c $(Configuration) --nologo" IgnoreStandardErrorWarningFormat="true" />

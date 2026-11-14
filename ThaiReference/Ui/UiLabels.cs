@@ -32,6 +32,15 @@ public static class UiLabels
 	public static class Account
 	{
 		public const string Devices = "account.devices";
+		public const string Appearance = "account.appearance";
+		public const string Recovery = "account.recovery";
+		public const string RecoverGroup = "account.recover_group";
+		public const string ChangeEmail = "account.change_email";
+		public const string TransferOwner = "account.transfer_owner";
+		public const string TransferOwnerConfirm = "account.transfer_owner_confirm";
+		public const string UnknownDevice = "account.unknown_device";
+		public const string EmailUnchanged = "account.email_unchanged";
+		public const string TransferFirst = "account.transfer_first";
 		public const string ThisDevice = "account.this_device";
 		public const string Members = "account.members";
 		public const string Unlink = "account.unlink";
@@ -187,6 +196,9 @@ public static class UiLabels
 			["Homophones"] = Shell.Homophones,
 			["MinimalSets"] = Shell.MinimalSets,
 			["Settings"] = Shell.Settings,
+			["SettingsAppearance"] = Account.Appearance,
+			["SettingsDevices"] = Account.Devices,
+			["SettingsRecovery"] = Account.Recovery,
 		};
 
 	public static readonly IReadOnlyDictionary<string, string> ClusterTypeToId =
@@ -240,6 +252,15 @@ public static class UiLabels
 		[Chrome.Romanisation] = ("การถอดเสียง", "Romanisation type"),
 		[Chrome.ViewOptions] = ("ตัวเลือกมุมมอง", "View options"),
 		[Account.Devices] = ("อุปกรณ์", "Devices"),
+		[Account.Appearance] = ("การแสดงผล", "Appearance"),
+		[Account.Recovery] = ("การกู้คืน", "Recovery"),
+		[Account.RecoverGroup] = ("กู้คืนกลุ่มอุปกรณ์", "Recover device group"),
+		[Account.ChangeEmail] = ("เปลี่ยนอีเมล", "Change email"),
+		[Account.TransferOwner] = ("โอนสิทธิ์เจ้าของ", "Transfer ownership"),
+		[Account.TransferOwnerConfirm] = ("โอนสิทธิ์เจ้าของให้อุปกรณ์นี้หรือไม่", "Transfer ownership to this device?"),
+		[Account.UnknownDevice] = ("อุปกรณ์ไม่ทราบชื่อ", "Unknown device"),
+		[Account.EmailUnchanged] = ("อีเมลนี้ผูกไว้แล้ว", "This email is already attached"),
+		[Account.TransferFirst] = ("โอนสิทธิ์เจ้าของก่อนยกเลิกการเชื่อม", "Transfer ownership before unlinking the owner"),
 		[Account.ThisDevice] = ("อุปกรณ์นี้", "This device"),
 		[Account.Members] = ("สมาชิกในกลุ่ม", "Group members"),
 		[Account.Unlink] = ("ยกเลิกการเชื่อม", "Unlink"),

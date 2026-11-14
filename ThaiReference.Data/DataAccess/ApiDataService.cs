@@ -49,9 +49,11 @@ public class ApiDataService : IDataService
     }
 
     /// <summary>HTTP-only construction for tools (e.g. FetchLiteDb). Fallback is unavailable.</summary>
+    /// <remarks>Build-time tools pull every collection in bulk over the public internet, so the
+    /// interactive 1.5s timeout is far too aggressive here.</remarks>
     public ApiDataService(string baseUrl)
         : this(
-            new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(1.5) },
+            new HttpClient { BaseAddress = new Uri(baseUrl), Timeout = TimeSpan.FromSeconds(30) },
             snapshotDbDir: null,
             ensureSnapshotDb: null,
             availability: null)
@@ -111,6 +113,9 @@ public class ApiDataService : IDataService
 
     private List<T> FetchList<T>(string path) => Fetch<List<T>>(path) ?? [];
 
+    /// <summary>No snapshot directory means this instance is API-only (build tools, tests).</summary>
+    private bool HasFallback => !string.IsNullOrEmpty(_snapshotDbDir);
+
     private LiteDataService FallbackDB
     {
         get
@@ -134,6 +139,11 @@ public class ApiDataService : IDataService
         Func<List<T>> fetchFromApi,
         Func<LiteDataService, IEnumerable<T>> fromFallback)
     {
+        // Without a snapshot there is nothing to fall back to, and routing through the handler
+        // would replace the real API failure with a misleading "not configured" message.
+        if (!HasFallback)
+            return fetchFromApi();
+
         if (_availability is { IsUp: false })
             return fromFallback(FallbackDB).ToList();
 
@@ -144,13 +154,16 @@ public class ApiDataService : IDataService
                 _availability?.MarkDown();
                 return fromFallback(FallbackDB);
             },
-            preferFallbackWhenApiEmpty: true);
+            preferFallbackWhenApiEmpty: false);
     }
 
     private T GetOrFallback<T>(
         Func<T> fetchFromApi,
         Func<LiteDataService, T> fromFallback)
     {
+        if (!HasFallback)
+            return fetchFromApi();
+
         if (_availability is { IsUp: false })
             return fromFallback(FallbackDB);
 
@@ -176,12 +189,11 @@ public class ApiDataService : IDataService
         _positions = null;
         _weekdays = null;
         _celestialBodies = null;
-        _months = null;
+        _seasons = null;
         _timeOfDayItems = null;
         _hourItems = null;
         _clusters = null;
         _homophones = null;
-        _minimalSets = null;
         _directions = null;
         _hueFamilies = null;
     }
@@ -201,12 +213,11 @@ public class ApiDataService : IDataService
     private List<IPosition>? _positions;
     private List<IWeekday>? _weekdays;
     private List<ICelestialBody>? _celestialBodies;
-    private List<IMonth>? _months;
+    private List<ISeason>? _seasons;
     private List<ITimeOfDay>? _timeOfDayItems;
     private List<IHour>? _hourItems;
     private List<ICluster>? _clusters;
     private List<IHomophoneGroup>? _homophones;
-    private List<IMinimalSet>? _minimalSets;
     private List<IDirection>? _directions;
     private List<IHueFamily>? _hueFamilies;
 
@@ -254,9 +265,9 @@ public class ApiDataService : IDataService
         () => FetchList<CelestialBodyDto>("/thai/celestial-bodies").Select<CelestialBodyDto, ICelestialBody>(d => d.ToCelestialBody()).ToList(),
         fb => fb.CelestialBodies).ToList();
 
-    public IEnumerable<IMonth> Months => _months ??= GetOrFallback(
-        () => FetchList<MonthDto>("/thai/months").Select<MonthDto, IMonth>(d => d.ToMonth()).ToList(),
-        fb => fb.Months).ToList();
+    public IEnumerable<ISeason> Seasons => _seasons ??= GetOrFallback(
+        () => FetchList<SeasonDto>("/thai/seasons").Select<SeasonDto, ISeason>(d => d.ToSeason()).ToList(),
+        fb => fb.Seasons).ToList();
 
     public IEnumerable<ITimeOfDay> TimeOfDayItems => _timeOfDayItems ??= GetOrFallback(
         () => FetchList<TimeOfDayDto>("/thai/time-of-day").Select<TimeOfDayDto, ITimeOfDay>(d => d.ToTimeOfDay()).ToList(),
@@ -274,9 +285,9 @@ public class ApiDataService : IDataService
         () => FetchList<HomophoneGroupDto>("/thai/homophones").Select(g => (IHomophoneGroup)g.ToHomophoneGroup()).ToList(),
         fb => fb.Homophones).ToList();
 
-    public IEnumerable<IMinimalSet> MinimalSets => _minimalSets ??= GetOrFallback(
-        () => FetchList<MinimalSetDto>("/thai/minimal-sets").Select(m => (IMinimalSet)m.ToMinimalSet()).ToList(),
-        fb => fb.MinimalSets).ToList();
+    public MinimalSetPage MinimalSets(string? initialSoundLabel = null, int page = 1, int pageSize = MinimalSetPage.DefaultPageSize) => GetOrFallback(
+        () => FetchMinimalSetsPageFromApi(initialSoundLabel, page, pageSize),
+        fb => fb.MinimalSets(initialSoundLabel, page, pageSize));
 
     public IEnumerable<IDirection> Directions => _directions ??= GetOrFallback(
         () => FetchList<DirectionDto>("/thai/directions").Select<DirectionDto, IDirection>(d => d.ToDirection()).ToList(),
@@ -285,6 +296,25 @@ public class ApiDataService : IDataService
     public IEnumerable<IHueFamily> HueFamilies => _hueFamilies ??= GetOrFallback(
         () => FetchList<HueFamilyDto>("/thai/colors").Select<HueFamilyDto, IHueFamily>(h => h.ToHueFamily()).ToList(),
         fb => fb.HueFamilies).ToList();
+
+    private MinimalSetPage FetchMinimalSetsPageFromApi(string? initialSoundLabel, int page, int pageSize)
+    {
+        int safePage = Math.Max(1, page);
+        int safePageSize = Math.Max(1, Math.Min(pageSize, 200));
+        string path = $"/thai/minimal-sets?page={safePage}&pageSize={safePageSize}";
+        if (!string.IsNullOrWhiteSpace(initialSoundLabel))
+        {
+            path += $"&label={Uri.EscapeDataString(initialSoundLabel)}";
+        }
+
+        var payload = Fetch<PagedResultDto<MinimalSetDto>>(path);
+        if (payload?.Items is null)
+            return MinimalSetPage.Empty;
+
+        return new MinimalSetPage(
+            payload.Items.Select(m => (IMinimalSet)m.ToMinimalSet()).ToList(),
+            payload.TotalItems);
+    }
 
     // ------------------------------------------------------------------
     // DTOs
@@ -558,7 +588,7 @@ public class ApiDataService : IDataService
         string SanskritName,
         string SanskritLexeme,
         string Element,
-        string? ImageUrl)
+        string Glyph)
     {
         public Zodiac ToZodiac() => new()
         {
@@ -567,7 +597,24 @@ public class ApiDataService : IDataService
             SanskritName = SanskritName,
             SanskritLexeme = SanskritLexeme,
             Element = Element,
-            ImageUrl = ImageUrl,
+            Glyph = Glyph,
+        };
+    }
+
+    private record SeasonDto(
+        int Ordinal,
+        List<WordDto> Words,
+        string EnglishLabel,
+        string? Glyph,
+        List<MonthDto> Months)
+    {
+        public Season ToSeason() => new()
+        {
+            Ordinal = Ordinal,
+            Words = Words.Select(w => (IWord)w.ToWord()).ToList(),
+            EnglishLabel = EnglishLabel,
+            Glyph = Glyph ?? string.Empty,
+            Months = Months.Select(m => (IMonth)m.ToMonth()).ToList(),
         };
     }
 
@@ -643,6 +690,15 @@ public class ApiDataService : IDataService
             Words = Words.Select(w => (IWord)w.ToWord()).ToList(),
         };
     }
+
+    private record PagedResultDto<T>(
+        List<T> Items,
+        int Page,
+        int PageSize,
+        long TotalItems,
+        int TotalPages,
+        bool HasNext,
+        bool HasPrevious);
 
     private record ColorDto(
         int Id,

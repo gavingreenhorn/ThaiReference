@@ -7,6 +7,25 @@ public static class ApiMigrate
 {
     private const string ERROR_MSG = "Error loading {0} to LiteDB database from API: {1}";
 
+    private static IEnumerable<T> ReadAllPages<T>(Func<int, int, IEnumerable<T>> readPage, int pageSize = 200)
+    {
+        int page = 1;
+        while (true)
+        {
+            List<T> items = [.. readPage(page, pageSize)];
+            if (items.Count == 0)
+                yield break;
+
+            foreach (var item in items)
+                yield return item;
+
+            if (items.Count < pageSize)
+                yield break;
+
+            page++;
+        }
+    }
+
     private static void Load<T>(LiteDatabase litedb, IEnumerable<T> items, string collectionName)
     {
         var coll = litedb.GetCollection<T>(collectionName);
@@ -33,12 +52,12 @@ public static class ApiMigrate
         Load<IPosition>(db, api.Positions, "positions");
         Load<IWeekday>(db, api.Weekdays, "weekdays");
         Load<ICelestialBody>(db, api.CelestialBodies, "celestialbodies");
-        Load<IMonth>(db, api.Months, "months");
+        Load<ISeason>(db, api.Seasons, "seasons");
         Load<ITimeOfDay>(db, api.TimeOfDayItems, "timeofdayitems");
         Load<IHour>(db, api.HourItems, "houritems");
         Load<ICluster>(db, api.Clusters, "clusters");
         Load<IHomophoneGroup>(db, api.Homophones, "homophones");
-        Load<IMinimalSet>(db, api.MinimalSets, "minimalsets");
+        Load<IMinimalSet>(db, ReadAllPages((page, size) => api.MinimalSets(page: page, pageSize: size).Items), "minimalsets");
         Load<IDirection>(db, api.Directions, "directions");
         Load<IHueFamily>(db, api.HueFamilies, "huefamilies");
     }

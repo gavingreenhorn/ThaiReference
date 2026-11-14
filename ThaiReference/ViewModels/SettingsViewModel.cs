@@ -123,6 +123,20 @@ public partial class SettingsViewModel : ObservableObject
     bool qrVisible;
 
     [ObservableProperty]
+    bool isOwner;
+
+    [ObservableProperty]
+    bool emailSet;
+
+    [ObservableProperty]
+    bool emailConfirmationVisible;
+
+    public string EmailActionLabel => UiLabels.Get(
+        EmailSet ? UiLabels.Account.ChangeEmail : UiLabels.Account.AttachEmail, CurrentLanguage());
+
+    partial void OnEmailSetChanged(bool value) => OnPropertyChanged(nameof(EmailActionLabel));
+
+    [ObservableProperty]
     ImageSource? qrImage;
 
     public ObservableCollection<DeviceMemberItem> Members { get; } = [];
@@ -172,6 +186,11 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (member is null)
             return;
+        if (member.Owner && Members.Count > 1)
+        {
+            StatusMessage = UiLabels.Get(UiLabels.Account.TransferFirst, CurrentLanguage());
+            return;
+        }
         var info = await WithDevice((uuid, platform, build) =>
             _accountClient.UnlinkAsync(uuid, member.Uuid, platform, build));
         if (info is null)
@@ -185,16 +204,45 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    async Task TransferOwner(DeviceMemberItem? member)
+    {
+        if (member is null || !IsOwner || member.Owner)
+            return;
+        if (!await Microsoft.Maui.Controls.Shell.Current.DisplayAlertAsync(
+                UiLabels.Get(UiLabels.Account.TransferOwner, CurrentLanguage()),
+                UiLabels.Get(UiLabels.Account.TransferOwnerConfirm, CurrentLanguage()),
+                "OK", "Cancel"))
+            return;
+        var info = await WithDevice((uuid, platform, build) =>
+            _accountClient.TransferOwnerAsync(uuid, member.Uuid, platform, build));
+        if (info is null)
+        {
+            StatusMessage = UiLabels.Get(UiLabels.Account.StatusOffline, CurrentLanguage());
+            return;
+        }
+        ApplyInfo(info);
+    }
+
+    [RelayCommand]
+    async Task OpenRecovery() => await Microsoft.Maui.Controls.Shell.Current.GoToAsync(nameof(Views.RecoverGroupPage));
+
+    [RelayCommand]
     async Task AttachEmail()
     {
         var email = EmailInput.Trim();
         if (string.IsNullOrWhiteSpace(email))
             return;
+        if (EmailSet && string.Equals(email, EmailValue, StringComparison.OrdinalIgnoreCase))
+        {
+            StatusMessage = UiLabels.Get(UiLabels.Account.EmailUnchanged, CurrentLanguage());
+            return;
+        }
         var ok = await WithDevice((uuid, platform, build) =>
             _accountClient.RequestEmailAsync(uuid, email, platform, build));
         StatusMessage = ok is { Ok: true }
             ? UiLabels.Get(UiLabels.Account.StatusEmailSent, CurrentLanguage())
             : UiLabels.Get(UiLabels.Account.StatusOffline, CurrentLanguage());
+        EmailConfirmationVisible = ok is { Ok: true };
     }
 
     [RelayCommand]
@@ -212,6 +260,7 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         EmailCodeInput = "";
+        EmailConfirmationVisible = false;
         await RefreshAsync();
         StatusMessage = UiLabels.Get(UiLabels.Account.StatusEmailConfirmed, CurrentLanguage());
     }
@@ -276,12 +325,13 @@ public partial class SettingsViewModel : ObservableObject
     void ApplyInfo(AccountClient.AccountInfoResponse info)
     {
         ThisDeviceUuid = info.DeviceUuid.ToString("D");
+        IsOwner = info.Owner;
+        EmailSet = info.EmailSet;
         EmailValue = info.EmailSet ? info.Email ?? "" : "";
-        if (info.EmailSet && string.IsNullOrWhiteSpace(EmailInput))
-            EmailInput = EmailValue;
+        EmailInput = EmailValue;
         Members.Clear();
         foreach (var member in info.Devices ?? [])
-            Members.Add(new DeviceMemberItem(member, UnlinkCommand));
+            Members.Add(new DeviceMemberItem(member, UnlinkCommand, TransferOwnerCommand, IsOwner));
     }
 
     async Task<T?> WithDevice<T>(Func<string, string, string, Task<T?>> call)
@@ -325,6 +375,7 @@ public partial class SettingsViewModel : ObservableObject
         ConfirmRecoverLabel = UiLabels.Get(UiLabels.Account.ConfirmRecover, language);
         CodeHint = UiLabels.Get(UiLabels.Account.CodeHint, language);
         OnPropertyChanged(nameof(SelectedUiLanguageOption));
+        OnPropertyChanged(nameof(EmailActionLabel));
     }
 
     static UiLanguage CurrentLanguage() => UiLanguageHelper.Read();

@@ -27,8 +27,8 @@
         </StackLayout>
     </DataTemplate>
     <DataTemplate x:Key="ConsonantItem" x:DataType="{x:Type models:ConsonantItem}">
-        <SwipeView HeightRequest="60" Threshold="80" HorizontalOptions="Fill" IsVisible="{Binding IsVisible}">
-            <SwipeView.LeftItems>
+        <SwipeView HeightRequest="50" Threshold="80" IsVisible="{Binding IsVisible}">
+            <!--<SwipeView.LeftItems>
                 <SwipeItemView>
                     <StackLayout>
                         <Label
@@ -72,17 +72,20 @@
                         </Label>
                     </StackLayout>
                 </SwipeItemView>
-            </SwipeView.LeftItems>
+            </SwipeView.LeftItems>-->
             <SwipeView.RightItems>
                 <SwipeItems Mode="Execute">
                     <SwipeItem
-                        Text="To details"
                         Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
                         CommandParameter="{Binding Consonant}">
+                        <SwipeItem.IconImageSource>
+                            <FontImageSource FontFamily="MaterialIconsSharp-Regular" Glyph="&#xE5C8;" Size="24"
+                                             Color="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"/>
+                        </SwipeItem.IconImageSource>
                     </SwipeItem>
                 </SwipeItems>
             </SwipeView.RightItems>
-            <Button Style="{StaticResource ConsonantButton}"/>
+            <Button VerticalOptions="Start" Style="{StaticResource ConsonantButton}"/>
         </SwipeView>
     </DataTemplate>
     <DataTemplate x:Key="ConsonantItemSoundGroup" x:DataType="{x:Type modelIF:IConsonant}">
@@ -90,9 +93,12 @@
             <SwipeView.RightItems>
                 <SwipeItems Mode="Execute">
                     <SwipeItem
-                        Text="To details"
                         Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
                         CommandParameter="{Binding .}">
+                        <SwipeItem.IconImageSource>
+                            <FontImageSource FontFamily="MaterialIconsSharp-Regular" Glyph="&#xE5C8;" Size="24"
+                                             Color="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"/>
+                        </SwipeItem.IconImageSource>
                     </SwipeItem>
                 </SwipeItems>
             </SwipeView.RightItems>
@@ -162,21 +168,27 @@
             <SwipeView.RightItems>
                 <SwipeItems Mode="Execute">
                     <SwipeItem
-                        Text="To details"
                         Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
-                        CommandParameter="{Binding Vowel}"/>
+                        CommandParameter="{Binding Vowel}">
+                        <SwipeItem.IconImageSource>
+                            <FontImageSource FontFamily="MaterialIconsSharp-Regular" Glyph="&#xE5C8;" Size="24"
+                                             Color="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"/>
+                        </SwipeItem.IconImageSource>
+                    </SwipeItem>
                 </SwipeItems>
             </SwipeView.RightItems>
             <Button Style="{StaticResource VowelButton}"/>
         </SwipeView>
     </DataTemplate>
     <DataTemplate x:Key="GraphemeItem" x:DataType="{x:Type sys:String}">
-        <Border Style="{StaticResource BoxedText}" HeightRequest="50" MinimumWidthRequest="75">
+        <!-- MinimumHeightRequest, not HeightRequest: a fixed 50du box clips Thai descenders. -->
+        <Border Style="{StaticResource BoxedText}" MinimumHeightRequest="56" MinimumWidthRequest="75">
             <Label
                 Text="{Binding .}"
                 HorizontalOptions="Center"
                 HorizontalTextAlignment="Center"
                 VerticalTextAlignment="Center"
+                LineBreakMode="NoWrap"
                 FontSize="25"
                 FontFamily="{DynamicResource CurrentThaiFont}"/>
         </Border>
@@ -186,13 +198,17 @@
             <SwipeView.RightItems>
                 <SwipeItems Mode="Execute">
                     <SwipeItem
-                        Text="To details"
                         Command="{Binding ToDetailsCommand, Source={RelativeSource AncestorType={x:Type IF:IDetailsNavigable}}}"
-                        CommandParameter="{Binding .}"/>
+                        CommandParameter="{Binding .}">
+                        <SwipeItem.IconImageSource>
+                            <FontImageSource FontFamily="MaterialIconsSharp-Regular" Glyph="&#xE5C8;" Size="24"
+                                             Color="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource White}}"/>
+                        </SwipeItem.IconImageSource>
+                    </SwipeItem>
                 </SwipeItems>
             </SwipeView.RightItems>
             <Border Style="{StaticResource BoxedText}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" HeightRequest="60" MaximumWidthRequest="100" Margin="5">
+                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource OffBlack}}" MinimumHeightRequest="70" MaximumWidthRequest="100" Margin="5">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer
                         Buttons="Primary"
@@ -205,7 +221,8 @@
                     HorizontalOptions="Center"
                     HorizontalTextAlignment="Center"
                     VerticalOptions="Center"
-                    VerticalTextAlignment="Start"
+                    VerticalTextAlignment="Center"
+                    LineBreakMode="NoWrap"
                     FontSize="35"
                     FontFamily="{DynamicResource CurrentThaiFont}">
                 </Label>
@@ -389,16 +406,13 @@
                                        TextColor="{AppThemeBinding Light={StaticResource SubduedLight}, Dark={StaticResource SubduedDark}}"/>
                             </SwipeItemView>
                         </SwipeView.RightItems>
-                        <Border Stroke="{StaticResource Gray500}" StrokeThickness="1" StrokeShape="RoundRectangle 5,5,5,5" Padding="8">
-                            <Label Text="{Binding Acrophonic.Value}" HorizontalOptions="Center" TextColor="{StaticResource ControlFG3}" FontSize="25" Padding="0" FontFamily="{DynamicResource CurrentThaiFont}">
-                                <Label.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                                Buttons="Primary"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type IF:IVoiced}}, Path=PronounceCommand}"
-                                                CommandParameter="{Binding Acrophonic}"/>
-                                </Label.GestureRecognizers>
-                            </Label>
-                        </Border>
+                        <Button Style="{StaticResource SoundButton}"
+                                Text="{Binding Acrophonic.Value}"
+                                TextColor="{StaticResource ControlFG3}"
+                                BorderColor="{StaticResource Gray500}"
+                                FontFamily="{DynamicResource CurrentThaiFont}"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type IF:IVoiced}}, Path=PronounceCommand}"
+                                CommandParameter="{Binding Acrophonic}"/>
                     </SwipeView>
                     <Label Grid.Row="3" HorizontalOptions="Center" TextColor="{AppThemeBinding Light={StaticResource ControlBG}, Dark={StaticResource ControlFG2}}">
                         <Label.Text>

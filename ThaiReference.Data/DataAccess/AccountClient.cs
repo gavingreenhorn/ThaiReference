@@ -32,8 +32,8 @@ public sealed class AccountClient
     }
 
     public Task<AccountInfoResponse?> CheckinAsync(
-        string uuid, string? platform, string? build, CancellationToken cancellationToken = default) =>
-        SendAsync<AccountInfoResponse>(HttpMethod.Post, "/account/checkin", uuid, platform, build, null, cancellationToken);
+        string uuid, string? platform, string? build, string? model, CancellationToken cancellationToken = default) =>
+        SendAsync<AccountInfoResponse>(HttpMethod.Post, "/account/checkin", uuid, platform, build, null, cancellationToken, model);
 
     public Task<AccountInfoResponse?> GetInfoAsync(
         string uuid, string? platform, string? build, CancellationToken cancellationToken = default) =>
@@ -64,6 +64,12 @@ public sealed class AccountClient
             build,
             new UnlinkRequest(deviceUuid),
             cancellationToken);
+
+    public Task<AccountInfoResponse?> TransferOwnerAsync(
+        string uuid, Guid deviceUuid, string? platform, string? build, CancellationToken cancellationToken = default) =>
+        SendAsync<AccountInfoResponse>(
+            HttpMethod.Post, "/account/devices/owner", uuid, platform, build,
+            new UnlinkRequest(deviceUuid), cancellationToken);
 
     public Task<OkResponse?> RequestEmailAsync(
         string uuid, string email, string? platform, string? build, CancellationToken cancellationToken = default) =>
@@ -116,7 +122,8 @@ public sealed class AccountClient
         string? platform,
         string? build,
         object? body,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? model = null)
         where T : class
     {
         using var request = new HttpRequestMessage(method, path);
@@ -125,6 +132,8 @@ public sealed class AccountClient
             request.Headers.TryAddWithoutValidation("X-Platform", platform);
         if (!string.IsNullOrWhiteSpace(build))
             request.Headers.TryAddWithoutValidation("X-Build-Number", build);
+        if (!string.IsNullOrWhiteSpace(model))
+            request.Headers.TryAddWithoutValidation("X-Device-Model", model);
         if (body is not null)
             request.Content = JsonContent.Create(body, options: JsonOptions);
 
@@ -140,15 +149,18 @@ public sealed class AccountClient
         Guid DeviceUuid,
         bool EmailSet,
         string? Email,
+        bool Owner,
         List<DeviceMemberDto> Devices);
 
     public record DeviceMemberDto(
         Guid Uuid,
+        string? Model,
         string? Platform,
         string? Build,
         DateTimeOffset? LinkedAt,
         DateTimeOffset? LastSeen,
         bool ThisDevice,
+        bool Owner,
         string? LastIp);
 
     public record PairStartResponse(string Token, DateTimeOffset ExpiresAt);

@@ -3,8 +3,9 @@ namespace ThaiReference.DataAccess;
 /// <summary>Shared up/down flag for the API. Polls health every interval; request failures call <see cref="MarkDown"/>.</summary>
 public sealed class ApiAvailabilityMonitor(HttpClient http, string healthPath)
 {
-	/// <summary>False until a health check succeeds — cold start / airplane mode use offline snapshot first.</summary>
-	public bool IsUp { get; private set; }
+	/// <summary>True until a health check or request actually fails — the API is the source of truth,
+	/// the offline snapshot is only used after a proven failure.</summary>
+	public bool IsUp { get; private set; } = true;
 
 	/// <summary>Raised when <see cref="IsUp"/> changes. Argument is the new value.</summary>
 	public event Action<bool>? Changed;

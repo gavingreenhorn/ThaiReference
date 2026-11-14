@@ -124,24 +124,6 @@ SELECT 'direction', composite_name_id, id FROM thai."Direction";
 
 REFRESH MATERIALIZED VIEW thai."WordView";
 -- Rename grid Position tables so "Position" can mean spatial prepositions.
---
--- Rollback:
---   ALTER TABLE thai."GridPositionWord" RENAME CONSTRAINT "GridPositionWord_grid_position_id_fkey"
---     TO "PositionWord_position_id_fkey";
---   ALTER TABLE thai."GridPositionWord" RENAME CONSTRAINT "GridPositionWord_word_id_fkey"
---     TO "PositionWord_word_id_fkey";
---   ALTER TABLE thai."GridPositionWord" RENAME CONSTRAINT "GridPositionWord_pkey"
---     TO "PositionWord_pkey";
---   ALTER TABLE thai."GridPositionWord" RENAME CONSTRAINT uq_thai_grid_position_word_order
---     TO uq_thai_position_word_order;
---   ALTER TABLE thai."GridPosition" RENAME CONSTRAINT "GridPosition_pkey" TO "Position_pkey";
---   ALTER TABLE thai."GridPosition" RENAME CONSTRAINT uq_thai_grid_position_row_col
---     TO uq_thai_position_row_col;
---   ALTER TABLE thai."GridPositionWord" RENAME COLUMN grid_position_id TO position_id;
---   ALTER SEQUENCE thai."GridPositionWord_id_seq" RENAME TO "PositionWord_id_seq";
---   ALTER SEQUENCE thai."GridPosition_id_seq" RENAME TO "Position_id_seq";
---   ALTER TABLE thai."GridPositionWord" RENAME TO "PositionWord";
---   ALTER TABLE thai."GridPosition" RENAME TO "Position";
 
 ALTER TABLE thai."PositionWord" RENAME TO "GridPositionWord";
 ALTER TABLE thai."Position" RENAME TO "GridPosition";
@@ -161,36 +143,6 @@ ALTER TABLE thai."GridPositionWord" RENAME CONSTRAINT "PositionWord_position_id_
 ALTER TABLE thai."GridPositionWord" RENAME CONSTRAINT "PositionWord_word_id_fkey"
     TO "GridPositionWord_word_id_fkey";
 -- Spatial prepositions: Position → Word + Sentence → SentenceWord → Word
---
--- Rollback:
---   DELETE FROM thai."Position";
---   DELETE FROM thai."SentenceWord" sw
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'sentence' AND m.sentence_id = sw.sentence_id;
---   DELETE FROM thai."Sentence" s
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'sentence' AND m.sentence_id = s.id;
---   DELETE FROM thai."WordLexeme" wl
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'word' AND m.word_id = wl.word;
---   DELETE FROM thai."Lexeme" l
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'lexeme' AND m.lexeme_id = l.id;
---   DELETE FROM thai."Word" w
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'word' AND m.word_id = w.id;
---   DELETE FROM thai."Spelling" s
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'word' AND m.spelling_id = s.id;
---   DELETE FROM thai."Transcription" t
---     USING thai._position_seed_meta m
---     WHERE m.kind = 'word' AND m.transcription_id = t.id;
---   DROP TABLE IF EXISTS thai._position_seed_meta;
---   DROP TABLE IF EXISTS thai."Position";
---   DROP TABLE IF EXISTS thai."SentenceWord";
---   DROP SEQUENCE IF EXISTS thai."SentenceWord_id_seq";
---   DROP TABLE IF EXISTS thai."Sentence";
---   REFRESH MATERIALIZED VIEW thai."WordView";
 
 CREATE TABLE thai."Sentence" (
     id          integer                NOT NULL,
@@ -395,17 +347,6 @@ SELECT 'position', p.id, p.sentence_id, p.word_id FROM thai."Position" p;
 
 REFRESH MATERIALIZED VIEW thai."WordView";
 -- Position heads → CompositeName (like Direction); fix ท่ามกลาง; add ids 10–14.
---
--- Audit (V4 heads):
---   atomic OK: บน ใน ใต้ ข้าง ระหว่าง หน้า หลัง นอก
---   dumped composite: ท่ามกลาง → ท่าม + กลาง
---
--- Rollback:
---   DELETE FROM thai."Position" WHERE id BETWEEN 10 AND 14;
---   DELETE FROM thai."SentenceWord" WHERE sentence_id BETWEEN 10 AND 14;
---   DELETE FROM thai."Sentence" WHERE id BETWEEN 10 AND 14;
---   -- restore Position.word_id / drop composite_name_id+lexeme manually if needed
---   REFRESH MATERIALIZED VIEW thai."WordView";
 
 -- ── 1. Position: CompositeName + lexeme ──────────────────────────────────────
 
@@ -667,12 +608,6 @@ WHERE p.id BETWEEN 10 AND 14;
 
 REFRESH MATERIALIZED VIEW thai."WordView";
 -- Drop phonemic transcription; keep paiboon + IPA only.
--- Also normalize position vocabulary paiboon/IPA (was edited into V5 after apply — must live here).
---
--- Rollback:
---   ALTER TABLE thai."Transcription" ADD COLUMN phonemic character varying(25);
---   DROP MATERIALIZED VIEW thai."WordView";
---   -- recreate WordView with phonemic from V1, then REFRESH
 
 DROP MATERIALIZED VIEW IF EXISTS thai."WordView";
 
@@ -734,9 +669,6 @@ WHERE t.id = w.transcription;
 REFRESH MATERIALIZED VIEW thai."WordView";
 -- Drop Position entries for across (11) and corner (12).
 -- Keeps Word / Lexeme / Spelling / Transcription for ข้าม and มุม.
---
--- Rollback: re-seed from V5 section 4 for ids 11–12 only (Sentence, SentenceWord,
--- CompositeName, Position, _position_seed_meta), then REFRESH MATERIALIZED VIEW thai."WordView".
 
 DELETE FROM thai._position_seed_meta
 WHERE (kind = 'position' AND position_id IN (11, 12))
@@ -762,25 +694,6 @@ USING _v7_drop_cn d
 WHERE cn.id = d.id;
 
 DROP TABLE _v7_drop_cn;
--- V8: Color wheel - full infrastructure
--- Creates: Spelling, Transcription, Word entries for color lexemes
---          CompositeName entries for color names
---          HueFamily and Color tables
---
--- ROLLBACK PLAN (execute in order):
---   DELETE FROM thai."Color";
---   DELETE FROM thai."HueFamily";
---   DELETE FROM thai."CompositeName" WHERE id >= 32;
---   DELETE FROM thai."Word" WHERE id >= 537;
---   DELETE FROM thai."Transcription" WHERE id >= 616;
---   DELETE FROM thai."Spelling" WHERE id >= 518;
---   DROP TABLE IF EXISTS thai."Color";
---   DROP TABLE IF EXISTS thai."HueFamily";
---   SELECT setval('thai."Spelling_id_seq"', 517);
---   SELECT setval('thai."Transcription_id_seq"', 615);
---   SELECT setval('thai."Word_id_seq"', 536);
---   SELECT setval('thai."CompositeName_id_seq"', 31);
---   DELETE FROM thai.flyway_schema_history WHERE version = '8';
 
 -- ============================================================================
 -- PHASE 1: Insert new Spelling entries (157 new lexemes)

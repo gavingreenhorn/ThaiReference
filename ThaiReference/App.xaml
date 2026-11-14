@@ -64,7 +64,7 @@
                 <Setter Property="HeightRequest" Value="50"/>
                 <Setter Property="MinimumWidthRequest" Value="75"/>
                 <Setter Property="Margin" Value="5"/>
-                <Setter Property="Padding" Value="1"/>
+                <Setter Property="Padding" Value="0"/>
                 <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
                 <Setter Property="CommandParameter" Value="{Binding .}"/>
                 <Setter Property="Text">
@@ -83,7 +83,7 @@
                         <Setter Property="Background" Value="CornflowerBlue"/>
                     </DataTrigger>
                     <DataTrigger TargetType="Button" Binding="{Binding IsDiphtong}" Value="True">
-                        <Setter Property="TextColor" Value="{StaticResource ControlFG2}"/>
+                        <Setter Property="TextColor" Value="{StaticResource KeyHighlight}"/>
                     </DataTrigger>
                 </Style.Triggers>
             </Style>
@@ -92,14 +92,6 @@
                     <DataTrigger TargetType="Button"
                                  Binding="{Binding Source={RelativeSource AncestorType={x:Type vms:AllVowelsViewModel}}, Path=SelectedVowelVisualizationOption.Latin}"
                                  Value="Sound">
-                        <!--<Setter Property="Text">
-                            <Setter.Value>
-                                <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
-                                    <Binding Path="Transcription"/>
-                                    <Binding Path="RomanizationOption" Source="{RelativeSource AncestorType={x:Type IF:IRomanizationReceiver}}"/>
-                                </MultiBinding>
-                            </Setter.Value>
-                        </Setter>-->
                         <Setter Property="FontFamily" Value="{DynamicResource UIFont}"/>
                     </DataTrigger>
                     <DataTrigger TargetType="Button"
@@ -138,6 +130,7 @@
             </Style>
             <Style x:Key="ConsonantButtonBase" x:DataType="{x:Type modelIF:IConsonant}" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
                 <Setter Property="MinimumHeightRequest" Value="50"/>
+                <Setter Property="LineBreakMode" Value="NoWrap"/>
                 <Setter Property="Text" Value="{Binding Grapheme, TargetNullValue={x:Static sys:String.Empty}}"/>
                 <Setter Property="Command" Value="{Binding PronounceCommand, Source={RelativeSource AncestorType={x:Type IF:IVoiced}}}"/>
                 <Setter Property="CommandParameter" Value="{Binding .}"/>
@@ -154,8 +147,8 @@
                 </Style.Triggers>
             </Style>
             <Style x:Key="ConsonantButton" BasedOn="{StaticResource ConsonantButtonBase}" TargetType="Button">
-                <Setter Property="Margin" Value="5"/>
-                <Setter Property="Padding" Value="5"/>
+                <Setter Property="Margin" Value="3"/>
+                <Setter Property="Padding" Value="0,0,0,0"/>
             </Style>
             <Style x:Key="ConsonantButtonSoundGroupStyle" BasedOn="{StaticResource ConsonantButtonBase}" TargetType="Button">
                 <Setter Property="MinimumWidthRequest" Value="80"/>

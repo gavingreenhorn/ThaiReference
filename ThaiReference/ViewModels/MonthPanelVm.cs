@@ -1,3 +1,4 @@
+using ThaiReference.Contracts;
 using ThaiReference.Models.Interfaces;
 
 namespace ThaiReference.ViewModels;
@@ -10,7 +11,7 @@ public sealed class MonthPanelVm
     public string Meaning { get; }
     public string ZodiacLine { get; }
     public string SanskritLine { get; }
-    public IMonth PronounceTarget { get; }
+    public IAudible PronounceTarget { get; }
 
     public MonthPanelVm(
         string thai,
@@ -18,7 +19,7 @@ public sealed class MonthPanelVm
         string meaning,
         string zodiacLine,
         string sanskritLine,
-        IMonth pronounceTarget)
+        IAudible pronounceTarget)
     {
         Thai = thai;
         Transcription = transcription;

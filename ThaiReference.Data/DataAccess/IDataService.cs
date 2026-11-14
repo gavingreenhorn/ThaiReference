@@ -18,12 +18,19 @@ public interface IDataService
     IEnumerable<IPosition> Positions { get; }
     IEnumerable<IWeekday> Weekdays { get; }
     IEnumerable<ICelestialBody> CelestialBodies { get; }
-    IEnumerable<IMonth> Months { get; }
+    IEnumerable<ISeason> Seasons { get; }
     IEnumerable<ITimeOfDay> TimeOfDayItems { get; }
     IEnumerable<IHour> HourItems { get; }
     IEnumerable<ICluster> Clusters { get; }
     IEnumerable<IHomophoneGroup> Homophones { get; }
-    IEnumerable<IMinimalSet> MinimalSets { get; }
+    MinimalSetPage MinimalSets(string? initialSoundLabel = null, int page = 1, int pageSize = MinimalSetPage.DefaultPageSize);
     IEnumerable<IDirection> Directions { get; }
     IEnumerable<IHueFamily> HueFamilies { get; }
+}
+
+public record MinimalSetPage(IReadOnlyList<IMinimalSet> Items, long TotalItems)
+{
+    public const int DefaultPageSize = 10;
+
+    public static MinimalSetPage Empty { get; } = new([], 0);
 }

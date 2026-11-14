@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             x:Class="ThaiReference.Views.SettingsRecoveryView"
+             x:DataType="vms:SettingsViewModel"
+             Title="{ui:UiLabel account.recovery}">
+    <ScrollView>
+        <VerticalStackLayout Padding="{StaticResource PageContentPadding}" Spacing="10">
+            <VerticalStackLayout IsVisible="{Binding IsOwner}" Spacing="8">
+                <Label Text="{Binding EmailLabel}" FontFamily="{DynamicResource CurrentChromeFont}"/>
+                <Entry Text="{Binding EmailInput}" Placeholder="{Binding EmailHint}" Keyboard="Email"
+                       FontFamily="{DynamicResource UIFont}"/>
+                <Button Style="{StaticResource UiButton}" Text="{Binding EmailActionLabel}" Command="{Binding AttachEmailCommand}"/>
+                <VerticalStackLayout IsVisible="{Binding EmailConfirmationVisible}" Spacing="8">
+                    <Entry Text="{Binding EmailCodeInput}" Placeholder="{Binding CodeHint}" Keyboard="Numeric"
+                           FontFamily="{DynamicResource UIFont}"/>
+                    <Button Style="{StaticResource UiButton}" Text="{Binding ConfirmEmailLabel}" Command="{Binding ConfirmEmailCommand}"/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+            <Button Style="{StaticResource UiButton}" Text="{ui:UiLabel account.recover_group}" Command="{Binding OpenRecoveryCommand}"/>
+            <Label Text="{Binding StatusMessage}" FontFamily="{DynamicResource CurrentChromeFont}"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

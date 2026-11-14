@@ -64,7 +64,15 @@ public partial class PositionWord : ObservableObject
 {
 	public IPosition Source { get; protected set; }
 
-	[ObservableProperty] private string thai = string.Empty;
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(Header))]
+	private string thai = string.Empty;
+
+	[ObservableProperty]
+	[NotifyPropertyChangedFor(nameof(Header))]
+	private string english = string.Empty;
+
+	public string Header => string.IsNullOrWhiteSpace(English) ? Thai : $"{Thai} - {English}";
 	[ObservableProperty] private string exampleThai = string.Empty;
 	[ObservableProperty] private ITranscription exampleTranscription = new Transcription();
 	[ObservableProperty] private IWord pronounceTarget = new Word("", new Transcription(), []);
@@ -87,6 +95,7 @@ public partial class PositionWord : ObservableObject
 	{
 		Source = position;
 		Thai = position.Word.Value;
+		English = position.Lexeme;
 		ExampleThai = position.Example.Spelling;
 		ExampleTranscription = MergeTranscription(position.Example.Words);
 		PronounceTarget = new Word(ExampleThai, ExampleTranscription, [position.Lexeme]);

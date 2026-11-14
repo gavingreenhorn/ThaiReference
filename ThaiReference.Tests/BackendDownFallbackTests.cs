@@ -78,7 +78,7 @@ public class BackendDownFallbackTests
 			Timeout = TimeSpan.FromMilliseconds(200),
 		};
 		var monitor = new ApiAvailabilityMonitor(http, HealthEndpoint);
-		Assert.False(monitor.IsUp); // cold start defaults offline
+		Assert.True(monitor.IsUp); // API is the source of truth; snapshot only after a proven failure
 
 		var changes = new List<bool>();
 		monitor.Changed += changes.Add;
@@ -86,10 +86,10 @@ public class BackendDownFallbackTests
 		await monitor.CheckOnceAsync();
 
 		Assert.False(monitor.IsUp);
-		Assert.Empty(changes); // already down — no edge
+		Assert.Equal([false], changes); // up -> down edge
 
 		await monitor.CheckOnceAsync();
-		Assert.Empty(changes);
+		Assert.Equal([false], changes); // already down — no further edge
 	}
 
 	[Fact]

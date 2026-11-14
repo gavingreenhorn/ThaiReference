@@ -203,7 +203,18 @@ public interface IZodiac
     string SanskritName { get; }
     string SanskritLexeme { get; }
     string Element { get; }
-    string? ImageUrl { get; }
+    string Glyph { get; }
+}
+
+public interface ISeason : IAudible
+{
+    int Ordinal { get; }
+    IReadOnlyList<IWord> Words { get; }
+    string Spelling { get; }
+    ITranscription Transcription { get; }
+    string EnglishLabel { get; }
+    string Glyph { get; }
+    IReadOnlyList<IMonth> Months { get; }
 }
 
 public interface IMonth : IAudible

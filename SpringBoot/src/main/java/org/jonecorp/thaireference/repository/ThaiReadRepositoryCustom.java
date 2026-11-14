@@ -1,0 +1,47 @@
+package org.jonecorp.thaireference.repository;
+
+import org.jonecorp.thaireference.dto.*;
+import java.util.List;
+
+public interface ThaiReadRepositoryCustom {
+
+    List<NumeralDto> findNumerals();
+
+    List<DayOfWeekDto> findWeekdays();
+
+    List<TimeOfDayDto> findTimeOfDay();
+
+    List<HourDto> findHours();
+
+    List<SeasonDto> findSeasons();
+
+    List<CelestialBodyDto> findCelestialBodies();
+
+    List<ConsonantDto> findConsonants();
+
+    List<VowelDto> findVowels();
+
+    List<MarkDto> findMarks();
+
+    List<ThaiClassDto> findClasses();
+
+    List<PronounDto> findPronouns();
+
+    List<GridPositionCellDto> findGridPositions();
+
+    List<ClusterDto> findClusters();
+
+    List<HomophoneGroupDto> findHomophones();
+
+    List<MinimalSetDto> findMinimalSetsPage(String label, int offset, int limit);
+
+    long countMinimalSets(String label);
+
+    List<String> findMinimalSetLabels();
+
+    List<DirectionDto> findDirections();
+
+    List<PositionDto> findPositions();
+
+    List<HueFamilyDto> findColors();
+}

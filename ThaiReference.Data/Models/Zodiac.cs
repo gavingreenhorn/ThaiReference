@@ -9,5 +9,5 @@ public class Zodiac : IZodiac
     public string SanskritName { get; set; } = string.Empty;
     public string SanskritLexeme { get; set; } = string.Empty;
     public string Element { get; set; } = string.Empty;
-    public string? ImageUrl { get; set; }
+    public string Glyph { get; set; } = string.Empty;
 }

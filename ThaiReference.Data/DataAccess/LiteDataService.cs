@@ -77,6 +77,11 @@ namespace ThaiReference.DataAccess
                 deserialize: bson => mapper.Deserialize<Month>(bson)
             );
 
+            mapper.RegisterType<ISeason>(
+                serialize: obj => mapper.Serialize(typeof(Season), obj),
+                deserialize: bson => mapper.Deserialize<Season>(bson)
+            );
+
             mapper.RegisterType<IVowelGrapheme>(
                 serialize: obj => mapper.Serialize(typeof(VowelGrapheme), obj),
                 deserialize: bson => mapper.Deserialize<VowelGrapheme>(bson)
@@ -255,7 +260,7 @@ namespace ThaiReference.DataAccess
             }
         }
 
-        public IEnumerable<IMonth> Months => GetData<IMonth>("months");
+        public IEnumerable<ISeason> Seasons => GetData<ISeason>("seasons");
         public IEnumerable<ITimeOfDay> TimeOfDayItems => GetData<ITimeOfDay>("timeofdayitems");
         public IEnumerable<IHour> HourItems => GetData<IHour>("houritems");
         public IEnumerable<ICluster> Clusters => GetData<ICluster>("clusters");
@@ -275,18 +280,27 @@ namespace ThaiReference.DataAccess
             }
         }
 
-        public IEnumerable<IMinimalSet> MinimalSets
+        public MinimalSetPage MinimalSets(string? initialSoundLabel = null, int page = 1, int pageSize = MinimalSetPage.DefaultPageSize)
         {
-            get
+            try
             {
-                try
+                var all = GetData<IMinimalSet>("minimalsets");
+                IEnumerable<IMinimalSet> filtered = all;
+                if (!string.IsNullOrWhiteSpace(initialSoundLabel))
                 {
-                    return GetData<IMinimalSet>("minimalsets");
+                    filtered = all.Where(s => string.Equals(s.Label, initialSoundLabel, StringComparison.Ordinal));
                 }
-                catch
-                {
-                    return [];
-                }
+
+                var list = filtered.ToList();
+                int safePage = Math.Max(1, page);
+                int safePageSize = Math.Max(1, pageSize);
+                return new MinimalSetPage(
+                    list.Skip((safePage - 1) * safePageSize).Take(safePageSize).ToList(),
+                    list.Count);
+            }
+            catch
+            {
+                return MinimalSetPage.Empty;
             }
         }
 

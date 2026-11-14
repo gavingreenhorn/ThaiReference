@@ -30,15 +30,10 @@ public partial class MonthsViewModel : ObservableObject, IVoiced, IRomanizationR
     private static (string Light, string Dark) ElementHex(string lightKey, string darkKey) =>
         (ThemeColors.ToHex(ThemeColors.Get(lightKey)), ThemeColors.ToHex(ThemeColors.Get(darkKey)));
 
-    private static readonly string[] ZodiacGlyphByOrdinal =
-    [
-        "\u2651\uFE0E", "\u2652\uFE0E", "\u2653\uFE0E", "\u2648\uFE0E", "\u2649\uFE0E", "\u264A\uFE0E",
-        "\u264B\uFE0E", "\u264C\uFE0E", "\u264D\uFE0E", "\u264E\uFE0E", "\u264F\uFE0E", "\u2650\uFE0E",
-    ];
-
     [ObservableProperty] private string romanizationOption = "IPA";
     [ObservableProperty] private MonthWheelItemVm? selectedWheelItem;
     [ObservableProperty] private MonthPanelVm? selectedPanel;
+    [ObservableProperty] private ISeason? selectedSeason;
 
     public MonthsViewModel(IDataServiceFactory dsf, IAudioManager audioManager)
     {
@@ -47,12 +42,36 @@ public partial class MonthsViewModel : ObservableObject, IVoiced, IRomanizationR
         WeakReferenceMessenger.Default.Register(this);
         PronounceCommand = new RelayCommand<object>(async item => await this.Pronounce(item));
 
-        Months = ds.Months.OrderBy(m => m.Ordinal).Select(CreateWheelItem).ToList();
+        Seasons = ds.Seasons.OrderBy(s => s.Ordinal).ToList();
+        Months = Seasons
+            .SelectMany(s => s.Months.Select(m => CreateWheelItem(m, s.Ordinal)))
+            .OrderBy(m => m.Ordinal)
+            .ToList();
     }
+
+    public IReadOnlyList<ISeason> Seasons { get; }
 
     partial void OnSelectedWheelItemChanged(MonthWheelItemVm? value)
     {
-        SelectedPanel = value is null ? null : CreatePanel(value);
+        if (value is null) return;
+        SelectedSeason = null;
+        SelectedPanel = CreatePanel(value);
+    }
+
+    [RelayCommand]
+    private void SelectSeason(int ordinal)
+    {
+        var season = Seasons.FirstOrDefault(s => s.Ordinal == ordinal);
+        if (season is null) return;
+        SelectedWheelItem = null;
+        SelectedSeason = season;
+        SelectedPanel = new MonthPanelVm(
+            season.Spelling,
+            season.Transcription,
+            season.EnglishLabel,
+            season.EnglishLabel,
+            string.Empty,
+            season);
     }
 
     public void Receive(RomanizationOptionChanged message) => RomanizationOption = message.Value;
@@ -63,7 +82,7 @@ public partial class MonthsViewModel : ObservableObject, IVoiced, IRomanizationR
         SelectedWheelItem = Months.First(m => m.Ordinal == ordinal);
     }
 
-    private static MonthWheelItemVm CreateWheelItem(IMonth m)
+    private static MonthWheelItemVm CreateWheelItem(IMonth m, int seasonOrdinal)
     {
         var palette = ElementPalette.TryGetValue(m.Zodiac?.Element ?? string.Empty, out var p)
             ? p
@@ -71,10 +90,11 @@ public partial class MonthsViewModel : ObservableObject, IVoiced, IRomanizationR
 
         var en = m.EnglishName ?? string.Empty;
         string shortEnglish = en.Length >= 3 ? en[..3].ToLowerInvariant() : en.ToLowerInvariant();
-        string glyph = ZodiacGlyph(m.Zodiac);
+        string glyph = m.Zodiac?.Glyph ?? string.Empty;
 
         return new MonthWheelItemVm(
             m,
+            seasonOrdinal,
             m.ShortName ?? string.Empty,
             shortEnglish,
             glyph,
@@ -99,10 +119,4 @@ public partial class MonthsViewModel : ObservableObject, IVoiced, IRomanizationR
             m);
     }
 
-    private static string ZodiacGlyph(IZodiac? z)
-    {
-        if (z is null) return string.Empty;
-        int ord = ((z.Ordinal % 12) + 12) % 12;
-        return ZodiacGlyphByOrdinal[ord];
-    }
 }

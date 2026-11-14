@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:ui="clr-namespace:ThaiReference.Ui"
+             xmlns:vms="clr-namespace:ThaiReference.ViewModels"
+             x:Class="ThaiReference.Views.RecoverGroupPage"
+             x:DataType="vms:SettingsViewModel"
+             Title="{ui:UiLabel account.recover_group}">
+    <ScrollView>
+        <VerticalStackLayout Padding="{StaticResource PageContentPadding}" Spacing="8">
+            <Entry Text="{Binding RecoverInput}" Placeholder="{Binding EmailHint}" Keyboard="Email"
+                   FontFamily="{DynamicResource UIFont}"/>
+            <Button Style="{StaticResource UiButton}" Text="{Binding RecoverLabel}" Command="{Binding RecoverCommand}"/>
+            <Entry Text="{Binding RecoverCodeInput}" Placeholder="{Binding CodeHint}" Keyboard="Numeric"
+                   FontFamily="{DynamicResource UIFont}"/>
+            <Button Style="{StaticResource UiButton}" Text="{Binding ConfirmRecoverLabel}" Command="{Binding ConfirmRecoverCommand}"/>
+            <Label Text="{Binding StatusMessage}" FontFamily="{DynamicResource CurrentChromeFont}"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

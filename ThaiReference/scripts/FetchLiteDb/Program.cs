@@ -17,11 +17,13 @@ static async Task<bool> IsApiHealthyAsync(string baseUrl)
 string? outPath = null;
 string? configPath = null;
 string? apiBase = null;
+var allowOffline = false;
 for (var i = 0; i < args.Length; i++)
 {
     if (args[i] == "--out" && i + 1 < args.Length) { outPath = args[++i]; continue; }
     if (args[i] == "--config" && i + 1 < args.Length) { configPath = args[++i]; continue; }
     if (args[i] == "--api" && i + 1 < args.Length) { apiBase = args[++i]; continue; }
+    if (args[i] == "--allow-offline") { allowOffline = true; continue; }
 }
 
 string baseUrl;
@@ -53,8 +55,18 @@ if (string.IsNullOrEmpty(outPath))
 var api = new ApiDataService(baseUrl);
 if (!await IsApiHealthyAsync(baseUrl))
 {
-    Console.Error.WriteLine("API unavailable (health check failed). DB will not be updated.");
-    Environment.Exit(0);
+    if (allowOffline)
+    {
+        var state = File.Exists(outPath)
+            ? $"reusing EXISTING (possibly stale) {outPath}"
+            : $"no {outPath} will be packaged; the app will have no offline fallback";
+        Console.Error.WriteLine($"warning: API unavailable at {baseUrl}; --allow-offline set, {state}.");
+        Environment.Exit(0);
+    }
+
+    Console.Error.WriteLine(
+        $"API unavailable at {baseUrl} (health check failed); pass --allow-offline to build anyway.");
+    Environment.Exit(1);
 }
 
 try

@@ -1,6 +1,3 @@
-# Build assumes a standard Maven layout under this directory: pom.xml, src/, etc.
-# Runtime listens on 5000 (same as the Python backend) for nginx / compose parity.
-
 FROM eclipse-temurin:23-jdk-noble AS build
 RUN apt-get update \
     && apt-get install -y --no-install-recommends maven \

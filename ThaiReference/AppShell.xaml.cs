@@ -15,6 +15,7 @@ namespace ThaiReference
 			BindingContext = asvm;
 			Routing.RegisterRoute("Details", typeof(DetailView));
 			Routing.RegisterRoute(nameof(PairScanPage), typeof(PairScanPage));
+			Routing.RegisterRoute(nameof(RecoverGroupPage), typeof(RecoverGroupPage));
 			asvm.ApplyShellChrome = ApplyChromeLabels;
 			ApplyChromeLabels();
 		}

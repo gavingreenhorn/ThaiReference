@@ -24,7 +24,7 @@
                             <Label Grid.Row="0"
                                    Style="{StaticResource GroupCardTitle}"
                                    FontFamily="{DynamicResource CurrentThaiFont}"
-                                   Text="{Binding Thai}"/>
+                                   Text="{Binding Header}"/>
                             <BoxView Grid.Row="1" Style="{StaticResource GroupCardSeparator}"/>
                             <GraphicsView Grid.Row="2"
                                           Drawable="{Binding Scene}"

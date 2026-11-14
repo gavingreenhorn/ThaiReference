@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.thaireference</groupId>
+    <groupId>org.jonecorp.thaireference</groupId>
     <artifactId>thai-reference-api</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <name>Thai Reference API</name>
@@ -44,7 +44,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        <!-- Auto-generated CRUD admin UI over the JPA entities (replaces the FastAPI/SQLAdmin panel). -->
         <dependency>
             <groupId>tech.ailef</groupId>
             <artifactId>snap-admin</artifactId>

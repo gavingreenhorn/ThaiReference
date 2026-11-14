@@ -45,7 +45,7 @@ spring:
 snapadmin:
   enabled: true
   baseUrl: admin
-  modelsPackage: com.thaireference.entity
+  modelsPackage: org.jonecorp.thaireference.entity
 
 management:
   endpoints:

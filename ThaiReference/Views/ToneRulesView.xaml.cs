@@ -62,7 +62,6 @@ public partial class ToneRulesView : ContentPage
         _headerBg = ThemeColors.Get(dark ? "Gray600" : "Gray200");
         _emptyBg = ThemeColors.Get(dark ? "Gray900" : "Gray300");
         _cellBg = ThemeColors.Get(dark ? "SurfaceInsetDark" : "SurfaceInsetLight");
-        // Fill must contrast with accent ink (not another gold — that made glyphs invisible).
         _selectedBg = ThemeColors.Get("ControlBG3");
         _selectedStroke = ThemeColors.Get(dark ? "AccentDark" : "ControlFG2");
 

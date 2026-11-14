@@ -52,7 +52,9 @@
     <Color x:Key="ControlFG2">#FFD166</Color>
     <Color x:Key="ControlFG3">#EF476F</Color>
 
-    <Color x:Key="AccentLight">#b8860b</Color>
+    <Color x:Key="KeyHighlight">#ea3f0d</Color>
+
+        <Color x:Key="AccentLight">#b8860b</Color>
     <Color x:Key="AccentDark">#e8c547</Color>
     
     <Color x:Key="SubduedLight">#666666</Color>
@@ -84,6 +86,12 @@
     <Color x:Key="ElementAirDark">#1A365D</Color>
     <Color x:Key="ElementWaterLight">#4ECDC4</Color>
     <Color x:Key="ElementWaterDark">#0D6B6B</Color>
+    <Color x:Key="SeasonWinter">#B3D7FB</Color>
+    <Color x:Key="SeasonSummer">#FAD08C</Color>
+    <Color x:Key="SeasonRainy">#B3E8BE</Color>
+    <Color x:Key="SeasonWinterGlyph">#F2C200</Color>
+    <Color x:Key="SeasonSummerGlyph">#E8590C</Color>
+    <Color x:Key="SeasonRainyGlyph">#7A6E8A</Color>
 
     <Color x:Key="OptionStripTrackFillLight">#73C8C8C8</Color>
     <Color x:Key="OptionStripTrackFillDark">#8C141414</Color>

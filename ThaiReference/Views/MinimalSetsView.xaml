@@ -54,16 +54,16 @@
         </DataTemplate>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*" Padding="12,8">
+    <Grid RowDefinitions="Auto,*,Auto,Auto" Padding="12,8">
         <ScrollView Grid.Row="0"
                     Orientation="Horizontal"
                     HorizontalScrollBarVisibility="Never"
                     Margin="0,0,0,8">
             <ctrl:OptionStrip AllowNullSelection="True"
-                                     WidthRequest="{Binding FilterStripWidth}"
-                                     ItemsSource="{Binding InitialSoundFilters}"
-                                     SelectedItem="{Binding SelectedInitialSound, Mode=TwoWay}"
-                                     TextPropertyName="Value"/>
+                                      WidthRequest="{Binding FilterStripWidth}"
+                                      ItemsSource="{Binding InitialSoundFilters}"
+                                      SelectedItem="{Binding SelectedInitialSound, Mode=TwoWay}"
+                                      TextPropertyName="Value"/>
         </ScrollView>
 
         <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Never">
@@ -71,5 +71,44 @@
                                  BindableLayout.ItemsSource="{Binding Sets}"
                                  BindableLayout.ItemTemplate="{StaticResource MinimalSetCard}"/>
         </ScrollView>
+
+        <BoxView Grid.Row="2"
+                 IsVisible="{Binding IsPaged}"
+                 HeightRequest="2"
+                 Opacity="0.25"
+                 Color="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray600}}"
+                 Margin="0,2,0,0"/>
+
+        <Grid Grid.Row="3"
+              IsVisible="{Binding IsPaged}"
+              ColumnDefinitions="*,Auto,*"
+              Margin="0,4,0,0">
+            <Button Grid.Column="0"
+                    HorizontalOptions="Start"
+                    Text="&#xE5C4;"
+                    FontFamily="MaterialIconsSharp-Regular"
+                    BackgroundColor="Transparent"
+                    IsVisible="{Binding HasPreviousPage}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource ControlFG}}"
+                    FontSize="20"
+                    Padding="12,0"
+                    Command="{Binding PreviousPageCommand}"/>
+            <Label Grid.Column="1"
+                   FontSize="16"
+                   Text="{Binding PageRangeText}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource White}}"/>
+            <Button Grid.Column="2"
+                    HorizontalOptions="End"
+                    Text="&#xE5C8;"
+                    FontFamily="MaterialIconsSharp-Regular"
+                    BackgroundColor="Transparent"
+                    IsVisible="{Binding HasNextPage}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDarkText}, Dark={StaticResource ControlFG}}"
+                    FontSize="20"
+                    Padding="12,0"
+                    Command="{Binding NextPageCommand}"/>
+        </Grid>
     </Grid>
 </ContentPage>

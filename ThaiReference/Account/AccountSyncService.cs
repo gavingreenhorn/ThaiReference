@@ -18,6 +18,7 @@ public sealed class AccountSyncService(
                     uuid,
                     DeviceInfo.Current.Platform.ToString(),
                     AppInfo.Current.BuildString,
+                    DeviceInfo.Current.Model,
                     cancellationToken)
                 .ConfigureAwait(false);
         }

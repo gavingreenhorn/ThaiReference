@@ -33,7 +33,9 @@ public partial class MinimalSetVm : ObservableObject
 public partial class MinimalSetsViewModel : ObservableObject, IRomanizationReceiver, IVoiced
 {
     private const double FilterSegmentWidth = 48;
-    private readonly List<MinimalSetVm> _allSets = [];
+    private const int PageSize = MinimalSetPage.DefaultPageSize;
+    private readonly IDataService _ds;
+    private int _currentPage = 1;
 
     public IAudioManager AudioManager { get; init; }
     public RelayCommand<object> PronounceCommand { get; init; }
@@ -53,62 +55,92 @@ public partial class MinimalSetsViewModel : ObservableObject, IRomanizationRecei
     [ObservableProperty]
     double filterStripWidth;
 
+    [ObservableProperty]
+    bool isPaged;
+
+    [ObservableProperty]
+    string pageRangeText = string.Empty;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(NextPageCommand))]
+    bool hasNextPage;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PreviousPageCommand))]
+    bool hasPreviousPage;
+
     public MinimalSetsViewModel(IDataServiceFactory dataServiceFactory, IAudioManager audioManager)
     {
         AudioManager = audioManager;
         WeakReferenceMessenger.Default.Register(this);
         PronounceCommand = new RelayCommand<object>(async o => await this.Pronounce(o));
 
-        var ds = dataServiceFactory.Get("thai");
-        _allSets = ds.MinimalSets
+        _ds = dataServiceFactory.Get("thai");
+        InitialSoundFilters = BuildInitialSoundFilters(_ds);
+        FilterStripWidth = Math.Max(InitialSoundFilters.Count * FilterSegmentWidth, FilterSegmentWidth);
+        LoadPage(1);
+    }
+
+    public void Receive(RomanizationOptionChanged message) => RomanizationOption = message.Value;
+
+    partial void OnSelectedInitialSoundChanged(ISound? value)
+    {
+        LoadPage(1);
+    }
+
+    private string? SelectedLabel => SelectedInitialSound?.Value;
+
+    private void LoadPage(int page)
+    {
+        int safePage = Math.Max(1, page);
+        var result = _ds.MinimalSets(SelectedLabel, safePage, PageSize);
+        var pageItems = result.Items
             .Select(MinimalSetVm.FromModel)
             .OrderBy(s => s.Label, StringComparer.Ordinal)
             .ThenBy(s => s.WordLines.FirstOrDefault()?.Word.Value, StringComparer.Ordinal)
             .ToList();
 
-        InitialSoundFilters = BuildInitialSoundFilters(ds, _allSets);
-        FilterStripWidth = Math.Max(InitialSoundFilters.Count * FilterSegmentWidth, FilterSegmentWidth);
-        ApplyFilter();
+        Sets = new ObservableCollection<MinimalSetVm>(pageItems);
+        _currentPage = safePage;
+
+        long first = pageItems.Count == 0 ? 0 : (long)(safePage - 1) * PageSize + 1;
+        long last = (long)(safePage - 1) * PageSize + pageItems.Count;
+        PageRangeText = $"{first}-{last} / {result.TotalItems}";
+        IsPaged = result.TotalItems > PageSize;
+        HasPreviousPage = _currentPage > 1;
+        HasNextPage = last < result.TotalItems;
     }
 
-    public void Receive(RomanizationOptionChanged message) => RomanizationOption = message.Value;
+    private bool CanGoNext() => HasNextPage;
+    private bool CanGoPrevious() => HasPreviousPage;
 
-    partial void OnSelectedInitialSoundChanged(ISound? value) => ApplyFilter();
-
-    private void ApplyFilter()
+    [RelayCommand(CanExecute = nameof(CanGoNext))]
+    private void NextPage()
     {
-        IEnumerable<MinimalSetVm> visible = _allSets;
-        if (SelectedInitialSound is not null)
-        {
-            var label = SelectedInitialSound.Value;
-            visible = _allSets.Where(s => string.Equals(s.Label, label, StringComparison.Ordinal));
-        }
-
-        Sets = new ObservableCollection<MinimalSetVm>(visible);
+        if (!HasNextPage)
+            return;
+        LoadPage(_currentPage + 1);
     }
 
-    private static ObservableCollection<ISound> BuildInitialSoundFilters(
-        IDataService ds,
-        IReadOnlyList<MinimalSetVm> sets)
+    [RelayCommand(CanExecute = nameof(CanGoPrevious))]
+    private void PreviousPage()
     {
-        var labels = sets
-            .Select(s => s.Label)
-            .Where(l => !string.IsNullOrWhiteSpace(l))
-            .ToHashSet(StringComparer.Ordinal);
+        if (!HasPreviousPage)
+            return;
+        LoadPage(_currentPage - 1);
+    }
 
-        var soundByValue = ds.Consonants
+    private static ObservableCollection<ISound> BuildInitialSoundFilters(IDataService ds)
+    {
+        var labels = ds.Consonants
             .Select(c => c.InitialSound)
             .Where(s => !string.IsNullOrWhiteSpace(s.Value))
             .GroupBy(s => s.Value, StringComparer.Ordinal)
-            .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
-
-        var filters = labels
-            .Where(soundByValue.ContainsKey)
-            .Select(label => soundByValue[label])
+            .Select(g => g.First())
             .OrderBy(s => s.Value, StringComparer.Ordinal)
             .Cast<ISound>()
             .ToList();
 
-        return new ObservableCollection<ISound>(filters);
+        return new ObservableCollection<ISound>(labels);
     }
 }

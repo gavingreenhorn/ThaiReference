@@ -21,15 +21,16 @@ public partial class MonthsView : ContentPage
         _drawable.CenterStrokeColor = ThemeColors.Get("MonthWheelCenterStroke");
         _drawable.ZodiacSymbolColor = ThemeColors.Get("MonthWheelZodiacSymbol");
         _drawable.SelectionStrokeColor = ThemeColors.Get("MonthWheelSelectionStroke");
-        _drawable.Configure(vm.Months);
+        _drawable.Configure(vm.Seasons, vm.Months);
         vm.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(MonthsViewModel.SelectedWheelItem))
+        if (e.PropertyName is nameof(MonthsViewModel.SelectedWheelItem) or nameof(MonthsViewModel.SelectedSeason))
         {
             _drawable.SelectedOrdinal = ViewModel.SelectedWheelItem?.Ordinal ?? -1;
+            _drawable.SelectedSeasonOrdinal = ViewModel.SelectedSeason?.Ordinal ?? -1;
             MonthsWheel.Invalidate();
         }
     }
@@ -37,9 +38,12 @@ public partial class MonthsView : ContentPage
     private void OnWheelTapped(object sender, TouchEventArgs e)
     {
         var touch = e.Touches[0];
-        int ordinal = _drawable.HitTest(touch.X, touch.Y);
-        if (ordinal < 0) return;
+        var hit = _drawable.HitTest(touch.X, touch.Y);
+        if (hit.IsNone) return;
 
-        ViewModel.SelectMonthCommand.Execute(ordinal);
+        if (hit.IsSeason)
+            ViewModel.SelectSeasonCommand.Execute(hit.Ordinal);
+        else
+            ViewModel.SelectMonthCommand.Execute(hit.Ordinal);
     }
 }
