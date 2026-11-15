@@ -94,9 +94,8 @@ class ReferenceFeatureMigrationTest {
                     INSERT INTO thai."Sentence"(id) VALUES (1), (2), (3);
                     INSERT INTO thai."SentenceWord"(id) VALUES (1);
                     INSERT INTO thai."Mood"(word_id) VALUES (1);
-                    INSERT INTO thai."MoodSentence"
-                        (mood_id, sentence_id, position, source_url, source_author, source_license)
-                    SELECT id, 1, 1, 'source', 'author', 'license' FROM thai."Mood";
+                    INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
+                    SELECT id, 1, 1 FROM thai."Mood";
                     INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
                     SELECT id, 2, 2 FROM thai."Mood";
                     """);
@@ -107,21 +106,23 @@ class ReferenceFeatureMigrationTest {
             }
             var savepoint = connection.setSavepoint();
             assertThrows(SQLException.class, () -> statement.execute("""
-                    INSERT INTO thai."MoodSentence"
-                        (mood_id, sentence_id, position, source_url, source_author, source_license)
-                    SELECT id, 3, 1, 'source', 'author', 'license' FROM thai."Mood";
+                    INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
+                    SELECT id, 3, 1 FROM thai."Mood";
                     """));
             connection.rollback(savepoint);
             assertThrows(SQLException.class, () -> statement.execute("""
-                    INSERT INTO thai."MoodSentence"
-                        (mood_id, sentence_id, position, source_url, source_author, source_license)
-                    SELECT id, 3, 0, 'source', 'author', 'license' FROM thai."Mood";
+                    INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
+                    SELECT id, 3, 0 FROM thai."Mood";
                     """));
             connection.rollback(savepoint);
-            assertThrows(SQLException.class, () -> statement.execute("""
-                    INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position, source_url)
-                    SELECT id, 3, 3, 'source' FROM thai."Mood";
-                    """));
+            try (var rows = statement.executeQuery("""
+                    SELECT count(*) FROM information_schema.columns
+                    WHERE table_schema = 'thai' AND table_name = 'MoodSentence'
+                      AND column_name IN ('source_url', 'source_author', 'source_license')
+                    """)) {
+                rows.next();
+                assertEquals(0, rows.getInt(1));
+            }
             connection.rollback();
         }
     }

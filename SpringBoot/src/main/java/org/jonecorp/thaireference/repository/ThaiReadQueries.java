@@ -589,7 +589,7 @@ final class ThaiReadQueries {
     static final String MOOD_SENTENCES =
             """
             SELECT new org.jonecorp.thaireference.repository.MoodSentenceRow(
-                ms.moodId, s.id, s.translation, ms.sourceUrl, ms.sourceAuthor, ms.sourceLicense)
+                ms.moodId, s.id, s.translation)
             FROM MoodSentence ms
             JOIN Sentence s ON s.id = ms.sentenceId
             ORDER BY ms.moodId, ms.position

@@ -1,5 +1,21 @@
--- Run separately after V11. Tatoeba sentences are CC BY 2.0 FR; their
--- contributors and source URLs are retained in MoodSentence.
+-- Run separately after V11. Thai examples are from Tatoeba, CC BY 2.0 FR:
+-- https://tatoeba.org/en/sentences/show/12858373 by superteenkai
+-- https://tatoeba.org/en/sentences/show/12589685 by superteenkai
+-- https://tatoeba.org/en/sentences/show/8675869 by pastelite
+-- https://tatoeba.org/en/sentences/show/11471502 by superteenkai
+-- https://tatoeba.org/en/sentences/show/12708327 by superteenkai
+-- https://tatoeba.org/en/sentences/show/2847987 by ojiisan
+-- https://tatoeba.org/en/sentences/show/10189682 by Somsak
+-- https://tatoeba.org/en/sentences/show/8719784 by pastelite
+-- https://tatoeba.org/en/sentences/show/12529528 by superteenkai
+-- https://tatoeba.org/en/sentences/show/8669449 by pastelite
+-- https://tatoeba.org/en/sentences/show/8675801 by pastelite
+-- https://tatoeba.org/en/sentences/show/12729650 by superteenkai
+-- https://tatoeba.org/en/sentences/show/8692086 by pastelite
+-- https://tatoeba.org/en/sentences/show/8728779 by pastelite
+-- https://tatoeba.org/en/sentences/show/11127363 by Somsak
+-- https://tatoeba.org/en/sentences/show/2847975 by ojiisan
+-- License: https://creativecommons.org/licenses/by/2.0/fr/
 -- Pronunciations for new words follow Wiktionary's Thai entries, with IPA
 -- converted to the tone-mark format used by this database.
 BEGIN;
@@ -80,12 +96,11 @@ SELECT * FROM (VALUES
 ) AS additional(spelling, gloss, part_of_speech);
 
 CREATE TEMP TABLE mood_seed_sentence (
-    source_id integer PRIMARY KEY,
+    seed_id integer PRIMARY KEY,
     mood text NOT NULL,
     position integer NOT NULL,
     thai_text text NOT NULL,
     translation text NOT NULL,
-    source_author text NOT NULL,
     tokens text[] NOT NULL,
     UNIQUE (mood, position)
 ) ON COMMIT DROP;
@@ -93,50 +108,50 @@ CREATE TEMP TABLE mood_seed_sentence (
 -- Each token array is the word-by-word breakdown. Compound lexical words are
 -- retained as units; วันนี้ is วัน + นี้ and ไม่เป็นไร is ไม่ + เป็น + ไร.
 INSERT INTO mood_seed_sentence VALUES
-    (12858373, 'สุข', 1, 'ฉันชอบงานที่ฉันทำอยู่ ทุกวันก็เลยมีความสุขมาก',
-     'I like my work, so I am very happy every day.', 'superteenkai',
+    (1, 'สุข', 1, 'ฉันชอบงานที่ฉันทำอยู่ ทุกวันก็เลยมีความสุขมาก',
+     'I like my work, so I am very happy every day.',
      ARRAY['ฉัน','ชอบ','งาน','ที่','ฉัน','ทำ','อยู่','ทุก','วัน','ก็','เลย','มี','ความสุข','มาก']),
-    (12589685, 'สุข', 2, 'ทอมดูไม่มีความสุข',
-     'Tom looks unhappy.', 'superteenkai', ARRAY['ทอม','ดู','ไม่','มี','ความสุข']),
-    (8675869, 'สุข', 3, 'ทำไมคุณมีความสุขมาก?',
-     'Why are you so happy?', 'pastelite', ARRAY['ทำไม','คุณ','มี','ความสุข','มาก']),
-    (11471502, 'เศร้า', 1, 'วันนี้ฉันรู้สึกเศร้า',
-     'I feel sad today.', 'superteenkai', ARRAY['วัน','นี้','ฉัน','รู้สึก','เศร้า']),
-    (12708327, 'เศร้า', 2, 'จะร้องไห้เวลาเศร้าก็ไม่เป็นไรหรอก',
-     'It is okay to cry when you are sad.', 'superteenkai',
+    (2, 'สุข', 2, 'ทอมดูไม่มีความสุข',
+     'Tom looks unhappy.', ARRAY['ทอม','ดู','ไม่','มี','ความสุข']),
+    (3, 'สุข', 3, 'ทำไมคุณมีความสุขมาก?',
+     'Why are you so happy?', ARRAY['ทำไม','คุณ','มี','ความสุข','มาก']),
+    (4, 'เศร้า', 1, 'วันนี้ฉันรู้สึกเศร้า',
+     'I feel sad today.', ARRAY['วัน','นี้','ฉัน','รู้สึก','เศร้า']),
+    (5, 'เศร้า', 2, 'จะร้องไห้เวลาเศร้าก็ไม่เป็นไรหรอก',
+     'It is okay to cry when you are sad.',
      ARRAY['จะ','ร้องไห้','เวลา','เศร้า','ก็','ไม่','เป็น','ไร','หรอก']),
-    (2847987, 'โกรธ', 1, 'ถึงเขาจะขอโทษ ฉันก็ยังโกรธ',
-     'Even though he apologized, I am still angry.', 'ojiisan',
+    (6, 'โกรธ', 1, 'ถึงเขาจะขอโทษ ฉันก็ยังโกรธ',
+     'Even though he apologized, I am still angry.',
      ARRAY['ถึง','เขา','จะ','ขอโทษ','ฉัน','ก็','ยัง','โกรธ']),
-    (10189682, 'โกรธ', 2, 'คุณดูเหมือนโกรธมาก',
-     'You look very angry.', 'Somsak', ARRAY['คุณ','ดู','เหมือน','โกรธ','มาก']),
-    (8719784, 'โกรธ', 3, 'ทำไมคุณถึงโกรธ?',
-     'Why are you angry?', 'pastelite', ARRAY['ทำไม','คุณ','ถึง','โกรธ']),
-    (12529528, 'กลัว', 1, 'ฉันกลัวสัตว์ป่า',
-     'I am afraid of wild animals.', 'superteenkai', ARRAY['ฉัน','กลัว','สัตว์ป่า']),
-    (8669449, 'กลัว', 2, 'เธอกลัวที่จะเดินทางคนเดียว',
-     'She was afraid to travel alone.', 'pastelite', ARRAY['เธอ','กลัว','ที่','จะ','เดินทาง','คนเดียว']),
-    (8675801, 'กลัว', 3, 'เขากลัวที่จะว่ายน้ำ',
-     'He is afraid to swim.', 'pastelite', ARRAY['เขา','กลัว','ที่','จะ','ว่ายน้ำ']),
-    (12729650, 'เหนื่อย', 1, 'ฉันเหนื่อยจนเดินไม่ไหว',
-     'I am too tired to walk.', 'superteenkai', ARRAY['ฉัน','เหนื่อย','จน','เดิน','ไม่','ไหว']),
-    (8692086, 'เหนื่อย', 2, 'คุณดูเหนื่อยมาก',
-     'You look very tired.', 'pastelite', ARRAY['คุณ','ดู','เหนื่อย','มาก']),
-    (8728779, 'เหนื่อย', 3, 'ฉันเหนื่อยและอยากไปนอน',
-     'I am tired and want to go to bed.', 'pastelite', ARRAY['ฉัน','เหนื่อย','และ','อยาก','ไป','นอน']),
-    (11127363, 'ตื่นเต้น', 1, 'ฉันรู้สึกตื่นเต้นมาก',
-     'I feel very excited.', 'Somsak', ARRAY['ฉัน','รู้สึก','ตื่นเต้น','มาก']),
-    (2847975, 'ตื่นเต้น', 2, 'เธอดูตื่นเต้นสุดๆเลย',
-     'She looks extremely excited.', 'ojiisan', ARRAY['เธอ','ดู','ตื่นเต้น','สุด','เลย']);
+    (7, 'โกรธ', 2, 'คุณดูเหมือนโกรธมาก',
+     'You look very angry.', ARRAY['คุณ','ดู','เหมือน','โกรธ','มาก']),
+    (8, 'โกรธ', 3, 'ทำไมคุณถึงโกรธ?',
+     'Why are you angry?', ARRAY['ทำไม','คุณ','ถึง','โกรธ']),
+    (9, 'กลัว', 1, 'ฉันกลัวสัตว์ป่า',
+     'I am afraid of wild animals.', ARRAY['ฉัน','กลัว','สัตว์ป่า']),
+    (10, 'กลัว', 2, 'เธอกลัวที่จะเดินทางคนเดียว',
+     'She was afraid to travel alone.', ARRAY['เธอ','กลัว','ที่','จะ','เดินทาง','คนเดียว']),
+    (11, 'กลัว', 3, 'เขากลัวที่จะว่ายน้ำ',
+     'He is afraid to swim.', ARRAY['เขา','กลัว','ที่','จะ','ว่ายน้ำ']),
+    (12, 'เหนื่อย', 1, 'ฉันเหนื่อยจนเดินไม่ไหว',
+     'I am too tired to walk.', ARRAY['ฉัน','เหนื่อย','จน','เดิน','ไม่','ไหว']),
+    (13, 'เหนื่อย', 2, 'คุณดูเหนื่อยมาก',
+     'You look very tired.', ARRAY['คุณ','ดู','เหนื่อย','มาก']),
+    (14, 'เหนื่อย', 3, 'ฉันเหนื่อยและอยากไปนอน',
+     'I am tired and want to go to bed.', ARRAY['ฉัน','เหนื่อย','และ','อยาก','ไป','นอน']),
+    (15, 'ตื่นเต้น', 1, 'ฉันรู้สึกตื่นเต้นมาก',
+     'I feel very excited.', ARRAY['ฉัน','รู้สึก','ตื่นเต้น','มาก']),
+    (16, 'ตื่นเต้น', 2, 'เธอดูตื่นเต้นสุดๆเลย',
+     'She looks extremely excited.', ARRAY['เธอ','ดู','ตื่นเต้น','สุด','เลย']);
 
 CREATE TEMP TABLE mood_seed_token ON COMMIT DROP AS
-SELECT s.source_id, t.ordinality::integer AS word_order, t.spelling,
+SELECT s.seed_id, t.ordinality::integer AS word_order, t.spelling,
        CASE
-           WHEN s.source_id = 12858373 AND t.ordinality = 7 THEN ' '
-           WHEN s.source_id = 2847987 AND t.ordinality = 4 THEN ' '
-           WHEN s.source_id IN (8675869, 8719784)
+           WHEN s.seed_id = 1 AND t.ordinality = 7 THEN ' '
+           WHEN s.seed_id = 6 AND t.ordinality = 4 THEN ' '
+           WHEN s.seed_id IN (3, 8)
                 AND t.ordinality = cardinality(s.tokens) THEN '?'
-           WHEN s.source_id = 2847975 AND t.ordinality = 4 THEN 'ๆ'
+           WHEN s.seed_id = 16 AND t.ordinality = 4 THEN 'ๆ'
            ELSE ''
        END AS following_text
 FROM mood_seed_sentence s
@@ -146,8 +161,8 @@ DO $$
 BEGIN
     IF EXISTS (
         SELECT 1 FROM mood_seed_sentence s
-        JOIN mood_seed_token t ON t.source_id = s.source_id
-        GROUP BY s.source_id, s.thai_text
+        JOIN mood_seed_token t ON t.seed_id = s.seed_id
+        GROUP BY s.seed_id, s.thai_text
         HAVING string_agg(t.spelling || t.following_text, '' ORDER BY t.word_order) <> s.thai_text
     ) THEN
         RAISE EXCEPTION 'A sentence breakdown does not reproduce its source text';
@@ -203,9 +218,11 @@ BEGIN
         RAISE EXCEPTION 'The seed contains duplicate IPA or Paiboon values';
     END IF;
     IF EXISTS (
-        SELECT 1 FROM thai."MoodSentence" ms
-        JOIN mood_seed_sentence s
-          ON ms.source_url = 'https://tatoeba.org/en/sentences/show/' || s.source_id
+        SELECT 1 FROM mood_seed_sentence v
+        JOIN thai."Spelling" s ON s.value = v.mood
+        JOIN thai."Word" w ON w.spelling_id = s.id
+        JOIN thai."Mood" m ON m.word_id = w.id
+        JOIN thai."MoodSentence" ms ON ms.mood_id = m.id AND ms.position = v.position
     ) THEN
         RAISE EXCEPTION 'At least one sample sentence has already been inserted';
     END IF;
@@ -249,19 +266,19 @@ WHERE NOT EXISTS (
 );
 
 CREATE TEMP TABLE mood_seed_sentence_id ON COMMIT DROP AS
-SELECT source_id,
+SELECT seed_id,
        (SELECT COALESCE(max(id), 0) FROM thai."Sentence")
-       + row_number() OVER (ORDER BY source_id)::integer AS sentence_id
+       + row_number() OVER (ORDER BY seed_id)::integer AS sentence_id
 FROM mood_seed_sentence;
 
 INSERT INTO thai."Sentence"(id, translation)
 SELECT i.sentence_id, s.translation
-FROM mood_seed_sentence s JOIN mood_seed_sentence_id i USING (source_id);
+FROM mood_seed_sentence s JOIN mood_seed_sentence_id i USING (seed_id);
 
 INSERT INTO thai."SentenceWord"(sentence_id, word_id, word_order, following_text)
 SELECT i.sentence_id, w.id, t.word_order, t.following_text
 FROM mood_seed_token t
-JOIN mood_seed_sentence_id i USING (source_id)
+JOIN mood_seed_sentence_id i USING (seed_id)
 JOIN thai."Spelling" s ON s.value = t.spelling
 JOIN thai."Word" w ON w.spelling_id = s.id;
 
@@ -272,12 +289,10 @@ JOIN thai."Spelling" s ON s.value = v.mood
 JOIN thai."Word" w ON w.spelling_id = s.id
 ON CONFLICT (word_id) DO NOTHING;
 
-INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position, source_url, source_author, source_license)
-SELECT m.id, i.sentence_id, v.position,
-       'https://tatoeba.org/en/sentences/show/' || v.source_id,
-       v.source_author, 'CC BY 2.0 FR'
+INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
+SELECT m.id, i.sentence_id, v.position
 FROM mood_seed_sentence v
-JOIN mood_seed_sentence_id i USING (source_id)
+JOIN mood_seed_sentence_id i USING (seed_id)
 JOIN thai."Spelling" s ON s.value = v.mood
 JOIN thai."Word" w ON w.spelling_id = s.id
 JOIN thai."Mood" m ON m.word_id = w.id;
@@ -291,11 +306,11 @@ BEGIN
           <> (SELECT count(*) FROM mood_seed_token)
        OR EXISTS (
            SELECT 1 FROM mood_seed_sentence s
-           JOIN mood_seed_sentence_id i USING (source_id)
+           JOIN mood_seed_sentence_id i USING (seed_id)
            JOIN thai."SentenceWord" sw ON sw.sentence_id = i.sentence_id
            JOIN thai."Word" w ON w.id = sw.word_id
            JOIN thai."Spelling" sp ON sp.id = w.spelling_id
-           GROUP BY s.source_id, s.thai_text
+           GROUP BY s.seed_id, s.thai_text
            HAVING string_agg(sp.value || sw.following_text, '' ORDER BY sw.word_order) <> s.thai_text
        ) THEN
         RAISE EXCEPTION 'Inserted sentence dependencies do not match the sample dataset';

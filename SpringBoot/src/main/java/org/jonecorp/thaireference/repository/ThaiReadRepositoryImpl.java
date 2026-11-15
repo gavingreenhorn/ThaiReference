@@ -270,8 +270,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                 .getResultList().stream()
                 .collect(groupingBy(MoodSentenceRow::moodId, LinkedHashMap::new,
                         mapping(s -> new MoodSentenceDto(s.sentenceId(), s.translation(),
-                                words.getOrDefault(s.sentenceId(), List.of()),
-                                s.sourceUrl(), s.sourceAuthor(), s.sourceLicense()), toList())));
+                                words.getOrDefault(s.sentenceId(), List.of())), toList())));
 
         return entityManager.createQuery(ThaiReadQueries.MOODS, MoodRow.class).getResultList().stream()
                 .map(m -> new MoodDto(m.id(), m.word(), sentences.getOrDefault(m.id(), List.of())))

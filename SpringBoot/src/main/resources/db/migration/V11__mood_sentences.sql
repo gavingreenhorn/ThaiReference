@@ -7,13 +7,8 @@ CREATE TABLE thai."MoodSentence" (
     mood_id integer NOT NULL REFERENCES thai."Mood"(id) ON DELETE CASCADE,
     sentence_id integer NOT NULL REFERENCES thai."Sentence"(id),
     position integer NOT NULL CHECK (position > 0),
-    source_url text,
-    source_author text,
-    source_license text,
     PRIMARY KEY (mood_id, sentence_id),
-    UNIQUE (mood_id, position),
-    CHECK ((source_url IS NULL AND source_author IS NULL AND source_license IS NULL)
-        OR (source_url IS NOT NULL AND source_author IS NOT NULL AND source_license IS NOT NULL))
+    UNIQUE (mood_id, position)
 );
 
 ALTER TABLE thai."SentenceWord"

@@ -51,9 +51,7 @@ record PositionHeadRow(Integer id, String lexeme, Integer sentenceId, String tra
 
 record MoodRow(Integer id, WordDto word) {}
 
-record MoodSentenceRow(
-        Integer moodId, Integer sentenceId, String translation,
-        String sourceUrl, String sourceAuthor, String sourceLicense) {}
+record MoodSentenceRow(Integer moodId, Integer sentenceId, String translation) {}
 
 record MoodSentenceTokenRow(Integer sentenceId, SentenceTokenDto token) {}
 

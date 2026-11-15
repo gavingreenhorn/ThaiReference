@@ -21,13 +21,4 @@ public class MoodSentence {
 
     @Column(name = "position", nullable = false)
     private Integer position;
-
-    @Column(name = "source_url")
-    private String sourceUrl;
-
-    @Column(name = "source_author")
-    private String sourceAuthor;
-
-    @Column(name = "source_license")
-    private String sourceLicense;
 }

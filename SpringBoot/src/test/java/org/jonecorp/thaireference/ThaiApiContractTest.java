@@ -49,14 +49,14 @@ class ThaiApiContractTest {
     }
 
     @Test
-    void moodsEndpointPreservesWordOrderFormattingAndAttribution() throws Exception {
+    void moodsEndpointPreservesWordOrderAndFormatting() throws Exception {
         WordDto happy = new WordDto(1, "สุข", new TranscriptionDto("sùk", "sùk"), List.of("happy"));
         WordDto why = new WordDto(2, "ทำไม", new TranscriptionDto("tam-mai", "tʰām.māj"), List.of("why"));
         MoodSentenceDto first = new MoodSentenceDto(3, "Why?", List.of(
                 new SentenceTokenDto(why, " "),
-                new SentenceTokenDto(happy, "?")), "https://example.org/3", "author", "CC BY 2.0 FR");
+                new SentenceTokenDto(happy, "?")));
         MoodSentenceDto second = new MoodSentenceDto(4, "Happy.", List.of(
-                new SentenceTokenDto(happy, ".")), null, null, null);
+                new SentenceTokenDto(happy, ".")));
         when(repository.findMoods()).thenReturn(List.of(new MoodDto(5, happy, List.of(first, second))));
 
         mockMvc.perform(get("/thai/moods"))
@@ -66,8 +66,9 @@ class ThaiApiContractTest {
                 .andExpect(jsonPath("$[0].sentences[0].words[0].word.value").value("ทำไม"))
                 .andExpect(jsonPath("$[0].sentences[0].words[0].following_text").value(" "))
                 .andExpect(jsonPath("$[0].sentences[0].words[1].following_text").value("?"))
-                .andExpect(jsonPath("$[0].sentences[0].source_author").value("author"))
-                .andExpect(jsonPath("$[0].sentences[0].source_license").value("CC BY 2.0 FR"))
+                .andExpect(jsonPath("$[0].sentences[0].source_url").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$[0].sentences[0].source_author").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$[0].sentences[0].source_license").doesNotHaveJsonPath())
                 .andExpect(jsonPath("$[0].sentences[1].id").value(4));
     }
 }
