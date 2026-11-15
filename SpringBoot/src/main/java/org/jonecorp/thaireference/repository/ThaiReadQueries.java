@@ -573,6 +573,44 @@ final class ThaiReadQueries {
             ORDER BY sw.sentenceId, sw.wordOrder
             """;
 
+    static final String MOODS =
+            """
+            SELECT new org.jonecorp.thaireference.repository.MoodRow(
+                m.id,
+                new org.jonecorp.thaireference.dto.WordDto(
+                    wv.id, wv.spelling,
+                    new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
+                    wv.lexemes))
+            FROM Mood m
+            JOIN WordView wv ON wv.id = m.wordId
+            ORDER BY m.id
+            """;
+
+    static final String MOOD_SENTENCES =
+            """
+            SELECT new org.jonecorp.thaireference.repository.MoodSentenceRow(
+                ms.moodId, s.id, s.translation, ms.sourceUrl, ms.sourceAuthor, ms.sourceLicense)
+            FROM MoodSentence ms
+            JOIN Sentence s ON s.id = ms.sentenceId
+            ORDER BY ms.moodId, ms.position
+            """;
+
+    static final String MOOD_SENTENCE_WORDS =
+            """
+            SELECT new org.jonecorp.thaireference.repository.MoodSentenceTokenRow(
+                sw.sentenceId,
+                new org.jonecorp.thaireference.dto.SentenceTokenDto(
+                    new org.jonecorp.thaireference.dto.WordDto(
+                        wv.id, wv.spelling,
+                        new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
+                        wv.lexemes),
+                    sw.followingText))
+            FROM SentenceWord sw
+            JOIN WordView wv ON wv.id = sw.wordId
+            WHERE EXISTS (SELECT 1 FROM MoodSentence ms WHERE ms.sentenceId = sw.sentenceId)
+            ORDER BY sw.sentenceId, sw.wordOrder
+            """;
+
     static final String HUE_FAMILIES =
             """
             SELECT new org.jonecorp.thaireference.dto.HueFamilyDto(

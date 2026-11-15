@@ -117,6 +117,12 @@ public class ThaiController {
         return repository.findPositions();
     }
 
+    @GetMapping("/moods")
+    @Cacheable("thai.moods")
+    public List<MoodDto> getMoods() {
+        return repository.findMoods();
+    }
+
     @GetMapping("/weekdays")
     @Cacheable("thai.weekdays")
     public List<DayOfWeekDto> getWeekdays() {

@@ -5,6 +5,7 @@ import org.jonecorp.thaireference.dto.SoundDto;
 import org.jonecorp.thaireference.dto.TranscriptionDto;
 import org.jonecorp.thaireference.dto.VowelGraphemeDto;
 import org.jonecorp.thaireference.dto.WordDto;
+import org.jonecorp.thaireference.dto.SentenceTokenDto;
 import org.jonecorp.thaireference.dto.ZodiacDto;
 
 /*
@@ -47,6 +48,14 @@ record HomophoneRow(Integer transcriptionId, TranscriptionDto transcription) {}
 record DirectionRow(Integer id, String label, String lexeme) {}
 
 record PositionHeadRow(Integer id, String lexeme, Integer sentenceId, String translation) {}
+
+record MoodRow(Integer id, WordDto word) {}
+
+record MoodSentenceRow(
+        Integer moodId, Integer sentenceId, String translation,
+        String sourceUrl, String sourceAuthor, String sourceLicense) {}
+
+record MoodSentenceTokenRow(Integer sentenceId, SentenceTokenDto token) {}
 
 record MonthRow(
         Integer seasonId,

@@ -22,4 +22,7 @@ public class SentenceWord {
 
     @Column(name = "word_order", nullable = false)
     private Integer wordOrder;
+
+    @Column(name = "following_text", nullable = false)
+    private String followingText;
 }

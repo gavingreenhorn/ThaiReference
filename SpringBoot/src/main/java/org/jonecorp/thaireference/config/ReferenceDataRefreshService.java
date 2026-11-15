@@ -31,6 +31,7 @@ public class ReferenceDataRefreshService {
             "thai.pronouns",
             "thai.gridPositions",
             "thai.positions",
+            "thai.moods",
             "thai.weekdays",
             "thai.celestialBodies",
             "thai.timeOfDay",
@@ -132,6 +133,7 @@ public class ReferenceDataRefreshService {
         thaiController.getPronouns();
         thaiController.getGridPositions();
         thaiController.getPositions();
+        thaiController.getMoods();
         thaiController.getWeekdays();
         thaiController.getCelestialBodies();
         thaiController.getTimeOfDay();

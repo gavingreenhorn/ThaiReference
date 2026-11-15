@@ -1,9 +1,11 @@
 package org.jonecorp.thaireference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -23,8 +25,10 @@ class ReferenceFeatureMigrationTest {
                 var statement = connection.createStatement()) {
             statement.execute("""
                     CREATE SCHEMA thai;
-                    CREATE TABLE thai."Word"(id integer, transcription integer, is_primary boolean);
+                    CREATE TABLE thai."Word"(id integer PRIMARY KEY, transcription integer, is_primary boolean);
                     CREATE TABLE thai."Transcription"(id integer, "IPA" text);
+                    CREATE TABLE thai."Sentence"(id integer PRIMARY KEY);
+                    CREATE TABLE thai."SentenceWord"(id integer PRIMARY KEY);
                     CREATE TABLE thai."Sound"(
                         id integer, value text, consonant_sound integer, initial_only boolean);
                     CREATE TABLE thai."Season"(id integer, ordinal integer);
@@ -53,7 +57,7 @@ class ReferenceFeatureMigrationTest {
                     .baselineOnMigrate(true)
                     .baselineVersion("5")
                     .load();
-            assertEquals(5, flyway.migrate().migrationsExecuted);
+            assertEquals(6, flyway.migrate().migrationsExecuted);
             flyway.validate();
             assertEquals(0, flyway.migrate().migrationsExecuted);
             try (var rows = statement.executeQuery("""
@@ -85,6 +89,40 @@ class ReferenceFeatureMigrationTest {
                 rows.next();
                 assertEquals(0, rows.getInt(1));
             }
+            statement.execute("""
+                    INSERT INTO thai."Word"(id) VALUES (1);
+                    INSERT INTO thai."Sentence"(id) VALUES (1), (2), (3);
+                    INSERT INTO thai."SentenceWord"(id) VALUES (1);
+                    INSERT INTO thai."Mood"(word_id) VALUES (1);
+                    INSERT INTO thai."MoodSentence"
+                        (mood_id, sentence_id, position, source_url, source_author, source_license)
+                    SELECT id, 1, 1, 'source', 'author', 'license' FROM thai."Mood";
+                    INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
+                    SELECT id, 2, 2 FROM thai."Mood";
+                    """);
+            try (var rows = statement.executeQuery(
+                    "SELECT following_text FROM thai.\"SentenceWord\" WHERE id = 1")) {
+                rows.next();
+                assertEquals("", rows.getString(1));
+            }
+            var savepoint = connection.setSavepoint();
+            assertThrows(SQLException.class, () -> statement.execute("""
+                    INSERT INTO thai."MoodSentence"
+                        (mood_id, sentence_id, position, source_url, source_author, source_license)
+                    SELECT id, 3, 1, 'source', 'author', 'license' FROM thai."Mood";
+                    """));
+            connection.rollback(savepoint);
+            assertThrows(SQLException.class, () -> statement.execute("""
+                    INSERT INTO thai."MoodSentence"
+                        (mood_id, sentence_id, position, source_url, source_author, source_license)
+                    SELECT id, 3, 0, 'source', 'author', 'license' FROM thai."Mood";
+                    """));
+            connection.rollback(savepoint);
+            assertThrows(SQLException.class, () -> statement.execute("""
+                    INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position, source_url)
+                    SELECT id, 3, 3, 'source' FROM thai."Mood";
+                    """));
+            connection.rollback();
         }
     }
 }

@@ -257,6 +257,27 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                 .toList();
     }
 
+    @Override
+    public List<MoodDto> findMoods() {
+        Map<Integer, List<SentenceTokenDto>> words = entityManager
+                .createQuery(ThaiReadQueries.MOOD_SENTENCE_WORDS, MoodSentenceTokenRow.class)
+                .getResultList().stream()
+                .collect(groupingBy(MoodSentenceTokenRow::sentenceId, LinkedHashMap::new,
+                        mapping(MoodSentenceTokenRow::token, toList())));
+
+        Map<Integer, List<MoodSentenceDto>> sentences = entityManager
+                .createQuery(ThaiReadQueries.MOOD_SENTENCES, MoodSentenceRow.class)
+                .getResultList().stream()
+                .collect(groupingBy(MoodSentenceRow::moodId, LinkedHashMap::new,
+                        mapping(s -> new MoodSentenceDto(s.sentenceId(), s.translation(),
+                                words.getOrDefault(s.sentenceId(), List.of()),
+                                s.sourceUrl(), s.sourceAuthor(), s.sourceLicense()), toList())));
+
+        return entityManager.createQuery(ThaiReadQueries.MOODS, MoodRow.class).getResultList().stream()
+                .map(m -> new MoodDto(m.id(), m.word(), sentences.getOrDefault(m.id(), List.of())))
+                .toList();
+    }
+
     private static String joinTranscription(
             List<WordDto> parts, java.util.function.Function<TranscriptionDto, String> field) {
         return parts.stream()

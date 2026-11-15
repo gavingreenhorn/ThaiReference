@@ -43,5 +43,7 @@ public interface ThaiReadRepositoryCustom {
 
     List<PositionDto> findPositions();
 
+    List<MoodDto> findMoods();
+
     List<HueFamilyDto> findColors();
 }
