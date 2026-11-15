@@ -3,6 +3,7 @@ package org.jonecorp.thaireference;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -61,6 +62,7 @@ class ThaiApiContractTest {
 
         mockMvc.perform(get("/thai/moods"))
                 .andExpect(status().isOk())
+                .andExpect(header().exists("Link"))
                 .andExpect(jsonPath("$[0].word.value").value("สุข"))
                 .andExpect(jsonPath("$[0].sentences[0].id").value(3))
                 .andExpect(jsonPath("$[0].sentences[0].words[0].word.value").value("ทำไม"))
