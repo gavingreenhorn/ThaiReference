@@ -49,7 +49,7 @@ record DirectionRow(Integer id, String label, String lexeme) {}
 
 record PositionHeadRow(Integer id, String lexeme, Integer sentenceId, String translation) {}
 
-record MoodRow(Integer id, WordDto word) {}
+record MoodRow(Integer id, WordDto word, String svg) {}
 
 record MoodSentenceRow(Integer moodId, Integer sentenceId, String translation) {}
 

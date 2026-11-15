@@ -58,12 +58,14 @@ class ThaiApiContractTest {
                 new SentenceTokenDto(happy, "?")));
         MoodSentenceDto second = new MoodSentenceDto(4, "Happy.", List.of(
                 new SentenceTokenDto(happy, ".")));
-        when(repository.findMoods()).thenReturn(List.of(new MoodDto(5, happy, List.of(first, second))));
+        String svg = "<svg xmlns=\"http://www.w3.org/2000/svg\"/>";
+        when(repository.findMoods()).thenReturn(List.of(new MoodDto(5, happy, svg, List.of(first, second))));
 
         mockMvc.perform(get("/thai/moods"))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("Link"))
                 .andExpect(jsonPath("$[0].word.value").value("สุข"))
+                .andExpect(jsonPath("$[0].svg").value(svg))
                 .andExpect(jsonPath("$[0].sentences[0].id").value(3))
                 .andExpect(jsonPath("$[0].sentences[0].words[0].word.value").value("ทำไม"))
                 .andExpect(jsonPath("$[0].sentences[0].words[0].following_text").value(" "))

@@ -104,6 +104,14 @@ class ReferenceFeatureMigrationTest {
                 rows.next();
                 assertEquals("", rows.getString(1));
             }
+            statement.execute("""
+                    UPDATE thai."Mood" SET svg = '<svg xmlns="http://www.w3.org/2000/svg"/>'
+                    WHERE word_id = 1
+                    """);
+            try (var rows = statement.executeQuery("SELECT svg FROM thai.\"Mood\" WHERE word_id = 1")) {
+                rows.next();
+                assertEquals("<svg xmlns=\"http://www.w3.org/2000/svg\"/>", rows.getString(1));
+            }
             var savepoint = connection.setSavepoint();
             assertThrows(SQLException.class, () -> statement.execute("""
                     INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)

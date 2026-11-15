@@ -580,7 +580,8 @@ final class ThaiReadQueries {
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id, wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes),
+                m.svg)
             FROM Mood m
             JOIN WordView wv ON wv.id = m.wordId
             ORDER BY m.id

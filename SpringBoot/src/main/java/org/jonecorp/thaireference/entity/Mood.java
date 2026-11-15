@@ -16,4 +16,7 @@ public class Mood {
 
     @Column(name = "word_id", nullable = false)
     private Integer wordId;
+
+    @Column(name = "svg")
+    private String svg;
 }

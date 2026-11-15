@@ -273,7 +273,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                                 words.getOrDefault(s.sentenceId(), List.of())), toList())));
 
         return entityManager.createQuery(ThaiReadQueries.MOODS, MoodRow.class).getResultList().stream()
-                .map(m -> new MoodDto(m.id(), m.word(), sentences.getOrDefault(m.id(), List.of())))
+                .map(m -> new MoodDto(m.id(), m.word(), m.svg(), sentences.getOrDefault(m.id(), List.of())))
                 .toList();
     }
 

@@ -15,6 +15,9 @@
 -- https://tatoeba.org/en/sentences/show/8728779 by pastelite
 -- https://tatoeba.org/en/sentences/show/11127363 by Somsak
 -- https://tatoeba.org/en/sentences/show/2847975 by ojiisan
+-- https://tatoeba.org/en/sentences/show/12858401 by superteenkai
+-- https://tatoeba.org/en/sentences/show/10174096 by Somsak
+-- https://tatoeba.org/en/sentences/show/10624653 by Somsak
 -- License: https://creativecommons.org/licenses/by/2.0/fr/
 -- Pronunciations for new words follow Wiktionary's Thai entries, with IPA
 -- converted to the tone-mark format used by this database.
