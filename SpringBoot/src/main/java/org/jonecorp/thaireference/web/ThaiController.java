@@ -4,8 +4,6 @@ import org.jonecorp.thaireference.dto.*;
 import org.jonecorp.thaireference.repository.ThaiReadRepository;
 import java.util.List;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -121,13 +119,8 @@ public class ThaiController {
 
     @GetMapping("/moods")
     @Cacheable("thai.moods")
-    public ResponseEntity<List<MoodDto>> getMoods() {
-        return ResponseEntity.ok()
-                .header(HttpHeaders.LINK,
-                        "<https://creativecommons.org/licenses/by/2.0/fr/>; rel=\"license\", "
-                        + "<https://github.com/gavingreenhorn/ThaiReference/blob/main/SpringBoot/src/main/resources/db/data/mood_sample_data.sql>; "
-                        + "rel=\"https://creativecommons.org/ns#attributionURL\"")
-                .body(repository.findMoods());
+    public List<MoodDto> getMoods() {
+        return repository.findMoods();
     }
 
     @GetMapping("/weekdays")

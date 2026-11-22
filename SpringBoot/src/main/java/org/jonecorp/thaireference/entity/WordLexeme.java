@@ -14,10 +14,12 @@ public class WordLexeme {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "word", nullable = true)
-    private Integer wordId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "word")
+    private Word word;
 
-    @Column(name = "lexeme", nullable = true)
-    private Integer lexemeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lexeme")
+    private Lexeme lexeme;
 
 }

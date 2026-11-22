@@ -56,6 +56,7 @@ class ReferenceFeatureMigrationTest {
                     .schemas("thai")
                     .baselineOnMigrate(true)
                     .baselineVersion("5")
+                    .target("11")
                     .load();
             assertEquals(6, flyway.migrate().migrationsExecuted);
             flyway.validate();

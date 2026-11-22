@@ -93,26 +93,17 @@ public class ReferenceDataRefreshService {
             long ms = (System.nanoTime() - started) / 1_000_000;
             log.info("Reference-data refresh complete in {} ms (trigger={})", ms, trigger);
         } catch (RuntimeException ex) {
-            log.warn("Reference-data refresh failed (trigger={}): {}", trigger, ex.getMessage());
+            log.warn("Reference-data refresh failed (trigger={})", trigger, ex);
         } finally {
             refreshLock.unlock();
         }
     }
 
     private void refreshWordView() {
-        try {
-            jdbcTemplate.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY thai.\"WordView\"");
-            log.debug("Refreshed materialized view thai.\"WordView\"");
-        } catch (RuntimeException ex) {
-            log.warn("Could not refresh thai.\"WordView\": {}", ex.getMessage());
-        }
-
-        try {
-            jdbcTemplate.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY thai.\"MinimalSetView\"");
-            log.debug("Refreshed materialized view thai.\"MinimalSetView\"");
-        } catch (RuntimeException ex) {
-            log.warn("Could not refresh thai.\"MinimalSetView\": {}", ex.getMessage());
-        }
+        jdbcTemplate.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY thai.\"WordView\"");
+        log.debug("Refreshed materialized view thai.\"WordView\"");
+        jdbcTemplate.execute("REFRESH MATERIALIZED VIEW CONCURRENTLY thai.\"MinimalSetView\"");
+        log.debug("Refreshed materialized view thai.\"MinimalSetView\"");
     }
 
     private void refreshReferenceCaches() {

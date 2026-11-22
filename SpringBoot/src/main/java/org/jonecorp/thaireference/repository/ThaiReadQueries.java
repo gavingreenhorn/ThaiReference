@@ -4,8 +4,7 @@ package org.jonecorp.thaireference.repository;
  * Word projections select straight from WordView (the flat, pre-joined materialized view):
  * one row per word carrying spelling, the three transcription columns and a lexemes text[].
  *
- * WordDto(id, spelling, TranscriptionDto, String[]) maps wv.lexemes directly; its String[]
- * constructor normalises the array to a list.
+ * WordDto maps the view's lexeme and component arrays directly.
  */
 final class ThaiReadQueries {
 
@@ -19,7 +18,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM Numeral n
             JOIN WordView wv ON wv.id = n.wordId
             ORDER BY n.id
@@ -33,7 +32,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes),
+                    wv.lexemes, wv.componentWordIds),
                 d.deity,
                 d.imageUrl)
             FROM DayOfWeek d
@@ -49,7 +48,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM TimeOfDay td
             JOIN WordView wv ON wv.id = td.wordId
             ORDER BY td.ordinal
@@ -63,7 +62,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM Hour h
             JOIN WordView wv ON wv.id = h.wordId
             ORDER BY h.ordinal
@@ -90,7 +89,7 @@ final class ThaiReadQueries {
                         wv.id,
                         wv.spelling,
                         new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                        wv.lexemes),
+                        wv.lexemes, wv.componentWordIds),
                     m.shortName,
                     m.englishName,
                     new org.jonecorp.thaireference.dto.ZodiacDto(
@@ -108,13 +107,14 @@ final class ThaiReadQueries {
 
     static final String SEASON_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
                 s.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds),
+                cn)
             FROM Season s
             JOIN CompositeName cn ON cn.id = s.compositeNameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
@@ -138,7 +138,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM CelestialBody cb
             JOIN WordView wv ON wv.id = cb.wordId
             ORDER BY cb.ordinal
@@ -187,7 +187,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM ConsonantSample cs
             JOIN WordView wv ON wv.id = cs.wordId
             ORDER BY cs.consonantId, cs.id
@@ -231,7 +231,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM VowelSample vsmp
             JOIN WordView wv ON wv.id = vsmp.wordId
             ORDER BY vsmp.vowelId, vsmp.id
@@ -245,7 +245,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes),
+                    wv.lexemes, wv.componentWordIds),
                 COALESCE(p.grammaticalPerson, 0),
                 CASE
                     WHEN LOWER(pl.name) LIKE '%singular%' THEN 1
@@ -293,7 +293,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM GridPositionWord pw
             JOIN WordView wv ON wv.id = pw.wordId
             ORDER BY pw.gridPositionId, pw.wordOrder
@@ -318,7 +318,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM ClusterWord cw
             JOIN WordView wv ON wv.id = cw.wordId
             ORDER BY cw.clusterId, cw.id
@@ -363,43 +363,25 @@ final class ThaiReadQueries {
                 ORDER BY m.set_id
                 OFFSET :offset LIMIT :limit
             )
-            SELECT m.set_id, wv.id, wv.spelling, wv.paiboon, wv.ipa, wv.lexemes
+            SELECT m.set_id, wv.id, wv.spelling, wv.paiboon, wv.ipa, wv.lexemes, wv.component_word_ids
             FROM thai."MinimalSetView" m
             JOIN paged_sets ps ON ps.set_id = m.set_id
             JOIN thai."WordView" wv ON wv.id = m.word_id
             ORDER BY m.set_id, m.word_id
             """;
 
-    static final String HOMOPHONES =
-            """
-            SELECT new org.jonecorp.thaireference.repository.HomophoneRow(
-                t.id,
-                new org.jonecorp.thaireference.dto.TranscriptionDto(t.paiboon, t.ipa))
-            FROM Transcription t
-            JOIN Word w ON w.transcriptionId = t.id
-                AND (SELECT COUNT(w2) FROM Word w2 WHERE w2.spellingId = w.spellingId) = 1
-            GROUP BY t.id, t.paiboon, t.ipa
-            HAVING COUNT(w) >= 2
-            ORDER BY t.id
-            """;
-
     static final String HOMOPHONE_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.HomophoneCandidate(
                 wv.transcriptionId,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM WordView wv
-            WHERE (SELECT COUNT(w2) FROM Word w2 WHERE w2.spellingId = wv.spellingId) = 1
-              AND wv.transcriptionId IN (
-                  SELECT w3.transcriptionId FROM Word w3
-                  WHERE (SELECT COUNT(w4) FROM Word w4 WHERE w4.spellingId = w3.spellingId) = 1
-                  GROUP BY w3.transcriptionId
-                  HAVING COUNT(w3) >= 2)
-            ORDER BY wv.transcriptionId, wv.id
+            WHERE (SELECT COUNT(w2) FROM WordView w2 WHERE w2.spelling = wv.spelling) = 1
+            ORDER BY wv.transcriptionId NULLS LAST, wv.id
             """;
 
     static final String MARK_SPECIAL_SYMBOLS =
@@ -421,7 +403,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM SpecialSymbol ss
             JOIN WordView wv ON wv.id = ss.wordId
             WHERE ss.wordId IS NOT NULL
@@ -440,13 +422,14 @@ final class ThaiReadQueries {
 
     static final String CLASS_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
                 tc.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds),
+                cn)
             FROM ThaiClassEntity tc
             JOIN CompositeName cn ON cn.id = tc.nameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
@@ -473,13 +456,14 @@ final class ThaiReadQueries {
 
     static final String MARK_TONE_MARK_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
                 tm.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds),
+                cn)
             FROM ToneMark tm
             JOIN CompositeName cn ON cn.id = tm.nameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
@@ -505,13 +489,14 @@ final class ThaiReadQueries {
 
     static final String DIRECTION_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
                 d.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds),
+                cn)
             FROM Direction d
             JOIN CompositeName cn ON cn.id = d.compositeNameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
@@ -539,13 +524,14 @@ final class ThaiReadQueries {
 
     static final String POSITION_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
                 p.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds),
+                cn)
             FROM Position p
             JOIN CompositeName cn ON cn.id = p.compositeNameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
@@ -567,7 +553,7 @@ final class ThaiReadQueries {
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds))
             FROM SentenceWord sw
             JOIN WordView wv ON wv.id = sw.wordId
             ORDER BY sw.sentenceId, sw.wordOrder
@@ -580,7 +566,7 @@ final class ThaiReadQueries {
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id, wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes),
+                    wv.lexemes, wv.componentWordIds),
                 m.svg)
             FROM Mood m
             JOIN WordView wv ON wv.id = m.wordId
@@ -604,7 +590,7 @@ final class ThaiReadQueries {
                     new org.jonecorp.thaireference.dto.WordDto(
                         wv.id, wv.spelling,
                         new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                        wv.lexemes),
+                        wv.lexemes, wv.componentWordIds),
                     sw.followingText))
             FROM SentenceWord sw
             JOIN WordView wv ON wv.id = sw.wordId
@@ -639,13 +625,14 @@ final class ThaiReadQueries {
 
     static final String COLOR_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.WordRow(
+            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
                 c.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes))
+                    wv.lexemes, wv.componentWordIds),
+                cn)
             FROM Color c
             JOIN CompositeName cn ON cn.id = c.compositeNameId
             JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)

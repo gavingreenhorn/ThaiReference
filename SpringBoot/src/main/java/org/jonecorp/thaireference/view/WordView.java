@@ -38,4 +38,8 @@ public class WordView {
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "lexemes")
     private String[] lexemes;
+
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "component_word_ids")
+    private Integer[] componentWordIds;
 }

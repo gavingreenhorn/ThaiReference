@@ -51,8 +51,9 @@ class ThaiApiContractTest {
 
     @Test
     void moodsEndpointPreservesWordOrderAndFormatting() throws Exception {
-        WordDto happy = new WordDto(1, "สุข", new TranscriptionDto("sùk", "sùk"), List.of("happy"));
-        WordDto why = new WordDto(2, "ทำไม", new TranscriptionDto("tam-mai", "tʰām.māj"), List.of("why"));
+        WordDto happy = new WordDto(1, "สุข", new TranscriptionDto("sùk", "sùk"), List.of("happy"), List.of());
+        WordDto why = new WordDto(2, "ทำไม", new TranscriptionDto("tam-mai", "tʰām.māj"),
+                List.of("why"), List.of(10, 11));
         MoodSentenceDto first = new MoodSentenceDto(3, "Why?", List.of(
                 new SentenceTokenDto(why, " "),
                 new SentenceTokenDto(happy, "?")));
@@ -63,11 +64,12 @@ class ThaiApiContractTest {
 
         mockMvc.perform(get("/thai/moods"))
                 .andExpect(status().isOk())
-                .andExpect(header().exists("Link"))
                 .andExpect(jsonPath("$[0].word.value").value("สุข"))
                 .andExpect(jsonPath("$[0].svg").value(svg))
                 .andExpect(jsonPath("$[0].sentences[0].id").value(3))
                 .andExpect(jsonPath("$[0].sentences[0].words[0].word.value").value("ทำไม"))
+                .andExpect(jsonPath("$[0].sentences[0].words[0].word.component_word_ids[0]").value(10))
+                .andExpect(jsonPath("$[0].sentences[0].words[0].word.component_word_ids[1]").value(11))
                 .andExpect(jsonPath("$[0].sentences[0].words[0].following_text").value(" "))
                 .andExpect(jsonPath("$[0].sentences[0].words[1].following_text").value("?"))
                 .andExpect(jsonPath("$[0].sentences[0].source_url").doesNotHaveJsonPath())

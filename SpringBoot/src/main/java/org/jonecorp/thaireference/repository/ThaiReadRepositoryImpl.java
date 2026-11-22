@@ -5,10 +5,12 @@ import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
 import org.jonecorp.thaireference.dto.*;
+import org.jonecorp.thaireference.entity.CompositeName;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.sql.Array;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,7 +54,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<SeasonDto> findSeasons() {
-        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.SEASON_WORDS);
+        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.SEASON_WORDS);
         Map<Integer, List<MonthDto>> months = entityManager
                 .createQuery(ThaiReadQueries.SEASON_MONTHS, MonthRow.class).getResultList().stream()
                 .collect(groupingBy(MonthRow::seasonId, LinkedHashMap::new, mapping(MonthRow::month, toList())));
@@ -117,7 +119,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<ThaiClassDto> findClasses() {
-        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.CLASS_WORDS);
+        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.CLASS_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.CLASSES, ClassRow.class).getResultList().stream()
                 .map(c -> new ThaiClassDto(
@@ -171,12 +173,26 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<HomophoneGroupDto> findHomophones() {
-        Map<Integer, List<WordDto>> wordsByTranscription = wordsByParentId(ThaiReadQueries.HOMOPHONE_WORDS);
-
-        return entityManager.createQuery(ThaiReadQueries.HOMOPHONES, HomophoneRow.class).getResultList().stream()
-                .map(h -> new HomophoneGroupDto(
-                        h.transcription(), wordsByTranscription.getOrDefault(h.transcriptionId(), List.of())))
+        Map<HomophoneKey, List<WordDto>> groups = entityManager
+                .createQuery(ThaiReadQueries.HOMOPHONE_WORDS, HomophoneCandidate.class).getResultList().stream()
+                .collect(groupingBy(ThaiReadRepositoryImpl::homophoneKey, LinkedHashMap::new,
+                        mapping(HomophoneCandidate::word, toList())));
+        return groups.values().stream()
+                .filter(words -> words.size() >= 2)
+                .map(words -> new HomophoneGroupDto(words.getFirst().transcription(), words))
                 .toList();
+    }
+
+    private record HomophoneKey(String paiboon, String ipa, Integer incompleteTranscriptionId) {}
+
+    private static HomophoneKey homophoneKey(HomophoneCandidate candidate) {
+        TranscriptionDto transcription = candidate.word().transcription();
+        String paiboon = transcription.paiboon();
+        String ipa = transcription.ipa();
+        return new HomophoneKey(
+                paiboon == null ? null : Normalizer.normalize(paiboon, Normalizer.Form.NFC),
+                ipa == null ? null : Normalizer.normalize(ipa, Normalizer.Form.NFC),
+                paiboon == null || ipa == null ? candidate.transcriptionId() : null);
     }
 
     @Override
@@ -222,7 +238,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<DirectionDto> findDirections() {
-        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.DIRECTION_WORDS);
+        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.DIRECTION_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.DIRECTIONS, DirectionRow.class).getResultList().stream()
                 .map(d -> {
@@ -242,7 +258,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<PositionDto> findPositions() {
-        Map<Integer, List<WordDto>> headWords = wordsByParentId(ThaiReadQueries.POSITION_WORDS);
+        Map<Integer, List<WordDto>> headWords = wordsByCompositeName(ThaiReadQueries.POSITION_WORDS);
         Map<Integer, List<WordDto>> sentenceWords = wordsByParentId(ThaiReadQueries.SENTENCE_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.POSITIONS, PositionHeadRow.class).getResultList().stream()
@@ -297,7 +313,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     }
 
     private List<MarkDto> toneMarks() {
-        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.MARK_TONE_MARK_WORDS);
+        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.MARK_TONE_MARK_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.MARK_TONE_MARKS, MarkRow.class).getResultList().stream()
                 .map(m -> new MarkDto(
@@ -308,6 +324,37 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     private Map<Integer, List<WordDto>> wordsByParentId(String wordQuery) {
         return entityManager.createQuery(wordQuery, WordRow.class).getResultList().stream()
                 .collect(groupingBy(WordRow::parentId, LinkedHashMap::new, mapping(WordRow::word, toList())));
+    }
+
+    private Map<Integer, List<WordDto>> wordsByCompositeName(String wordQuery) {
+        Map<Integer, List<CompositeNameWordRow>> rows = entityManager
+                .createQuery(wordQuery, CompositeNameWordRow.class).getResultList().stream()
+                .collect(groupingBy(CompositeNameWordRow::parentId, LinkedHashMap::new, toList()));
+        Map<Integer, List<WordDto>> result = new LinkedHashMap<>();
+        for (var entry : rows.entrySet()) {
+            Map<Integer, WordDto> words = new LinkedHashMap<>();
+            for (CompositeNameWordRow row : entry.getValue()) {
+                words.put(row.word().id(), row.word());
+            }
+            result.put(entry.getKey(), orderedCompositeWords(entry.getValue().get(0).name(), words));
+        }
+        return result;
+    }
+
+    static List<WordDto> orderedCompositeWords(CompositeName name, Map<Integer, WordDto> words) {
+        List<WordDto> result = new ArrayList<>();
+        Integer[] ids = {name.getWord1Id(), name.getWord2Id(), name.getWord3Id(),
+                name.getWord4Id(), name.getWord5Id()};
+        for (Integer id : ids) {
+            if (id != null) {
+                WordDto word = words.get(id);
+                if (word == null) {
+                    throw new IllegalStateException("Missing word " + id + " in composite name " + name.getId());
+                }
+                result.add(word);
+            }
+        }
+        return result;
     }
 
     private Map<Integer, List<WordDto>> wordsByMinimalSetsPage(String label, int offset, int limit) {
@@ -327,12 +374,37 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
             String paiboon = (String) row[3];
             String ipa = (String) row[4];
             List<String> lexemes = toStringList(row[5]);
+            List<Integer> componentWordIds = toIntegerList(row[6]);
 
-            WordDto word = new WordDto(wordId, spelling, new TranscriptionDto(paiboon, ipa), lexemes);
+            WordDto word = new WordDto(wordId, spelling, new TranscriptionDto(paiboon, ipa), lexemes, componentWordIds);
             result.computeIfAbsent(setId, _ -> new ArrayList<>()).add(word);
         }
 
         return result;
+    }
+
+    private static List<Integer> toIntegerList(Object value) {
+        if (value instanceof Array array) {
+            try {
+                value = array.getArray();
+            } catch (SQLException e) {
+                throw new IllegalStateException("Could not read SQL array of word components", e);
+            }
+        }
+        if (value instanceof Object[] values) {
+            return Arrays.stream(values).map(ThaiReadRepositoryImpl::toComponentId).toList();
+        }
+        if (value instanceof Collection<?> values) {
+            return values.stream().map(ThaiReadRepositoryImpl::toComponentId).toList();
+        }
+        throw new IllegalStateException("Unexpected word component array: " + value);
+    }
+
+    private static Integer toComponentId(Object value) {
+        if (value instanceof Integer id) {
+            return id;
+        }
+        throw new IllegalStateException("Unexpected word component ID: " + value);
     }
 
     private static List<String> toStringList(Object sqlArrayOrNull) {
@@ -372,7 +444,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                 .createQuery(ThaiReadQueries.HUE_FAMILIES, HueFamilyDto.class).getResultList();
         List<ColorRow> colors = entityManager
                 .createQuery(ThaiReadQueries.COLORS, ColorRow.class).getResultList();
-        Map<Integer, List<WordDto>> wordsByColor = wordsByParentId(ThaiReadQueries.COLOR_WORDS);
+        Map<Integer, List<WordDto>> wordsByColor = wordsByCompositeName(ThaiReadQueries.COLOR_WORDS);
 
         Map<Integer, List<ColorRow>> colorsByFamily = colors.stream()
                 .collect(groupingBy(ColorRow::familyId, LinkedHashMap::new, toList()));

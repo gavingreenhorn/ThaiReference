@@ -7,6 +7,7 @@ import org.jonecorp.thaireference.dto.VowelGraphemeDto;
 import org.jonecorp.thaireference.dto.WordDto;
 import org.jonecorp.thaireference.dto.SentenceTokenDto;
 import org.jonecorp.thaireference.dto.ZodiacDto;
+import org.jonecorp.thaireference.entity.CompositeName;
 
 /*
  * A JPQL constructor projection (SELECT new Dto(...)) cannot fill a nested List, so any parent
@@ -16,6 +17,7 @@ import org.jonecorp.thaireference.dto.ZodiacDto;
  *   2. child rows that carry (parentId, child)                         (WordRow / GraphemeRow / PronounTypeRow).
  *
  * The repository groups the child rows by parentId and hands each parent its own children.
+ * CompositeNameWordRow also carries the name slots so repeated words retain their positions.
  * Parents whose DTO already exposes the join id (Cluster, MinimalSet) skip step 1 and project
  * straight into the DTO, so they have no row here.
  */
@@ -43,7 +45,7 @@ record MarkRow(Integer id, String grapheme, boolean toneMark, String englishLabe
 
 record ClassRow(Integer id, String code, String englishLabel) {}
 
-record HomophoneRow(Integer transcriptionId, TranscriptionDto transcription) {}
+record HomophoneCandidate(Integer transcriptionId, WordDto word) {}
 
 record DirectionRow(Integer id, String label, String lexeme) {}
 
@@ -68,6 +70,8 @@ record SeasonRow(
 // --- child rows: (parentId, child), grouped back onto the parent by parentId ---
 
 record WordRow(Integer parentId, WordDto word) {}
+
+record CompositeNameWordRow(Integer parentId, WordDto word, CompositeName name) {}
 
 record GraphemeRow(Integer vowelId, VowelGraphemeDto grapheme) {}
 
