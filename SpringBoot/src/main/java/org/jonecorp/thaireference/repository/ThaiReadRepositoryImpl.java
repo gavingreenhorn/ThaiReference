@@ -54,7 +54,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<SeasonDto> findSeasons() {
-        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.SEASON_WORDS);
+        Map<Integer, WordDto> words = wordByParentId(ThaiReadQueries.SEASON_WORDS);
         Map<Integer, List<MonthDto>> months = entityManager
                 .createQuery(ThaiReadQueries.SEASON_MONTHS, MonthRow.class).getResultList().stream()
                 .collect(groupingBy(MonthRow::seasonId, LinkedHashMap::new, mapping(MonthRow::month, toList())));
@@ -62,7 +62,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         return entityManager.createQuery(ThaiReadQueries.SEASONS, SeasonRow.class).getResultList().stream()
                 .map(s -> new SeasonDto(
                         s.ordinal(),
-                        words.getOrDefault(s.id(), List.of()),
+                        Objects.requireNonNull(words.get(s.id()), "Missing season word " + s.id()),
                         s.englishLabel(),
                         s.glyph(),
                         months.getOrDefault(s.id(), List.of())))
@@ -119,11 +119,12 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<ThaiClassDto> findClasses() {
-        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.CLASS_WORDS);
+        Map<Integer, WordDto> words = wordByParentId(ThaiReadQueries.CLASS_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.CLASSES, ClassRow.class).getResultList().stream()
                 .map(c -> new ThaiClassDto(
-                        c.code(), c.englishLabel(), words.getOrDefault(c.id(), List.of())))
+                        c.code(), c.englishLabel(),
+                        Objects.requireNonNull(words.get(c.id()), "Missing class word " + c.id())))
                 .toList();
     }
 
@@ -238,21 +239,11 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<DirectionDto> findDirections() {
-        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.DIRECTION_WORDS);
+        Map<Integer, WordDto> words = wordByParentId(ThaiReadQueries.DIRECTION_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.DIRECTIONS, DirectionRow.class).getResultList().stream()
-                .map(d -> {
-                    List<WordDto> parts = words.getOrDefault(d.id(), List.of());
-                    String spelling = parts.stream().map(WordDto::value).reduce("", String::concat);
-                    String paiboon = joinTranscription(parts, t -> t.paiboon());
-                    String ipa = joinTranscription(parts, t -> t.ipa());
-                    return new DirectionDto(
-                            d.id(),
-                            d.label(),
-                            d.lexeme(),
-                            spelling,
-                            new TranscriptionDto(paiboon, ipa));
-                })
+                .map(d -> new DirectionDto(d.id(), d.label(), d.lexeme(),
+                        Objects.requireNonNull(words.get(d.id()), "Missing direction word " + d.id())))
                 .toList();
     }
 
@@ -293,32 +284,27 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                 .toList();
     }
 
-    private static String joinTranscription(
-            List<WordDto> parts, java.util.function.Function<TranscriptionDto, String> field) {
-        return parts.stream()
-                .map(WordDto::transcription)
-                .filter(t -> t != null)
-                .map(field)
-                .filter(s -> s != null && !s.isBlank())
-                .reduce((a, b) -> a + " " + b)
-                .orElse("");
-    }
-
     private List<MarkDto> specialSymbolMarks() {
-        Map<Integer, List<WordDto>> words = wordsByParentId(ThaiReadQueries.MARK_SPECIAL_SYMBOL_WORDS);
+        Map<Integer, WordDto> words = wordByParentId(ThaiReadQueries.MARK_SPECIAL_SYMBOL_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.MARK_SPECIAL_SYMBOLS, MarkRow.class).getResultList().stream()
-                .map(m -> new MarkDto(m.grapheme(), m.toneMark(), words.getOrDefault(m.id(), List.of())))
+                .map(m -> new MarkDto(m.grapheme(), m.toneMark(), words.get(m.id())))
                 .toList();
     }
 
     private List<MarkDto> toneMarks() {
-        Map<Integer, List<WordDto>> words = wordsByCompositeName(ThaiReadQueries.MARK_TONE_MARK_WORDS);
+        Map<Integer, WordDto> words = wordByParentId(ThaiReadQueries.MARK_TONE_MARK_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.MARK_TONE_MARKS, MarkRow.class).getResultList().stream()
                 .map(m -> new MarkDto(
-                        m.grapheme(), m.toneMark(), words.getOrDefault(m.id(), List.of()), m.englishLabel()))
+                        m.grapheme(), m.toneMark(), words.get(m.id()), m.englishLabel()))
                 .toList();
+    }
+
+    private Map<Integer, WordDto> wordByParentId(String wordQuery) {
+        return entityManager.createQuery(wordQuery, WordRow.class).getResultList().stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        WordRow::parentId, WordRow::word));
     }
 
     private Map<Integer, List<WordDto>> wordsByParentId(String wordQuery) {
@@ -445,6 +431,8 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
         List<ColorRow> colors = entityManager
                 .createQuery(ThaiReadQueries.COLORS, ColorRow.class).getResultList();
         Map<Integer, List<WordDto>> wordsByColor = wordsByCompositeName(ThaiReadQueries.COLOR_WORDS);
+        wordByParentId(ThaiReadQueries.COLOR_LABEL_WORDS)
+                .forEach((id, word) -> wordsByColor.put(id, List.of(word)));
 
         Map<Integer, List<ColorRow>> colorsByFamily = colors.stream()
                 .collect(groupingBy(ColorRow::familyId, LinkedHashMap::new, toList()));
@@ -457,7 +445,7 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
                         f.hex(),
                         f.displayOrder(),
                         colorsByFamily.getOrDefault(f.id(), List.of()).stream()
-                                .map(c -> new ColorDto(
+                                .map(c -> new ColorLabel(
                                         c.colorId(),
                                         c.hex(),
                                         c.englishLabel(),

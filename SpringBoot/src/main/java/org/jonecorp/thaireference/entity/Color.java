@@ -20,6 +20,9 @@ public class Color {
     @Column(name = "composite_name_id")
     private Integer compositeNameId;
 
+    @Column(name = "word_id")
+    private Integer wordId;
+
     @Column(name = "english_label", nullable = false, length = 100)
     private String englishLabel;
 

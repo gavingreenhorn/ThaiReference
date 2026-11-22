@@ -1,10 +1,11 @@
 package org.jonecorp.thaireference.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-public record MarkDto(String grapheme, boolean toneMark, List<WordDto> words, String englishLabel) {
+public record MarkDto(String grapheme, boolean toneMark,
+        @JsonInclude(JsonInclude.Include.ALWAYS) WordDto word, String englishLabel) {
 
-    public MarkDto(String grapheme, boolean toneMark, List<WordDto> words) {
-        this(grapheme, toneMark, words, null);
+    public MarkDto(String grapheme, boolean toneMark, WordDto word) {
+        this(grapheme, toneMark, word, null);
     }
 }

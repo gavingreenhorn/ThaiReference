@@ -4,7 +4,7 @@ import java.util.List;
 
 public record SeasonDto(
 		Integer ordinal,
-		List<WordDto> words,
+		WordDto word,
 		String englishLabel,
 		String glyph,
 		List<MonthDto> months) {}

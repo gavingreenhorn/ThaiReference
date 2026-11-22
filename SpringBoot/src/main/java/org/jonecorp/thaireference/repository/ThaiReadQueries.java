@@ -107,25 +107,16 @@ final class ThaiReadQueries {
 
     static final String SEASON_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
+            SELECT new org.jonecorp.thaireference.repository.WordRow(
                 s.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes, wv.componentWordIds),
-                cn)
+                    wv.lexemes, wv.componentWordIds))
             FROM Season s
-            JOIN CompositeName cn ON cn.id = s.compositeNameId
-            JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
-            ORDER BY s.id,
-                CASE
-                    WHEN wv.id = cn.word1Id THEN 1
-                    WHEN wv.id = cn.word2Id THEN 2
-                    WHEN wv.id = cn.word3Id THEN 3
-                    WHEN wv.id = cn.word4Id THEN 4
-                    WHEN wv.id = cn.word5Id THEN 5
-                    ELSE 6 END
+            JOIN WordView wv ON wv.id = s.wordId
+            ORDER BY s.id
             """;
 
     static final String CELESTIAL_BODIES =
@@ -422,25 +413,16 @@ final class ThaiReadQueries {
 
     static final String CLASS_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
+            SELECT new org.jonecorp.thaireference.repository.WordRow(
                 tc.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes, wv.componentWordIds),
-                cn)
+                    wv.lexemes, wv.componentWordIds))
             FROM ThaiClassEntity tc
-            JOIN CompositeName cn ON cn.id = tc.nameId
-            JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
-            ORDER BY tc.id,
-                CASE
-                    WHEN wv.id = cn.word1Id THEN 1
-                    WHEN wv.id = cn.word2Id THEN 2
-                    WHEN wv.id = cn.word3Id THEN 3
-                    WHEN wv.id = cn.word4Id THEN 4
-                    WHEN wv.id = cn.word5Id THEN 5
-                    ELSE 6 END
+            JOIN WordView wv ON wv.id = tc.wordId
+            ORDER BY tc.id
             """;
 
     static final String MARK_TONE_MARKS =
@@ -456,25 +438,16 @@ final class ThaiReadQueries {
 
     static final String MARK_TONE_MARK_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
+            SELECT new org.jonecorp.thaireference.repository.WordRow(
                 tm.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes, wv.componentWordIds),
-                cn)
+                    wv.lexemes, wv.componentWordIds))
             FROM ToneMark tm
-            JOIN CompositeName cn ON cn.id = tm.nameId
-            JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
-            ORDER BY tm.id,
-                CASE
-                    WHEN wv.id = cn.word1Id THEN 1
-                    WHEN wv.id = cn.word2Id THEN 2
-                    WHEN wv.id = cn.word3Id THEN 3
-                    WHEN wv.id = cn.word4Id THEN 4
-                    WHEN wv.id = cn.word5Id THEN 5
-                    ELSE 6 END
+            JOIN WordView wv ON wv.id = tm.wordId
+            ORDER BY tm.id
             """;
 
     static final String DIRECTIONS =
@@ -489,25 +462,16 @@ final class ThaiReadQueries {
 
     static final String DIRECTION_WORDS =
             """
-            SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(
+            SELECT new org.jonecorp.thaireference.repository.WordRow(
                 d.id,
                 new org.jonecorp.thaireference.dto.WordDto(
                     wv.id,
                     wv.spelling,
                     new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
-                    wv.lexemes, wv.componentWordIds),
-                cn)
+                    wv.lexemes, wv.componentWordIds))
             FROM Direction d
-            JOIN CompositeName cn ON cn.id = d.compositeNameId
-            JOIN WordView wv ON wv.id IN (cn.word1Id, cn.word2Id, cn.word3Id, cn.word4Id, cn.word5Id)
-            ORDER BY d.id,
-                CASE
-                    WHEN wv.id = cn.word1Id THEN 1
-                    WHEN wv.id = cn.word2Id THEN 2
-                    WHEN wv.id = cn.word3Id THEN 3
-                    WHEN wv.id = cn.word4Id THEN 4
-                    WHEN wv.id = cn.word5Id THEN 5
-                    ELSE 6 END
+            JOIN WordView wv ON wv.id = d.wordId
+            ORDER BY d.id
             """;
 
     static final String POSITIONS =
@@ -621,6 +585,20 @@ final class ThaiReadQueries {
                 CAST(c.luminanceOrder AS int))
             FROM Color c
             ORDER BY c.hueFamilyId, c.luminanceOrder
+            """;
+
+    static final String COLOR_LABEL_WORDS =
+            """
+            SELECT new org.jonecorp.thaireference.repository.WordRow(
+                c.id,
+                new org.jonecorp.thaireference.dto.WordDto(
+                    wv.id,
+                    wv.spelling,
+                    new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
+                    wv.lexemes, wv.componentWordIds))
+            FROM Color c
+            JOIN WordView wv ON wv.id = c.wordId
+            ORDER BY c.id
             """;
 
     static final String COLOR_WORDS =

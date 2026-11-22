@@ -19,6 +19,6 @@ public class Direction {
     @Column(name = "lexeme", nullable = false, length = 32)
     private String lexeme;
 
-    @Column(name = "composite_name_id", nullable = false)
-    private Integer compositeNameId;
+    @Column(name = "word_id", nullable = false)
+    private Integer wordId;
 }

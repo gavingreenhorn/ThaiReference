@@ -17,8 +17,8 @@ public class ToneMark {
     @Column(name = "mark", nullable = false)
     private String mark;
 
-    @Column(name = "name", nullable = true)
-    private Integer nameId;
+    @Column(name = "word_id", nullable = true)
+    private Integer wordId;
 
     @Column(name = "mediapath", nullable = true)
     private String mediapath;

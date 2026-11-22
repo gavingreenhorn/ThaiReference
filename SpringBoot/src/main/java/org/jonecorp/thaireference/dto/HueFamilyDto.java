@@ -8,7 +8,7 @@ public record HueFamilyDto(
         String englishName,
         String hex,
         Integer displayOrder,
-        List<ColorDto> colors) {
+        List<ColorLabel> colors) {
 
     /** Constructor for JPQL projection (without colors). */
     public HueFamilyDto(Integer id, String thaiName, String englishName, String hex, Integer displayOrder) {

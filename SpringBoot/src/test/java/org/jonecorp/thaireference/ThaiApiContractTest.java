@@ -8,8 +8,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import org.jonecorp.thaireference.dto.MoodDto;
+import org.jonecorp.thaireference.dto.ColorLabel;
+import org.jonecorp.thaireference.dto.DirectionDto;
+import org.jonecorp.thaireference.dto.HueFamilyDto;
+import org.jonecorp.thaireference.dto.MarkDto;
+import org.jonecorp.thaireference.dto.SeasonDto;
+import org.jonecorp.thaireference.dto.ThaiClassDto;
 import org.jonecorp.thaireference.dto.MoodSentenceDto;
 import org.jonecorp.thaireference.dto.SentenceTokenDto;
 import org.jonecorp.thaireference.dto.TranscriptionDto;
@@ -33,7 +40,8 @@ class ThaiApiContractTest {
         repository = mock(ThaiReadRepository.class);
         when(repository.findSounds()).thenReturn(List.of());
         when(repository.findHomophones()).thenReturn(List.of());
-        ObjectMapper mapper = new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+        ObjectMapper mapper = new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
         mockMvc = MockMvcBuilders.standaloneSetup(new ThaiController(repository))
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(mapper))
                 .build();
@@ -47,6 +55,51 @@ class ThaiApiContractTest {
     @Test
     void homophonesEndpointReturnsOk() throws Exception {
         mockMvc.perform(get("/thai/homophones")).andExpect(status().isOk());
+    }
+
+    @Test
+    void namedDomainsExposeWholeWordsAndKeepTheNamelessToneMark() throws Exception {
+        WordDto word = new WordDto(900, "ไม้เอก", new TranscriptionDto("mai-ek", "mai.ek"),
+                List.of("first Thai tone mark"), List.of(45, 46));
+        when(repository.findDirections()).thenReturn(List.of(new DirectionDto(1, "N", "north", word)));
+        when(repository.findClasses()).thenReturn(List.of(new ThaiClassDto("low", "Low", word)));
+        when(repository.findSeasons()).thenReturn(List.of(new SeasonDto(1, word, "Winter", "winter", List.of())));
+        when(repository.findMarks()).thenReturn(List.of(
+                new MarkDto("none", true, null, "No tone mark"),
+                new MarkDto("mark", true, word, "Low tone"),
+                new MarkDto("symbol", false, word)));
+
+        for (String endpoint : List.of("directions", "classes", "seasons")) {
+            mockMvc.perform(get("/thai/" + endpoint))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].word.id").value(900))
+                    .andExpect(jsonPath("$[0].word.lexemes[0]").value("first Thai tone mark"))
+                    .andExpect(jsonPath("$[0].word.component_word_ids[1]").value(46))
+                    .andExpect(jsonPath("$[0].words").doesNotHaveJsonPath());
+        }
+        mockMvc.perform(get("/thai/marks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].word").hasJsonPath())
+                .andExpect(jsonPath("$[0].word").isEmpty())
+                .andExpect(jsonPath("$[1].word.id").value(900))
+                .andExpect(jsonPath("$[2].word.id").value(900));
+    }
+
+    @Test
+    void colorsRetainTheirLabelShapeForBothWholeWordsAndPhrases() throws Exception {
+        WordDto whole = new WordDto(900, "maroon", new TranscriptionDto("a-b", "a.b"),
+                List.of("maroon"), List.of(1, 2));
+        WordDto modifier = new WordDto(901, "light", new TranscriptionDto("c", "c"), List.of("light"), List.of());
+        when(repository.findColors()).thenReturn(List.of(new HueFamilyDto(1, "red", "Red", "#ff0000", 1,
+                List.of(new ColorLabel(1, "#800000", "Maroon", List.of(whole), 1),
+                        new ColorLabel(2, "#ffaaaa", "Light maroon", List.of(whole, modifier), 2)))));
+
+        mockMvc.perform(get("/thai/colors"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].colors[0].words[0].id").value(900))
+                .andExpect(jsonPath("$[0].colors[0].words[0].lexemes[0]").value("maroon"))
+                .andExpect(jsonPath("$[0].colors[0].words[0].component_word_ids[1]").value(2))
+                .andExpect(jsonPath("$[0].colors[1].words[1].id").value(901));
     }
 
     @Test

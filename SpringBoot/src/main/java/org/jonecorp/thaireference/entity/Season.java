@@ -16,8 +16,8 @@ public class Season {
 	@Column(name = "ordinal", nullable = false)
 	private Integer ordinal;
 
-	@Column(name = "name", nullable = false)
-	private Integer compositeNameId;
+	@Column(name = "word_id", nullable = false)
+	private Integer wordId;
 
 	@Column(name = "english_label", nullable = false)
 	private String englishLabel;

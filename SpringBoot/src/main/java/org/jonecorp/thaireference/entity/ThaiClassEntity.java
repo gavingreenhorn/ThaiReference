@@ -18,9 +18,8 @@ public class ThaiClassEntity {
     @Column(name = "code", nullable = false, length = 15)
     private String code;
 
-    /** CompositeName FK — same column name as ToneMark.name. */
-    @Column(name = "name", nullable = true)
-    private Integer nameId;
+    @Column(name = "word_id", nullable = false)
+    private Integer wordId;
 
     @Column(name = "mediapath", nullable = true)
     private String mediapath;

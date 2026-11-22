@@ -2,7 +2,7 @@ package org.jonecorp.thaireference.dto;
 
 import java.util.List;
 
-public record ColorDto(
+public record ColorLabel(
         Integer id,
         String hex,
         String englishLabel,
