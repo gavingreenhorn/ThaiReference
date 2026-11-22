@@ -1,4 +1,5 @@
 DROP MATERIALIZED VIEW IF EXISTS thai."MinimalSetComputedView";
+
 DROP MATERIALIZED VIEW IF EXISTS thai."MinimalSetView";
 
 CREATE MATERIALIZED VIEW thai."MinimalSetView" AS
@@ -63,5 +64,3 @@ CREATE UNIQUE INDEX "MinimalSetView_set_word_uq"
 
 CREATE INDEX "MinimalSetView_label_set_idx"
 	ON thai."MinimalSetView" (label, set_id);
-
-REFRESH MATERIALIZED VIEW thai."MinimalSetView";

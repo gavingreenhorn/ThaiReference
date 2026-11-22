@@ -3,12 +3,10 @@ package org.jonecorp.thaireference;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.nio.charset.StandardCharsets;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
-import org.springframework.core.io.ClassPathResource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -19,54 +17,28 @@ class ReferenceFeatureMigrationTest {
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Test
-    void consolidatedFeaturesMigrateAndValidateWithoutWordDataHotfixes() throws Exception {
+    void ddlOnlyMigrationsCreateAndValidateSchemaWithoutSeedingWords() throws Exception {
         try (var connection = DriverManager.getConnection(
                 postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
                 var statement = connection.createStatement()) {
-            statement.execute("""
-                    CREATE SCHEMA thai;
-                    CREATE TABLE thai."Word"(id integer PRIMARY KEY, transcription integer, is_primary boolean);
-                    CREATE TABLE thai."Transcription"(id integer, "IPA" text);
-                    CREATE TABLE thai."Sentence"(id integer PRIMARY KEY);
-                    CREATE TABLE thai."SentenceWord"(id integer PRIMARY KEY);
-                    CREATE TABLE thai."Sound"(
-                        id integer, value text, consonant_sound integer, initial_only boolean);
-                    CREATE TABLE thai."Season"(id integer, ordinal integer);
-                    INSERT INTO thai."Season" VALUES (1,1),(2,2),(3,3);
-                    CREATE TABLE thai."Zodiac"(id integer, english_name text, image_url text);
-                    CREATE TABLE thai.device_group(id bigint PRIMARY KEY);
-                    CREATE TABLE thai.device(
-                        id bigint PRIMARY KEY, device_group_id bigint REFERENCES thai.device_group(id),
-                        linked_at timestamptz);
-                    CREATE TABLE thai.account_token(
-                        id bigint PRIMARY KEY, group_id bigint REFERENCES thai.device_group(id));
-                    CREATE TABLE thai.user_accounts(id bigint PRIMARY KEY);
-                    INSERT INTO thai.device_group VALUES (1);
-                    INSERT INTO thai.device VALUES (10,1,now());
-                    INSERT INTO thai.account_token VALUES (20,1);
-                    INSERT INTO thai.user_accounts VALUES (30);
-                    INSERT INTO thai."Zodiac" VALUES
-                        (1,'Aries',NULL),(2,'Taurus',NULL),(3,'Gemini',NULL),
-                        (4,'Cancer',NULL),(5,'Leo',NULL),(6,'Virgo',NULL),
-                        (7,'Libra',NULL),(8,'Scorpio',NULL),(9,'Sagittarius',NULL),
-                        (10,'Capricorn',NULL),(11,'Aquarius',NULL),(12,'Pisces',NULL);
-                    """);
             Flyway flyway = Flyway.configure()
                     .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                     .schemas("thai")
-                    .baselineOnMigrate(true)
-                    .baselineVersion("5")
-                    .target("11")
+                    .target("13")
                     .load();
-            assertEquals(6, flyway.migrate().migrationsExecuted);
+            assertEquals(13, flyway.migrate().migrationsExecuted);
             flyway.validate();
             assertEquals(0, flyway.migrate().migrationsExecuted);
             try (var rows = statement.executeQuery("""
                     SELECT
-                      (SELECT count(*) FROM account.device_group WHERE id = 1 AND owner_device_id = 10),
-                      (SELECT count(*) FROM account.device WHERE id = 10 AND device_group_id = 1),
-                      (SELECT count(*) FROM account.account_token WHERE id = 20 AND group_id = 1),
-                      (SELECT count(*) FROM account.user_accounts WHERE id = 30),
+                      (SELECT count(*) FROM information_schema.tables
+                       WHERE table_schema = 'account' AND table_name = 'device_group'),
+                      (SELECT count(*) FROM information_schema.tables
+                       WHERE table_schema = 'account' AND table_name = 'device'),
+                      (SELECT count(*) FROM information_schema.tables
+                       WHERE table_schema = 'account' AND table_name = 'account_token'),
+                      (SELECT count(*) FROM information_schema.tables
+                       WHERE table_schema = 'account' AND table_name = 'user_accounts'),
                       (SELECT count(*) FROM information_schema.tables
                        WHERE table_schema = 'thai' AND table_name IN
                          ('device_group', 'device', 'account_token', 'user_accounts')),
@@ -83,17 +55,17 @@ class ReferenceFeatureMigrationTest {
                 assertEquals(3, rows.getInt(6));
             }
             connection.setAutoCommit(false);
-            statement.execute(new ClassPathResource("sql/minimal_sets_ipa_comparison.sql")
-                    .getContentAsString(StandardCharsets.UTF_8));
-            connection.rollback();
             try (var rows = statement.executeQuery("SELECT count(*) FROM thai.\"Word\"")) {
                 rows.next();
                 assertEquals(0, rows.getInt(1));
             }
             statement.execute("""
+                    INSERT INTO thai."Spelling"(id,value) VALUES (1,'test');
+                    INSERT INTO thai."Transcription"(id,paiboon,"IPA") VALUES (1,'test','test');
                     INSERT INTO thai."Word"(id) VALUES (1);
-                    INSERT INTO thai."Sentence"(id) VALUES (1), (2), (3);
-                    INSERT INTO thai."SentenceWord"(id) VALUES (1);
+                    INSERT INTO thai."SimpleWord"(id,spelling_id,transcription) VALUES (1,1,1);
+                    INSERT INTO thai."Sentence"(id,translation) VALUES (1,'one'), (2,'two'), (3,'three');
+                    INSERT INTO thai."SentenceWord"(id,sentence_id,word_id,word_order) VALUES (1,1,1,1);
                     INSERT INTO thai."Mood"(word_id) VALUES (1);
                     INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
                     SELECT id, 1, 1 FROM thai."Mood";
