@@ -92,7 +92,7 @@ class ThaiApiContractTest {
         WordDto whole = new WordDto(900, "whole", new TranscriptionDto("a-b", "a.b"),
                 List.of("whole meaning", "other whole meaning"), List.of(1, 2));
         WordDto side = new WordDto(535, "side", new TranscriptionDto("c", "c"),
-                List.of("side"), List.of());
+                List.of(), List.of());
         SentenceDto example = new SentenceDto(1, "example", List.of(side, whole));
         when(repository.findPositions()).thenReturn(List.of(
                 new PositionDto(1, "domain meaning", whole, null, example),
@@ -108,6 +108,9 @@ class ThaiApiContractTest {
                 .andExpect(jsonPath("$[1].word").hasJsonPath())
                 .andExpect(jsonPath("$[1].word").isEmpty())
                 .andExpect(jsonPath("$[1].phrase_words[0].id").value(535))
+                .andExpect(jsonPath("$[1].phrase_words[0].component_word_ids").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$[1].phrase_words[0].lexemes").isArray())
+                .andExpect(jsonPath("$[1].phrase_words[0].lexemes").isEmpty())
                 .andExpect(jsonPath("$[1].phrase_words[1].id").value(900))
                 .andExpect(jsonPath("$[1].words").doesNotHaveJsonPath())
                 .andExpect(jsonPath("$[0].example.words[1].id").value(900));
