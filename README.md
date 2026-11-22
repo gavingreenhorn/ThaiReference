@@ -11,9 +11,11 @@ Colors retain the existing `ColorLabel` DTO shape: `words` contains either one
 whole word or the ordered words of a retained CompositeName phrase. Color labels
 are not themselves words, and constituent lexemes are not whole-label meanings.
 The database enforces exactly one word or CompositeName reference per color.
-Positions use the same exclusive Word-or-CompositeName reference approach while
-preserving their existing `words` API field and example sentence. Single-word
-labels reference Word directly; only phrase labels reference CompositeName.
+Positions expose a singular `word` object for single-word labels. Retained
+phrases have `word: null` and ordered `phrase_words` instead; neither form exposes
+the old label `words` array. The example sentence retains its actual word tokens.
+The client preserves the whole Word's identity, components and lexemes and
+renders phrases without manufacturing a Word. Only phrase labels reference CompositeName.
 ท่ามกลาง reuses SimpleWord 532.
 
 V12 and V13 define the polymorphic word schema and direct domain references.
@@ -24,7 +26,7 @@ Historical migrations were cleaned after application. Existing databases need
 Flyway `repair` against the cleaned files before deployment; this reconciles
 checksums without rerunning those migrations or changing reference data.
 
-Offline snapshots use schema version 2. Rebuild the packaged snapshot with the
+Offline snapshots use schema version 3. Rebuild the packaged snapshot with the
 existing FetchLiteDb project after deploying the updated backend. Older AppData
 snapshots are replaced from the packaged snapshot rather than deserialized as
 the new direct-word models.

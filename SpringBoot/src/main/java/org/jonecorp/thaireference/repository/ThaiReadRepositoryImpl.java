@@ -249,20 +249,27 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
 
     @Override
     public List<PositionDto> findPositions() {
-        Map<Integer, List<WordDto>> headWords = wordsByCompositeName(ThaiReadQueries.POSITION_WORDS);
-        wordByParentId(ThaiReadQueries.POSITION_LABEL_WORDS)
-                .forEach((id, word) -> headWords.put(id, List.of(word)));
+        Map<Integer, List<WordDto>> phraseWords = wordsByCompositeName(ThaiReadQueries.POSITION_WORDS);
+        Map<Integer, WordDto> labelWords = wordByParentId(ThaiReadQueries.POSITION_LABEL_WORDS);
         Map<Integer, List<WordDto>> sentenceWords = wordsByParentId(ThaiReadQueries.SENTENCE_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.POSITIONS, PositionHeadRow.class).getResultList().stream()
-                .map(p -> new PositionDto(
+                .map(p -> {
+                    WordDto word = labelWords.get(p.id());
+                    List<WordDto> phrase = phraseWords.get(p.id());
+                    if ((word != null) == (phrase != null && !phrase.isEmpty())) {
+                        throw new IllegalStateException("Position must have exactly one word or phrase label " + p.id());
+                    }
+                    return new PositionDto(
                         p.id(),
                         p.lexeme(),
-                        Objects.requireNonNull(headWords.get(p.id()), "Missing position label " + p.id()),
+                        word,
+                        phrase,
                         new SentenceDto(
                                 p.sentenceId(),
                                 p.translation(),
-                                sentenceWords.getOrDefault(p.sentenceId(), List.of()))))
+                                sentenceWords.getOrDefault(p.sentenceId(), List.of())));
+                })
                 .toList();
     }
 

@@ -15,6 +15,8 @@ import org.jonecorp.thaireference.dto.ColorLabel;
 import org.jonecorp.thaireference.dto.DirectionDto;
 import org.jonecorp.thaireference.dto.HueFamilyDto;
 import org.jonecorp.thaireference.dto.MarkDto;
+import org.jonecorp.thaireference.dto.PositionDto;
+import org.jonecorp.thaireference.dto.SentenceDto;
 import org.jonecorp.thaireference.dto.SeasonDto;
 import org.jonecorp.thaireference.dto.ThaiClassDto;
 import org.jonecorp.thaireference.dto.MoodSentenceDto;
@@ -83,6 +85,32 @@ class ThaiApiContractTest {
                 .andExpect(jsonPath("$[0].word").isEmpty())
                 .andExpect(jsonPath("$[1].word.id").value(900))
                 .andExpect(jsonPath("$[2].word.id").value(900));
+    }
+
+    @Test
+    void positionsExposeASingularWholeWordAndSeparatePhraseWords() throws Exception {
+        WordDto whole = new WordDto(900, "whole", new TranscriptionDto("a-b", "a.b"),
+                List.of("whole meaning", "other whole meaning"), List.of(1, 2));
+        WordDto side = new WordDto(535, "side", new TranscriptionDto("c", "c"),
+                List.of("side"), List.of());
+        SentenceDto example = new SentenceDto(1, "example", List.of(side, whole));
+        when(repository.findPositions()).thenReturn(List.of(
+                new PositionDto(1, "domain meaning", whole, null, example),
+                new PositionDto(13, "phrase meaning", null, List.of(side, whole), example)));
+
+        mockMvc.perform(get("/thai/positions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].word.id").value(900))
+                .andExpect(jsonPath("$[0].word.lexemes[1]").value("other whole meaning"))
+                .andExpect(jsonPath("$[0].word.component_word_ids[1]").value(2))
+                .andExpect(jsonPath("$[0].phrase_words").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$[0].words").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$[1].word").hasJsonPath())
+                .andExpect(jsonPath("$[1].word").isEmpty())
+                .andExpect(jsonPath("$[1].phrase_words[0].id").value(535))
+                .andExpect(jsonPath("$[1].phrase_words[1].id").value(900))
+                .andExpect(jsonPath("$[1].words").doesNotHaveJsonPath())
+                .andExpect(jsonPath("$[0].example.words[1].id").value(900));
     }
 
     @Test

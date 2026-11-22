@@ -1,6 +1,8 @@
 package org.jonecorp.thaireference.repository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
@@ -62,8 +64,10 @@ class CompositeNameWordOrderTest {
                         new PositionHeadRow(2, "to the left", 10, "example")));
 
         var positions = repository.findPositions();
-        assertEquals(List.of(whole), positions.get(0).words());
-        assertEquals(List.of(side, left), positions.get(1).words());
+        assertSame(whole, positions.get(0).word());
+        assertNull(positions.get(0).phraseWords());
+        assertNull(positions.get(1).word());
+        assertEquals(List.of(side, left), positions.get(1).phraseWords());
         assertEquals(List.of(left, side), positions.get(0).example().words());
     }
 }
