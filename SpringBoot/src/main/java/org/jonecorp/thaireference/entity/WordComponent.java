@@ -11,13 +11,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import tech.ailef.snapadmin.external.annotations.Disable;
 
 @Entity
 @Table(name = "WordComponent", schema = "thai")
 @Getter
 @Setter
-@Disable
 public class WordComponent {
 
     @Id
