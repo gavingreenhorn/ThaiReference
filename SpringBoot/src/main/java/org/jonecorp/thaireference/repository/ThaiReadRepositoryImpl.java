@@ -250,13 +250,15 @@ public class ThaiReadRepositoryImpl implements ThaiReadRepositoryCustom {
     @Override
     public List<PositionDto> findPositions() {
         Map<Integer, List<WordDto>> headWords = wordsByCompositeName(ThaiReadQueries.POSITION_WORDS);
+        wordByParentId(ThaiReadQueries.POSITION_LABEL_WORDS)
+                .forEach((id, word) -> headWords.put(id, List.of(word)));
         Map<Integer, List<WordDto>> sentenceWords = wordsByParentId(ThaiReadQueries.SENTENCE_WORDS);
 
         return entityManager.createQuery(ThaiReadQueries.POSITIONS, PositionHeadRow.class).getResultList().stream()
                 .map(p -> new PositionDto(
                         p.id(),
                         p.lexeme(),
-                        headWords.getOrDefault(p.id(), List.of()),
+                        Objects.requireNonNull(headWords.get(p.id()), "Missing position label " + p.id()),
                         new SentenceDto(
                                 p.sentenceId(),
                                 p.translation(),

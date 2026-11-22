@@ -11,7 +11,10 @@ Colors retain the existing `ColorLabel` DTO shape: `words` contains either one
 whole word or the ordered words of a retained CompositeName phrase. Color labels
 are not themselves words, and constituent lexemes are not whole-label meanings.
 The database enforces exactly one word or CompositeName reference per color.
-Positions retain phrase support; ท่ามกลาง reuses SimpleWord 532.
+Positions use the same exclusive Word-or-CompositeName reference approach while
+preserving their existing `words` API field and example sentence. Single-word
+labels reference Word directly; only phrase labels reference CompositeName.
+ท่ามกลาง reuses SimpleWord 532.
 
 V12 and V13 define the polymorphic word schema and direct domain references.
 Migration files contain DDL only: word data, pronunciation corrections, domain

@@ -486,6 +486,20 @@ final class ThaiReadQueries {
             ORDER BY p.id
             """;
 
+    static final String POSITION_LABEL_WORDS =
+            """
+            SELECT new org.jonecorp.thaireference.repository.WordRow(
+                p.id,
+                new org.jonecorp.thaireference.dto.WordDto(
+                    wv.id,
+                    wv.spelling,
+                    new org.jonecorp.thaireference.dto.TranscriptionDto(wv.paiboon, wv.ipa),
+                    wv.lexemes, wv.componentWordIds))
+            FROM Position p
+            JOIN WordView wv ON wv.id = p.wordId
+            ORDER BY p.id
+            """;
+
     static final String POSITION_WORDS =
             """
             SELECT new org.jonecorp.thaireference.repository.CompositeNameWordRow(

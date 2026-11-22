@@ -24,9 +24,9 @@ class ReferenceFeatureMigrationTest {
             Flyway flyway = Flyway.configure()
                     .dataSource(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword())
                     .schemas("thai")
-                    .target("13")
+                    .target("14")
                     .load();
-            assertEquals(13, flyway.migrate().migrationsExecuted);
+            assertEquals(14, flyway.migrate().migrationsExecuted);
             flyway.validate();
             assertEquals(0, flyway.migrate().migrationsExecuted);
             try (var rows = statement.executeQuery("""
@@ -91,6 +91,24 @@ class ReferenceFeatureMigrationTest {
                     SELECT id, 3, 1 FROM thai."Mood";
                     """));
             connection.rollback(savepoint);
+            statement.execute("""
+                    INSERT INTO thai."CompositeName"(id,word1,word2) VALUES (1,1,1), (2,1,1);
+                    INSERT INTO thai."Position"(id,word_id,sentence_id,lexeme) VALUES (1,1,1,'on');
+                    INSERT INTO thai."Position"(id,composite_name_id,sentence_id,lexeme)
+                    VALUES (2,1,2,'phrase');
+                    """);
+            var positionSavepoint = connection.setSavepoint();
+            SQLException bothReferences = assertThrows(SQLException.class, () -> statement.execute("""
+                    INSERT INTO thai."Position"(id,word_id,composite_name_id,sentence_id,lexeme)
+                    VALUES (3,1,2,3,'invalid');
+                    """));
+            assertEquals("23514", bothReferences.getSQLState());
+            connection.rollback(positionSavepoint);
+            SQLException neitherReference = assertThrows(SQLException.class, () -> statement.execute("""
+                    INSERT INTO thai."Position"(id,sentence_id,lexeme) VALUES (3,3,'invalid');
+                    """));
+            assertEquals("23514", neitherReference.getSQLState());
+            connection.rollback(positionSavepoint);
             assertThrows(SQLException.class, () -> statement.execute("""
                     INSERT INTO thai."MoodSentence"(mood_id, sentence_id, position)
                     SELECT id, 3, 0 FROM thai."Mood";

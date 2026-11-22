@@ -13,8 +13,11 @@ public class Position {
     @Id
     private Integer id;
 
-    @Column(name = "composite_name_id", nullable = false)
+    @Column(name = "composite_name_id")
     private Integer compositeNameId;
+
+    @Column(name = "word_id")
+    private Integer wordId;
 
     @Column(name = "sentence_id", nullable = false)
     private Integer sentenceId;
